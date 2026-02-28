@@ -1,1 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700;800;900&display=swap');
+
+/* Tailwind v4 — single import */
 @import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   @theme — every design token lives here (no config file)
+═══════════════════════════════════════════════════════════ */
+@theme {
+  /* ── Fonts ── */
+  --font-mono: 'DM Mono', monospace;
+  --font-sans: 'DM Sans', sans-serif;
+
+  /* ── Brand palette ── */
+  --color-teal:       #00E5BE;
+  --color-teal-dim:   #00c4a3;
+  --color-dark:       #05101A;
+  --color-dark-900:   #060f1a;
+  --color-dark-800:   #0a1828;
+
+  /* ── Spacing extras ── */
+  --spacing-18: 4.5rem;
+
+  /* ── Background images ── */
+  --background-image-grid:
+    linear-gradient(rgba(0,229,190,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,190,0.06) 1px, transparent 1px);
+  --background-image-grid-faint:
+    linear-gradient(rgba(0,229,190,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,190,0.04) 1px, transparent 1px);
+  --background-image-hero-radial:
+    radial-gradient(ellipse 60% 55% at 72% 40%, rgba(0,229,190,0.13) 0%, transparent 70%);
+  --background-image-cta-radial:
+    radial-gradient(ellipse 65% 65% at 50% 50%, rgba(0,229,190,0.10) 0%, transparent 70%);
+  --background-image-panel-radial-tr:
+    radial-gradient(ellipse 60% 50% at 110% -10%, rgba(0,229,190,0.14) 0%, transparent 65%);
+  --background-image-panel-radial-bl:
+    radial-gradient(ellipse 55% 45% at -10% 110%, rgba(0,229,190,0.08) 0%, transparent 65%);
+  --background-image-scan-line:
+    linear-gradient(90deg, transparent, rgba(0,229,190,0.65), transparent);
+  --background-image-bar-teal:
+    linear-gradient(90deg, #00E5BE, #00c4a3);
+  --background-image-fade-down:
+    linear-gradient(to bottom, rgba(0,229,190,0.45), transparent);
+
+  /* ── Background sizes ── */
+  --background-size-grid:       56px 56px;
+  --background-size-grid-faint: 40px 40px;
+
+  /* ── Animations ── */
+  --animate-scan:          scan-line 3s linear infinite;
+  --animate-pulse-dot:     pulse-dot 2.5s ease-in-out infinite;
+  --animate-float:         float-y 5s ease-in-out infinite;
+  --animate-spin:          spin 1s linear infinite;
+
+  /* staggered page-load reveals */
+  --animate-fade-up-1: fade-up 0.65s 0.05s ease both;
+  --animate-fade-up-2: fade-up 0.65s 0.15s ease both;
+  --animate-fade-up-3: fade-up 0.65s 0.25s ease both;
+  --animate-fade-up-4: fade-up 0.65s 0.35s ease both;
+  --animate-fade-up-5: fade-up 0.85s 0.70s ease both;
+
+  /* login panel */
+  --animate-panel-in:      fade-up   0.55s 0.00s ease both;
+  --animate-fade-in:       fade-in   0.4s  0.00s ease both;
+  --animate-scan-face:     scan-face 2.8s ease-in-out infinite;
+  --animate-bracket-tl:    bracket-in 0.45s 0.10s ease both;
+  --animate-bracket-tr:    bracket-in 0.45s 0.18s ease both;
+  --animate-bracket-bl:    bracket-in 0.45s 0.26s ease both;
+  --animate-bracket-br:    bracket-in 0.45s 0.34s ease both;
+  --animate-dot-1:         dot-pulse  2.0s 0.0s  ease-in-out infinite;
+  --animate-dot-2:         dot-pulse  2.0s 0.4s  ease-in-out infinite;
+  --animate-dot-3:         dot-pulse  2.0s 0.8s  ease-in-out infinite;
+  --animate-dot-4:         dot-pulse  2.0s 1.2s  ease-in-out infinite;
+  --animate-ring-outer:    ring-pulse 3.0s 0.0s  ease-in-out infinite;
+  --animate-ring-inner:    ring-pulse 3.0s 0.6s  ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Keyframes
+═══════════════════════════════════════════════════════════ */
+@keyframes scan-line {
+  from { top: -4px;  }
+  to   { top: 100%;  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(0.85); opacity: 0.8;  }
+  50%       { transform: scale(1.15); opacity: 0.30; }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0px);   }
+  50%       { transform: translateY(-14px); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes scan-face {
+  0%   { top: 8%;  opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: 92%; opacity: 0; }
+}
+
+@keyframes bracket-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.8);  }
+  50%       { opacity: 1.0;  transform: scale(1.2);  }
+}
+
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(0.96); }
+  50%       { opacity: 0.40; transform: scale(1.03); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Base
+═══════════════════════════════════════════════════════════ */
+/* *, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+} */
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-dark);
+  color: #fff;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+::selection { background: rgba(0,229,190,0.28); }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--color-dark); }
+::-webkit-scrollbar-thumb {
+  background: rgba(0,229,190,0.22);
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Custom utilities  (@utility — Tailwind v4)
+═══════════════════════════════════════════════════════════ */
+
+/* Outlined display text */
+@utility text-outline-teal {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-teal);
+  text-stroke: 2px var(--color-teal);
+}
+
+/* Frosted nav on scroll */
+@utility nav-glass {
+  background: rgba(5, 16, 26, 0.90);
+  border-bottom: 1px solid rgba(0, 229, 190, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Hairline teal-divider grid layout
+   Parent: teal bg + gap 1px → children: bg-dark → 1px teal hairline shows */
+@utility divider-grid {
+  background: rgba(0, 229, 190, 0.10);
+  gap: 1px;
+}
+
+/* Horizontal scanline sweep (inside relative + overflow-hidden parent) */
+@utility scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--background-image-scan-line);
+  animation: var(--animate-scan);
+}
+
+/* Face-scan sweep line (taller sweep for the illustration) */
+@utility scan-face-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, rgba(0,229,190,0.85) 50%, transparent 95%);
+  box-shadow: 0 0 10px 2px rgba(0,229,190,0.35);
+  animation: var(--animate-scan-face);
+}
+
+/* Corner bracket animations */
+@utility bracket-tl { animation: var(--animate-bracket-tl); }
+@utility bracket-tr { animation: var(--animate-bracket-tr); }
+@utility bracket-bl { animation: var(--animate-bracket-bl); }
+@utility bracket-br { animation: var(--animate-bracket-br); }
+
+/* Pulsing detection dot variants */
+@utility dot-1 { animation: var(--animate-dot-1); }
+@utility dot-2 { animation: var(--animate-dot-2); }
+@utility dot-3 { animation: var(--animate-dot-3); }
+@utility dot-4 { animation: var(--animate-dot-4); }
+
+/* Outer / inner ring pulse for face illustration */
+@utility ring-outer { animation: var(--animate-ring-outer); }
+@utility ring-inner { animation: var(--animate-ring-inner); }
+
+/* Login panel entrance */
+@utility panel-in  { animation: var(--animate-panel-in);  }
+@utility anim-fade-in { animation: var(--animate-fade-in); }
