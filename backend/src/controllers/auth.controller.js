@@ -2,6 +2,7 @@ const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
 const TeacherProfile = require("../models/TeacherProfile");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const setCookie = (res, token) => {
   res.cookie("token", token, {
@@ -15,31 +16,65 @@ const setCookie = (res, token) => {
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
     expiresIn: "7d",
-  }); 
+  });
 };
 
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password, inviteToken } = req.body;
+
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Name, email and password are required" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
+    let role = "student";
+
+    if (inviteToken) {
+      const inviter = await TeacherProfile.findOne({ inviteToken });
+
+      if (!inviter) {
+        return res.status(403).json({ message: "Invalid invite link" });
+      }
+
+      if (inviter.invite.expiry < new Date())
+        return res.status(403).json({ message: "Invite link has expired" });
+
+      await TeacherProfile.findByIdAndUpdate(inviter._id, {
+        invite: { token: null, expiry: null },
+      });
+
+      role = "teacher";
+    }
+
     const user = await User.create({
       email,
       password,
-      role: "student",
+      role,
+      isFirstLogin: true,
     });
 
-    await StudentProfile.create({ userId: user._id });
+    if (role === "teacher") {
+      await TeacherProfile.create({
+        userId: user._id,
+        name,
+        inviteToken: null,
+      });
+    } else {
+      await StudentProfile.create({ userId: user._id, name });
+    }
 
     const token = generateToken(user._id, user.role);
     setCookie(res, token);
 
-    return res.status(201).json({
+    res.json({
       user: {
         _id: user._id,
         email: user.email,
@@ -104,50 +139,18 @@ const me = async (req, res) => {
   }
 };
 
-// PUT /api/auth/onboarding
-const onboarding = async (req, res) => {
+//POST /api/auth/invite
+const generateInvite = async (req, res) => {
   try {
-    const { name, rollNumber, password } = req.body;
-    const { userId, role } = req.user;
+    const token = crypto.randomUUID();
 
-    if (role === "teacher") {
-      if (!name || !password) {
-        return res
-          .status(400)
-          .json({ message: "Name and password are required" });
-      }
+    await TeacherProfile.findOneAndUpdate(
+      { userId: req.user.userId },
+      { invite: { token, expiry: new Date(Date.now() + 60 * 60 * 1000) } },
+    );
 
-      await TeacherProfile.findOneAndUpdate(
-        { userId },
-        { name },
-        { new: true },
-      );
-
-      const user = await User.findById(userId);
-      user.password = password;
-      user.isFirstLogin = false;
-      await user.save();
-
-      return res.status(200).json({ message: "Teacher onboarding complete" });
-    }
-
-    if (role === "student") {
-      if (!name || !rollNumber) {
-        return res
-          .status(400)
-          .json({ message: "Name and roll number are required" });
-      }
-
-      await StudentProfile.findOneAndUpdate(
-        { userId },
-        { name, rollNumber },
-        { new: true },
-      );
-
-      await User.findByIdAndUpdate(userId, { isFirstLogin: false });
-
-      return res.status(200).json({ message: "Student onboarding complete" });
-    }
+    const inviteLink = `${process.env.CLIENT_URL}/api/auth/register?invite=${token}`;
+    return res.status(200).json({ inviteLink });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -163,4 +166,4 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { register, login, me, onboarding, logout };
+module.exports = { register, login, me, generateInvite, logout };

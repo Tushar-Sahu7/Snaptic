@@ -4,7 +4,7 @@ const {
   register,
   login,
   me,
-  onboarding,
+  generateInvite,
   logout,
 } = require("../controllers/auth.controller");
 const { protect } = require("../middlewares/auth.middleware");
@@ -12,7 +12,7 @@ const { protect } = require("../middlewares/auth.middleware");
 router.post("/register", register);
 router.post("/login", login);
 router.get("/me", protect, me);
-router.put("/onboarding", protect, onboarding);
 router.post("/logout", logout);
+router.post("/invite", protect, restrictTo("teacher"), generateInvite);
 
 module.exports = router;

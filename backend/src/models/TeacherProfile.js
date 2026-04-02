@@ -1,17 +1,25 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
-const teacherProfileSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: [true, "userId is required"],
-    unique: true
+const teacherProfileSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "userId is required"],
+      unique: true,
+    },
+
+    name: {
+      type: String,
+      trim: true,
+    },
+
+    invite: {
+      token: { type: String, default: null },
+      expiry: { type: Date, default: null },
+    },
   },
+  { timestamps: true },
+);
 
-  name: {
-    type: String,
-    trim: true
-  },
-}, {timestamps: true}) 
-
-module.exports = mongoose.model("TeacherProfile", teacherProfileSchema)
+module.exports = mongoose.model("TeacherProfile", teacherProfileSchema);
