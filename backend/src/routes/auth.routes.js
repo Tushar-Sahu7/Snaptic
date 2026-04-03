@@ -7,7 +7,7 @@ const {
   generateInvite,
   logout,
 } = require("../controllers/auth.controller");
-const { protect } = require("../middlewares/auth.middleware");
+const { protect, restrictTo } = require("../middlewares/auth.middleware");
 
 router.post("/register", register);
 router.post("/login", login);

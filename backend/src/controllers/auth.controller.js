@@ -5,10 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const setCookie = (res, token) => {
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+  res.cookie("token", token, { 
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -38,7 +35,7 @@ const register = async (req, res) => {
     let role = "student";
 
     if (inviteToken) {
-      const inviter = await TeacherProfile.findOne({ inviteToken });
+      const inviter = await TeacherProfile.findOne({ "invite.token": inviteToken });
 
       if (!inviter) {
         return res.status(403).json({ message: "Invalid invite link" });
@@ -64,8 +61,7 @@ const register = async (req, res) => {
     if (role === "teacher") {
       await TeacherProfile.create({
         userId: user._id,
-        name,
-        inviteToken: null,
+        name
       });
     } else {
       await StudentProfile.create({ userId: user._id, name });
@@ -149,7 +145,7 @@ const generateInvite = async (req, res) => {
       { invite: { token, expiry: new Date(Date.now() + 60 * 60 * 1000) } },
     );
 
-    const inviteLink = `${process.env.CLIENT_URL}/api/auth/register?invite=${token}`;
+    const inviteLink = `${process.env.CLIENT_URL}/register?invite=${token}`;
     return res.status(200).json({ inviteLink });
   } catch (err) {
     return res.status(500).json({ message: err.message });
