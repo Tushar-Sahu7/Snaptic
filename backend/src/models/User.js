@@ -17,9 +17,12 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      validate(value) {
-        return validator.isStrongPassword(value);
-      }
+      validate: {
+        validator(value) {
+          return validator.isStrongPassword(value);
+        },
+        message: "Use a strong password (min 8 characters, with uppercase, lowercase, number & special character)",
+      },
     },
 
     role: {
