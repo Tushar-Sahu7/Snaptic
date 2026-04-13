@@ -16,7 +16,7 @@ import {
   InputGroup,
   InputGroupAddon,
 } from "@/components/ui/input-group";
-import { Clock, Navigation } from "lucide-react";
+import { Clock, Navigation, X, AlertCircle } from "lucide-react";
 import { cn, WEEKDAYS, format12Hour, formatRoom } from "@/lib/utils";
 import { ClassIcon, AVAILABLE_ICONS } from "@/components/shared/ClassIcon";
 
@@ -144,7 +144,9 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const iconPickerRef = React.useRef(null);
+  const initialDataRef = React.useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -185,7 +187,6 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
         setName(classData.name || "");
         setIcon(classData.icon || "BookOpen");
         
-        // Handle database days payload natively
         const initialDays = classData.schedule?.days || [];
         if (classData.schedule?.day && initialDays.length === 0) {
           initialDays.push(classData.schedule.day);
@@ -196,11 +197,54 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
         setEndTime(classData.schedule?.endTime || getRoundedTimeOffset(1));
         setRoom(classData.schedule?.room || "");
         setFormError(null);
+
+        // Capture initial data for dirty check
+        initialDataRef.current = {
+          name: classData.name || "",
+          icon: classData.icon || "BookOpen",
+          days: initialDays,
+          startTime: classData.schedule?.startTime || getRoundedTimeOffset(0),
+          endTime: classData.schedule?.endTime || getRoundedTimeOffset(1),
+          room: classData.schedule?.room || "",
+        };
       } else {
         resetForm();
+        initialDataRef.current = {
+          name: "",
+          icon: "BookOpen",
+          days: [],
+          startTime: getRoundedTimeOffset(0),
+          endTime: getRoundedTimeOffset(1),
+          room: "",
+        };
       }
     }
   }, [open, isEdit, classData]);
+
+  const isDirty = useMemo(() => {
+    if (!initialDataRef.current) return false;
+    
+    const d1 = [...days].sort().join(",");
+    const d2 = [...initialDataRef.current.days].sort().join(",");
+
+    return (
+      name !== initialDataRef.current.name ||
+      icon !== initialDataRef.current.icon ||
+      d1 !== d2 ||
+      startTime !== initialDataRef.current.startTime ||
+      endTime !== initialDataRef.current.endTime ||
+      room !== initialDataRef.current.room
+    );
+  }, [name, icon, days, startTime, endTime, room]);
+
+  const handleCloseAttempt = (force = false) => {
+    if (force || !isDirty) {
+      onOpenChange(false);
+      setShowDiscardConfirm(false);
+    } else {
+      setShowDiscardConfirm(true);
+    }
+  };
 
   function handleStartTimeChange(val) {
     let durationMins = 60; // Default to 1 hour
@@ -310,7 +354,11 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
   }
 
   function handleOpenChange(value) {
-    onOpenChange(value);
+    if (value === false) {
+      handleCloseAttempt();
+    } else {
+      onOpenChange(true);
+    }
   }
 
   const MON_TO_SAT = WEEKDAYS.filter(d => d !== "Sunday");
@@ -326,10 +374,21 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-2xl">
-        <div className="flex flex-col max-h-[96svh]">
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-2xl" showCloseButton={false}>
+        <div className="flex flex-col max-h-[96svh] relative">
+          {/* Custom Enhanced Close Button */}
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            className="absolute top-4 right-4 z-50 h-9 w-9 rounded-xl shadow-xs border bg-secondary/80 backdrop-blur-md hover:bg-secondary transition-all active:scale-95"
+            onClick={() => handleCloseAttempt()}
+          >
+            <X className="size-4.5" />
+            <span className="sr-only">Close</span>
+          </Button>
+
           <div className="px-4 py-5 sm:p-6 lg:p-8 overflow-y-auto scrollbar-thin">
-            <DialogHeader className="mb-4">
+            <DialogHeader className="mb-4 pr-10">
               <DialogTitle className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
                 {isEdit ? "Edit Class" : "Create Class"}
               </DialogTitle>
@@ -523,6 +582,37 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
           </div>
         </div>
       </DialogContent>
+
+      {/* Discard Confirmation Dialog */}
+      <Dialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+        <DialogContent showCloseButton={false} className="p-6 rounded-3xl">
+          <DialogHeader className="items-center text-center">
+            <div className="h-12 w-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2">
+              <AlertCircle className="size-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-lg font-bold">Discard changes?</DialogTitle>
+            <DialogDescription className="text-sm font-medium">
+              You have unsaved changes. Are you sure you want to close this form?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 mt-4">
+            <Button
+              variant="destructive"
+              className="w-full rounded-xl font-bold h-11"
+              onClick={() => handleCloseAttempt(true)}
+            >
+              Discard Changes
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full rounded-xl font-bold h-11 border-2"
+              onClick={() => setShowDiscardConfirm(false)}
+            >
+              Keep Editing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

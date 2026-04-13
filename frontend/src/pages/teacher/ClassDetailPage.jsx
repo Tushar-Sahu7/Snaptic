@@ -253,13 +253,29 @@ export default function ClassDetailPage() {
 
   // Toggle Archive
   async function handleToggleArchive() {
-    const newStatus = classData.status === "archived" ? "active" : "archived";
+    const currentStatus = classData.status;
+    const newStatus = currentStatus === "archived" ? "active" : "archived";
     try {
       await updateClass(id, { status: newStatus });
+      loadClass();
+
       toast.success(
         `Class "${classData.name}" ${newStatus === "archived" ? "archived" : "unarchived"} successfully`,
+        {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                await updateClass(id, { status: currentStatus });
+                loadClass();
+                toast.success(`Action undone`);
+              } catch {
+                toast.error("Failed to undo action");
+              }
+            },
+          },
+        }
       );
-      loadClass();
     } catch (err) {
       toast.error("Failed to update class status");
     }
@@ -273,18 +289,17 @@ export default function ClassDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-12 rounded-xl" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-32" />
+      <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            <Skeleton className="size-12 rounded-xl shrink-0" />
+            <div className="space-y-2 flex-1 lg:flex-none">
+              <Skeleton className="h-8 w-2/3 lg:w-48" />
+              <Skeleton className="h-4 w-1/3 lg:w-32" />
             </div>
           </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-24" />
+          <div className="flex items-center w-full lg:w-auto">
+            <Skeleton className="h-10 w-full lg:w-40" />
           </div>
         </div>
         <Skeleton className="h-10 w-full" />
@@ -296,12 +311,12 @@ export default function ClassDetailPage() {
   if (!classData) return null;
 
   return (
-    <div className="flex flex-col gap-6 px-4 sm:px-0">
+    <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3 w-full lg:w-auto">
           <div className="w-full">
-            <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+            <div className="flex items-center justify-between w-full lg:w-auto gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="p-1.5 bg-accent/30 rounded-xl text-muted-foreground border shadow-xs shrink-0">
                   <ClassIcon name={classData.icon} className="size-6" />
@@ -314,7 +329,7 @@ export default function ClassDetailPage() {
                 )}
               </div>
               
-              <div className="flex sm:hidden shrink-0">
+              <div className="flex lg:hidden shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 -mr-3">
@@ -355,13 +370,13 @@ export default function ClassDetailPage() {
             </div>
             {(classData.schedule?.days?.length > 0 ||
               classData.schedule?.day) && (
-              <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+              <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mt-1.5">
                 <ClassScheduleDisplay schedule={classData.schedule} />
               </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-4 w-full lg:w-auto">
           {classData.students?.length > 0 && classData.status !== "archived" && (() => {
             const { onTime, message } = isWithinSchedule(classData.schedule);
             
@@ -373,10 +388,10 @@ export default function ClassDetailPage() {
               // Case 1: Session is locked (Finalized or Submitted & Time Lapsed)
               if (isFinalized || (isSubmitted && !onTime)) {
                 return (
-                  <div className="flex flex-col items-center w-full sm:w-auto">
+                  <div className="flex flex-col items-center w-full lg:w-auto">
                     <Button
                       variant="secondary"
-                      className="bg-accent/10 hover:bg-accent/20 border text-foreground w-full sm:w-auto"
+                      className="bg-accent/10 hover:bg-accent/20 border text-foreground w-full lg:w-auto"
                       size="sm"
                       onClick={() => navigate(`/teacher/attendance/${activeSession._id}/summary`)}
                     >
@@ -393,9 +408,9 @@ export default function ClassDetailPage() {
               // Case 2: Session is Submitted but still On-Time (Allow Updates)
               if (isSubmitted && onTime) {
                 return (
-                  <div className="flex flex-col items-center w-full sm:w-auto">
+                  <div className="flex flex-col items-center w-full lg:w-auto">
                     <Button
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm w-full sm:w-auto"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm w-full lg:w-auto"
                       size="sm"
                       onClick={() => navigate(`/teacher/classes/${id}/attendance?manual=true&origin=detail`)}
                     >
@@ -412,9 +427,9 @@ export default function ClassDetailPage() {
               // Case 3: In-Progress Session
               if (activeSession.status === "inProgress") {
                 return (
-                  <div className="flex flex-col items-center w-full sm:w-auto">
+                  <div className="flex flex-col items-center w-full lg:w-auto">
                     <Button
-                      className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm w-full sm:w-auto"
+                      className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm w-full lg:w-auto"
                       size="sm"
                       onClick={() => navigate(`/teacher/classes/${id}/attendance?origin=detail`)}
                     >
@@ -432,9 +447,9 @@ export default function ClassDetailPage() {
             // PRIORITY 2: On-Time (New Session)
             if (onTime) {
               return (
-                <div className="flex flex-col items-center w-full sm:w-auto">
+                <div className="flex flex-col items-center w-full lg:w-auto">
                   <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition-all h-10 px-6 w-full sm:w-auto"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition-all h-10 px-6 w-full lg:w-auto"
                     size="sm"
                     disabled={startingSession}
                     onClick={() => handleStartAttendance("detail")}
@@ -455,9 +470,9 @@ export default function ClassDetailPage() {
 
             // PRIORITY 3: Off-Schedule
             return (
-              <div className="flex flex-col items-center w-full sm:w-auto">
+              <div className="flex flex-col items-center w-full lg:w-auto">
                 <Button
-                  className="bg-muted text-muted-foreground cursor-not-allowed w-full sm:w-auto"
+                  className="bg-muted text-muted-foreground cursor-not-allowed w-full lg:w-auto"
                   size="sm"
                   disabled
                 >
@@ -471,7 +486,7 @@ export default function ClassDetailPage() {
             );
           })()}
  
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-3">
             {classData.status !== "archived" && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="size-4 mr-1.5" />

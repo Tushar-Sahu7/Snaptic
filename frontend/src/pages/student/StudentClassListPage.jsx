@@ -45,7 +45,7 @@ export default function StudentClassListPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <Skeleton className="h-10 w-48" />
         </div>

@@ -4,7 +4,7 @@ import { useClasses } from "@/features/classes/hooks/useClasses";
 
 // UI Components
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader,AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   Empty,
   EmptyHeader,
@@ -137,14 +137,14 @@ export default function ClassListPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 px-4 pt-6 md:px-0 md:pt-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-full sm:w-64" />
+          <Skeleton className="h-10 w-full sm:w-32" />
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Skeleton className="h-10 w-full max-w-md" />
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-full sm:w-48" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
@@ -156,7 +156,7 @@ export default function ClassListPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 px-4 sm:px-0">
+    <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
       <ClassListHeader
         tab={tab}
         onTabChange={setTab}
@@ -309,45 +309,60 @@ export default function ClassListPage() {
       />
 
       {/* Bulk Action Dialogs */}
-      <AlertDialog open={bulkUnarchiveConfirm} onOpenChange={setBulkUnarchiveConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unarchive {filteredClasses.length} classes?</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={bulkUnarchiveConfirm} onOpenChange={setBulkUnarchiveConfirm}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader className="items-center text-center">
+            <DialogTitle>Unarchive {filteredClasses.length} classes?</DialogTitle>
+            <DialogDescription>
               These classes will be moved back to your Active tab for everyone to see.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkUnarchive} disabled={processing}>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setBulkUnarchiveConfirm(false)} 
+              disabled={processing}
+              className="w-full sm:w-auto rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleBulkUnarchive} disabled={processing} className="w-full sm:w-auto rounded-xl">
               {processing ? "Unarchiving..." : "Unarchive All"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+      <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader className="items-center text-center">
+            <DialogTitle className="text-destructive flex items-center gap-2">
               Delete {filteredClasses.length} archived classes?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            </DialogTitle>
+            <DialogDescription>
               This will permanently delete these classes and their student rosters. This action cannot be undone (except via the temporary Undo button).
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setBulkDeleteConfirm(false)} 
+              disabled={processing}
+              className="w-full sm:w-auto rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button 
               onClick={handleBulkDelete} 
               disabled={processing}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
+              className="w-full sm:w-auto rounded-xl"
             >
               {processing ? "Deleting..." : "Delete Permanently"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

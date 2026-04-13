@@ -51,7 +51,7 @@ export const AttendanceStepper = ({
                 {isCompleted ? <CheckCircle2 className="size-4 sm:size-5 stroke-[2.5]" /> : s.id}
               </div>
               <span className={cn(
-                "text-[7px] sm:text-[9px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] transition-colors whitespace-nowrap",
+                "text-[7px] sm:text-[9px] font-black uppercase tracking-widest sm:tracking-[0.15em] transition-colors whitespace-nowrap",
                 isActive ? "text-primary" : "text-muted-foreground/60"
               )}>
                 <span className="hidden sm:inline">{s.label}</span>

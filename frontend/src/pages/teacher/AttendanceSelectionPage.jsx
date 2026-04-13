@@ -4,6 +4,7 @@ import { fetchTodaySessions } from "@/features/attendance/api/attendance.api";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import AttendanceWizard from "@/features/attendance/components/AttendanceWizard";
 import { isWithinSchedule } from "@/lib/utils";
 
@@ -42,9 +43,16 @@ export default function AttendanceSelectionPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-[calc(100svh-4rem)] items-center justify-center p-6 text-center">
-        <Loader2 className="size-10 mb-4 animate-spin text-primary" />
-        <h2 className="text-lg font-bold">Loading Schedule...</h2>
+      <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-40 rounded-3xl" />
+          ))}
+        </div>
       </div>
     );
   }

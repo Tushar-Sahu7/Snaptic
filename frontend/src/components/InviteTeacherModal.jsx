@@ -148,9 +148,13 @@ export function InviteTeacherModal({ open, onOpenChange, inviteLink }) {
           </div>
         </div>
 
-        <div className="flex justify-end pt-2">
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Close
+        <div className="pt-2">
+          <Button 
+            variant="secondary" 
+            className="w-full h-11 rounded-xl font-semibold shadow-sm active:scale-[0.98] transition-all"
+            onClick={() => onOpenChange(false)}
+          >
+            Done
           </Button>
         </div>
       </DialogContent>

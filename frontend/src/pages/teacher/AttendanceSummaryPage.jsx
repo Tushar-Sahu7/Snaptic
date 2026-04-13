@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AttendanceSummaryPage() {
   const { id: sessionId } = useParams();
@@ -49,9 +50,17 @@ export default function AttendanceSummaryPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center py-20">
-        <Loader2 className="size-10 animate-spin text-emerald-500 mb-4" />
-        <h2 className="text-xl font-bold">Generating Summary...</h2>
+      <div className="flex flex-col gap-8 max-w-3xl mx-auto px-4 pt-10">
+        <div className="flex flex-col items-center gap-4">
+          <Skeleton className="size-20 rounded-[32px]" />
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-48 rounded-3xl" />
+          <Skeleton className="h-48 rounded-3xl" />
+        </div>
+        <Skeleton className="h-14 w-full rounded-2xl" />
       </div>
     );
   }
