@@ -1,5 +1,5 @@
 import { Navigate } from "react-router";
-import RegisterForm from "@/pages/auth/RegisterForm";
+import AuthRegisterForm from "@/features/auth/components/AuthRegisterForm";
 import { useAuth } from "@/context/AuthContext";
 
 export default function RegisterPage() {
@@ -12,9 +12,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center md:p-10">
+    <div className="flex min-h-svh w-full items-center justify-center p-6 sm:p-10">
       <div className="w-full max-w-sm">
-        <RegisterForm />
+        <AuthRegisterForm />
       </div>
     </div>
   );

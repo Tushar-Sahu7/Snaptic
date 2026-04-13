@@ -3,9 +3,20 @@ import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+import DashboardLayout from "@/components/DashboardLayout";
+import ClassListPage from "@/pages/teacher/ClassListPage";
+import ClassDetailPage from "@/pages/teacher/ClassDetailPage";
+import AttendanceSessionPage from "@/pages/teacher/AttendanceSessionPage";
+import AttendanceSelectionPage from "@/pages/teacher/AttendanceSelectionPage";
+import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
 import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
+import ProfilePage from "@/pages/teacher/ProfilePage";
 import StudentDashboard from "@/pages/student/StudentDashboard";
+import StudentClassListPage from "@/pages/student/StudentClassListPage";
+import FaceEnrollmentPage from "@/pages/student/FaceEnrollmentPage";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export default function App() {
   const { loading } = useAuth();
@@ -13,38 +24,65 @@ export default function App() {
   if (loading) {
     return (
       <div className="flex min-h-svh w-full items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">Loading…</p>
       </div>
     );
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+    <ThemeProvider defaultTheme="system" storageKey="snaptic-theme">
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-        <Route
-          path="/teacher/dashboard"
-          element={
-            <ProtectedRoute allowedRole="teacher">
-              <TeacherDashboard />
-            </ProtectedRoute>
-          }
-        />
+            {/* Teacher — sidebar dashboard with nested routes */}
+            <Route
+              path="/teacher"
+              element={
+                <ProtectedRoute allowedRole="teacher">
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="classes" element={<ClassListPage />} />
+              <Route path="take-attendance" element={<AttendanceSelectionPage />} />
+              <Route path="classes/:id" element={<ClassDetailPage />} />
+              <Route path="classes/:id/attendance" element={<AttendanceSessionPage />} />
+              <Route path="attendance/:id/summary" element={<AttendanceSummaryPage />} />
+              <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+            </Route>
 
-        <Route
-          path="/student/dashboard"
-          element={
-            <ProtectedRoute allowedRole="student">
-              <StudentDashboard />
-            </ProtectedRoute>
-          }
-        />
+            {/* Student — sidebar dashboard with nested routes */}
+            <Route
+              path="/student"
+              element={
+                <ProtectedRoute allowedRole="student">
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<StudentDashboard />} />
+              <Route path="classes" element={<StudentClassListPage />} />
+              <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+            </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-      <Toaster position="bottom-right" />
-    </BrowserRouter>
+            <Route
+              path="/student/dashboard"
+              element={<Navigate to="/student" replace />}
+            />
+
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+          <Toaster position="bottom-right" />
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   );
 }

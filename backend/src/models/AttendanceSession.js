@@ -20,13 +20,19 @@ const attendanceSessionSchema = new mongoose.Schema(
       default: Date.now
     },
 
+    dateString: {
+      type: String,
+      required: [true, "dateString is required"],
+      index: true
+    },
+
     status: {
       type: String,
       enum: {
-        values: ["active", "completed"],
-        message: "Status must be active or completed"
+        values: ["inProgress", "submitted", "finalized"],
+        message: "Status must be inProgress, submitted or finalized"
       },
-      default: "active"
+      default: "inProgress"
     }
   },
   {
@@ -34,8 +40,9 @@ const attendanceSessionSchema = new mongoose.Schema(
   }
 )
 
+// Ensure only one session per class per day
 attendanceSessionSchema.index(
-  { classId: 1, date: 1 },
+  { classId: 1, dateString: 1 },
   { unique: true }
 )
 

@@ -14,11 +14,6 @@ const studentProfileSchema = new mongoose.Schema(
       trim: true,
     },
 
-    rollNumber: {
-      type: String,
-      trim: true,
-    },
-
     avatar: {
       type: String,
       default: null,

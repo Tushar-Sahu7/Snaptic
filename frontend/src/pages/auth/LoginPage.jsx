@@ -1,5 +1,5 @@
 import { Navigate } from "react-router";
-import LoginForm from "@/pages/auth/LoginForm";
+import AuthLoginForm from "@/features/auth/components/AuthLoginForm";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
@@ -13,9 +13,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center md:p-10">
+    <div className="flex min-h-svh w-full items-center justify-center p-6 sm:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm />
+        <AuthLoginForm />
       </div>
     </div>
   );

@@ -1,0 +1,7 @@
+/skills/
+*.md
+/node_modules/
+.env
+.DS_Store
+.agents/
+*.json

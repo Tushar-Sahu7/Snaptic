@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import api from "@/lib/axios";
+import * as authApi from "@/features/auth/api/auth.api";
 
 const AuthContext = createContext(null);
 
@@ -8,15 +8,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Session restore on app mount — checks if cookie is still valid
   useEffect(() => {
     checkAuth();
   }, []);
 
   async function checkAuth() {
     try {
-      const { data } = await api.get("/api/auth/me");
-      setUser(data.user);
+      const userData = await authApi.checkAuth();
+      setUser(userData);
     } catch {
       setUser(null);
     } finally {
@@ -24,13 +23,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Login — email + password only, no role field (PRD F-1)
   async function login(email, password) {
     setError(null);
     try {
-      const { data } = await api.post("/api/auth/login", { email, password });
-      setUser(data.user);
-      return data.user;
+      const userData = await authApi.login(email, password);
+      setUser(userData);
+      return userData;
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       setError(msg);
@@ -38,16 +36,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Register — inviteToken present = teacher, absent = student (PRD F-1)
   async function register(name, email, password, inviteToken) {
     setError(null);
     try {
-      const body = { name, email, password };
-      if (inviteToken) body.inviteToken = inviteToken;
-
-      const { data } = await api.post("/api/auth/register", body);
-      setUser(data.user);
-      return data.user;
+      const userData = await authApi.register(name, email, password, inviteToken);
+      setUser(userData);
+      return userData;
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       setError(msg);
@@ -55,12 +49,57 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Logout — clears HTTP-only cookie server-side
   async function logout() {
     try {
-      await api.post("/api/auth/logout");
+      await authApi.logout();
     } finally {
       setUser(null);
+    }
+  }
+
+  async function updateProfile(name, avatar) {
+    try {
+      const profileData = await authApi.updateProfile(name, avatar);
+      setUser(prev => ({ ...prev, name: profileData.name, avatar: profileData.avatar }));
+      return profileData;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async function changePassword(currentPassword, newPassword) {
+    try {
+      await authApi.changePassword(currentPassword, newPassword);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async function generateInviteLink() {
+    try {
+      return await authApi.generateInviteLink();
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async function enrollFace(imageData, descriptorData) {
+    try {
+      const data = await authApi.enrollFace(imageData, descriptorData);
+      setUser(prev => ({ ...prev, faceEnrolled: true, avatar: imageData }));
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async function deleteFace() {
+    try {
+      const data = await authApi.deleteFace();
+      setUser(prev => ({ ...prev, faceEnrolled: false, avatar: null }));
+      return data;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -81,6 +120,11 @@ export function AuthProvider({ children }) {
         register,
         logout,
         checkAuth,
+        updateProfile,
+        changePassword,
+        generateInviteLink,
+        enrollFace,
+        deleteFace,
       }}
     >
       {children}
@@ -93,4 +137,3 @@ export function useAuth() {
   if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
-

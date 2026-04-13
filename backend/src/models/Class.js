@@ -7,6 +7,19 @@ const classSchema = new mongoose.Schema(
       required: [true, "Class name is required"],
       trim: true,
     },
+    icon: {
+      type: String,
+      default: "BookOpen", // Default lucide icon
+    },
+    status: {
+      type: String,
+      enum: ["active", "archived"],
+      default: "active",
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
 
     teacherId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -22,20 +35,23 @@ const classSchema = new mongoose.Schema(
     ],
 
     schedule: {
-      day: {
-        type: String,
-        enum: {
-          values: [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-          ],
-          message: "Day must be a valid weekday",
+      days: [
+        {
+          type: String,
+          enum: {
+            values: [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday",
+            ],
+            message: "Day must be a valid weekday",
+          },
         },
-      },
+      ],
       startTime: {
         type: String,
       },

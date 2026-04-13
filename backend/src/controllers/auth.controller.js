@@ -4,8 +4,9 @@ const TeacherProfile = require("../models/TeacherProfile");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
-const setCookie = (res, token) => {
-  res.cookie("token", token, { 
+const setCookie = (res, token, role) => {
+  const cookieName = role === "teacher" ? "token_teacher" : "token_student";
+  res.cookie(cookieName, token, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: "lax",
@@ -71,7 +72,7 @@ const register = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.role);
-    setCookie(res, token);
+    setCookie(res, token, user.role);
 
     res.json({
       user: {
@@ -79,6 +80,7 @@ const register = async (req, res) => {
         email: user.email,
         role: user.role,
         isFirstLogin: user.isFirstLogin,
+        name: name,
       },
     });
   } catch (err) {
@@ -102,7 +104,11 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.role);
-    setCookie(res, token);
+    setCookie(res, token, user.role);
+
+    const profile = user.role === "teacher"
+      ? await TeacherProfile.findOne({ userId: user._id })
+      : await StudentProfile.findOne({ userId: user._id });
 
     return res.status(200).json({
       user: {
@@ -110,6 +116,8 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role,
         isFirstLogin: user.isFirstLogin,
+        name: profile?.name || "",
+        avatar: profile?.avatar || null,
       },
     });
   } catch (err) {
@@ -125,16 +133,105 @@ const me = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    let profile = null;
+    let stats = {};
+    if (user.role === "teacher") {
+      profile = await TeacherProfile.findOne({ userId: user._id });
+
+      const Class = require("../models/Class");
+      // Aggregate stats
+      const classes = await Class.find({ teacherId: user._id });
+      const studentIds = new Set();
+      classes.forEach(cls => {
+        cls.studentIds.forEach(id => studentIds.add(id.toString()));
+      });
+
+      stats = {
+        classCount: classes.length,
+        studentCount: studentIds.size,
+        faceEnrolled: profile?.faceEnrolled || false,
+      };
+    } else {
+      profile = await StudentProfile.findOne({ userId: user._id });
+      const Class = require("../models/Class");
+      const activeClasses = await Class.countDocuments({ 
+        studentIds: user._id, 
+        status: "active", 
+        deletedAt: null 
+      });
+      stats = {
+        classCount: activeClasses,
+        faceEnrolled: profile?.faceEnrolled || false,
+      };
+    }
+
     return res.status(200).json({
       user: {
         _id: user._id,
         email: user.email,
         role: user.role,
         isFirstLogin: user.isFirstLogin,
+        name: profile?.name || "",
+        avatar: profile?.avatar || null,
+        joinedAt: user.createdAt,
+        ...stats
       },
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });
+  }
+};
+
+// PUT /api/auth/profile
+const updateProfile = async (req, res) => {
+  try {
+    const { name, avatar } = req.body;
+    let profile;
+
+    if (req.user.role === "teacher") {
+      profile = await TeacherProfile.findOneAndUpdate(
+        { userId: req.user.userId },
+        { name, avatar },
+        { new: true, runValidators: true }
+      );
+    } else {
+      profile = await StudentProfile.findOneAndUpdate(
+        { userId: req.user.userId },
+        { name, avatar },
+        { new: true, runValidators: true }
+      );
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      profile: {
+        name: profile.name,
+        avatar: profile.avatar,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/auth/change-password
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user.userId);
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -158,11 +255,106 @@ const generateInvite = async (req, res) => {
 // POST /api/auth/logout
 const logout = async (req, res) => {
   try {
+    const role = req.headers["x-role"];
+    if (role === "teacher") {
+      res.clearCookie("token_teacher");
+    } else if (role === "student") {
+      res.clearCookie("token_student");
+    } else {
+      // Clear both if no role specified
+      res.clearCookie("token_teacher");
+      res.clearCookie("token_student");
+    }
+    // Also clear legacy token
     res.clearCookie("token");
+
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
 };
 
-module.exports = { register, login, me, generateInvite, logout };
+// POST /api/auth/face/enroll
+const enrollFace = async (req, res) => {
+  try {
+    const { image, embedding } = req.body;
+
+    if (!image || !embedding || !Array.isArray(embedding)) {
+      return res.status(400).json({ message: "Face image and descriptor are required" });
+    }
+
+    const Model = req.user.role === "teacher" ? TeacherProfile : StudentProfile;
+
+    const profile = await Model.findOneAndUpdate(
+      { userId: req.user.userId },
+      { avatar: image, embedding, faceEnrolled: true },
+      { new: true, runValidators: true }
+    );
+
+    if (!profile) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+
+    return res.status(200).json({
+      message: "Face enrolled successfully",
+      faceEnrolled: true,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/auth/face/status
+const getFaceStatus = async (req, res) => {
+  try {
+    const Model = req.user.role === "teacher" ? TeacherProfile : StudentProfile;
+    const profile = await Model.findOne({ userId: req.user.userId });
+
+    if (!profile) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+
+    return res.status(200).json({
+      faceEnrolled: profile.faceEnrolled || false,
+      enrolledAt: profile.faceEnrolled ? profile.updatedAt : null,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// DELETE /api/auth/face
+const deleteFace = async (req, res) => {
+  try {
+    const Model = req.user.role === "teacher" ? TeacherProfile : StudentProfile;
+    const profile = await Model.findOneAndUpdate(
+      { userId: req.user.userId },
+      { embedding: [], faceEnrolled: false, avatar: null },
+      { new: true }
+    );
+
+    if (!profile) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+
+    return res.status(200).json({
+      message: "Face enrollment deleted",
+      faceEnrolled: false,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  me,
+  updateProfile,
+  changePassword,
+  generateInvite,
+  logout,
+  enrollFace,
+  getFaceStatus,
+  deleteFace,
+};

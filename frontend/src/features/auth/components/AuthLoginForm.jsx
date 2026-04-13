@@ -54,8 +54,8 @@ export default function LoginForm({ className, ...props }) {
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="ring-0 shadow-none md:border md:ring-1">
-        <CardHeader>
+      <Card className="border-none shadow-none bg-transparent sm:bg-card sm:border sm:ring-1 sm:ring-border">
+        <CardHeader className="px-5 sm:p-6 text-center sm:text-left">
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>
             Enter your email below to login to your account
@@ -101,16 +101,15 @@ export default function LoginForm({ className, ...props }) {
                   />
                   <InputGroupAddon align="inline-end">
                     <Button
-                      className="hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
                       variant="ghost"
                       size="icon"
-                      type="button"
+                      className="size-8 p-0"
+                      onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye data-icon="inline-end" className="text-muted-foreground" />
                       ) : (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <EyeOff data-icon="inline-end" className="text-muted-foreground" />
                       )}
                     </Button>
                   </InputGroupAddon>

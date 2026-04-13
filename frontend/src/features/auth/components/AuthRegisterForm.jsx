@@ -44,7 +44,9 @@ export default function RegisterForm({ className, ...props }) {
     setFormError(null);
 
     if (!validator.isStrongPassword(password)) {
-      setFormError("Use a strong password (min 8 characters, with uppercase, lowercase, number & special character)");
+      setFormError(
+        "Use a strong password (min 8 characters, with uppercase, lowercase, number & special character)",
+      );
       return;
     }
 
@@ -65,8 +67,8 @@ export default function RegisterForm({ className, ...props }) {
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="ring-0 shadow-none md:border md:ring-1">
-        <CardHeader>
+      <Card className="border-none shadow-none bg-transparent sm:bg-card sm:border sm:ring-1 sm:ring-border">
+        <CardHeader className="px-5 sm:p-6 text-center sm:text-left">
           {inviteToken && (
             <div className="mb-2 rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm dark:border-green-700 dark:bg-green-950/30">
               <p className="font-medium text-green-700 dark:text-green-400">
@@ -118,16 +120,16 @@ export default function RegisterForm({ className, ...props }) {
                   />
                   <InputGroupAddon align="inline-end">
                     <Button
-                      className="hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
                       variant="ghost"
                       size="icon"
+                      className="size-8 p-0"
+                      onClick={() => setShowPassword(!showPassword)}
                       type="button"
                     >
                       {showPassword ? (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye data-icon="inline-end" className="text-muted-foreground" />
                       ) : (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <EyeOff data-icon="inline-end" className="text-muted-foreground" />
                       )}
                     </Button>
                   </InputGroupAddon>
@@ -147,9 +149,12 @@ export default function RegisterForm({ className, ...props }) {
                 <FieldDescription className="text-center">
                   Already have an account? <Link to="/login">Log in</Link>
                 </FieldDescription>
-                {!inviteToken && <FieldDescription className="text-center">
-                  Are you a teacher? Contact your department to get a registration link.
-                </FieldDescription>}
+                {!inviteToken && (
+                  <FieldDescription className="text-center">
+                    Are you a teacher? Contact your department to get a
+                    registration link.
+                  </FieldDescription>
+                )}
               </Field>
             </FieldGroup>
           </form>
