@@ -1,69 +1,128 @@
+/* ==========================================================================
+   INDEX.CSS / GLOBALS.CSS
+   Dusty Olive Design System — Tailwind CSS v4
+   ========================================================================== */
+
+/* 💡 COMPONENT RECIPES: HOW TO USE TOKENS IN GROUPS
+  ---------------------------------------------------------------------------
+  Don't mix and match randomly. Use these standard groupings for consistency:
+
+  1. CARDS & PANELS (Elevated Surfaces)
+     Container : `bg-card text-card-foreground border-border shadow-sm rounded-lg`
+     Padding   : `p-{--space-component-lg}`
+     Inner Gap : `gap-{--space-layout-xs}` (Between header, body, footer)
+
+  2. PRIMARY BUTTONS (Interactive)
+     Container : `bg-primary text-primary-foreground rounded-md shadow-xs`
+     Padding   : `px-{--space-component-lg} py-{--space-component-sm}`
+     Text      : `text-body-bold`
+     Animation : `transition-transform duration-feedback active:scale-97`
+
+  3. FORM FIELDS
+     Wrapper   : `flex flex-col gap-{--space-component-xs}`
+     Label     : `text-body-bold text-foreground`
+     Input     : `bg-background border-input text-body rounded-md`
+     Help Text : `text-caption text-muted-foreground`
+
+  4. DATA LISTS / ROWS
+     Row Wrap  : `flex items-center gap-{--space-layout-xs} py-{--space-component-md} border-b border-border`
+     Title     : `text-body-bold text-foreground`
+     Subtitle  : `text-body text-muted-foreground`
+     Metadata  : `text-caption text-foreground-dim`
+========================================================================== */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-
 /* ── THEME LAYER (TailwindCSS v4) ────────────────────────── */
-@theme inline{
+@theme inline {
   /* Font families */
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* Typography Scale */
+  /* TYPOGRAPHY SCALE & PAIRINGS 
+     Usage Rule: Always pair a Heading with Body or Muted text.
+     Never stack two headings next to each other.
+  */
+  
+  /* Use for helper text, timestamps, footer links */
   --text-caption: 0.75rem;
   --text-caption--line-height: 1rem;
   --text-caption--font-weight: 400;
 
+  /* Use for badges, pill labels, table column headers (uppercase) */
   --text-caption-bold: 0.75rem;
   --text-caption-bold--line-height: 1rem;
-  --text-caption-bold--font-weight: 500;
+  --text-caption-bold--font-weight: 600;
 
+  /* Use for long-form reading, standard component descriptions */
   --text-body: 0.875rem;
   --text-body--line-height: 1.25rem;
   --text-body--font-weight: 400;
 
+  /* Use for form labels, button text, list item primary titles */
   --text-body-bold: 0.875rem;
   --text-body-bold--line-height: 1.25rem;
-  --text-body-bold--font-weight: 500;
+  --text-body-bold--font-weight: 600;
 
+  /* Use for card titles, widget headers, modal titles */
   --text-heading-3: 1rem;
-  --text-heading-3--line-height: 1.25rem;
-  --text-heading-3--font-weight: 500;
+  --text-heading-3--line-height: 1.5rem;
+  --text-heading-3--font-weight: 600;
 
+  /* Use for major page section headers, sidebar group titles */
   --text-heading-2: 1.25rem;
-  --text-heading-2--line-height: 1.5rem;
-  --text-heading-2--font-weight: 500;
+  --text-heading-2--line-height: 1.75rem;
+  --text-heading-2--font-weight: 700;
 
-  --text-heading-1: 1.875rem;
-  --text-heading-1--line-height: 2.25rem;
-  --text-heading-1--font-weight: 500;
+  /* Use for main page titles (H1). Max 1 per screen. */
+  --text-heading-1: 1.5rem;
+  --text-heading-1--line-height: 2rem;
+  --text-heading-1--font-weight: 700;
 
+  /* Use for IDs, hashes, code snippets, confidence scores */
   --text-monospace-body: 0.875rem;
   --text-monospace-body--line-height: 1.25rem;
   --text-monospace-body--font-weight: 400;
 
-  /* Spacing */
-  --spacing-112: 28rem;
-  --spacing-144: 36rem;
-  --spacing-192: 48rem;
-  --spacing-256: 64rem;
-  --spacing-320: 80rem;
+  /* SEMANTIC SPACING LAYER
+     Usage Rule: Use in `p-[]`, `m-[]`, and `gap-[]` utilities.
+  */
+  
+  /* Component Internals (Tight) */
+  --space-component-xs: 0.25rem;  /* icon-to-label gap */
+  --space-component-sm: 0.5rem;   /* badge/chip internal padding, input focus ring gap */
+  --space-component-md: 0.75rem;  /* button padding-y, list row padding-y */
+  --space-component-lg: 1rem;     /* default card internal padding */
 
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Layout & Structural (Loose) */
+  --space-layout-xs: 1rem;        /* gap between related form fields, buttons in a row */
+  --space-layout-sm: 1.5rem;      /* gap between widget cards in a grid */
+  --space-layout-md: 2rem;        /* margin between major page sections */
+  --space-layout-lg: 3rem;        /* main page vertical rhythm (header to content) */
+
+  /* Sizing Tokens (For widths/max-widths, never for spacing) */
+  --size-content-sm: 24rem;
+  --size-content-md: 36rem;
+  --size-content-lg: 48rem;
+  --size-content-xl: 64rem;
+
+  /* Radius - Linked to ShadCN contract */
+  --radius: 8px; 
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0px 1px 2px 0px rgb(0 0 0 / 0.05);
-  --shadow-default: 0px 1px 2px 0px rgb(0 0 0 / 0.05);
-  --shadow-md: 0px 4px 16px -2px rgb(0 0 0 / 0.08), 0px 2px 4px -1px rgb(0 0 0 / 0.08);
-  --shadow-lg: 0px 12px 32px -4px rgb(0 0 0 / 0.08), 0px 4px 8px -2px rgb(0 0 0 / 0.08);
-  --shadow-overlay: 0px 12px 32px -4px rgb(0 0 0 / 0.08), 0px 4px 8px -2px rgb(0 0 0 / 0.08);
+  /* Shadows - Usage: shadow-sm for cards, shadow-md for dropdowns, shadow-lg for modals */
+  --shadow-xs: 0px 1px 2px 0px rgb(0 0 0 / 0.05);
+  --shadow-sm: 0px 2px 4px 0px rgb(0 0 0 / 0.05);
+  --shadow-md: 0px 4px 16px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0px 12px 32px -4px rgb(0 0 0 / 0.12);
 
-  /* Color mappings */
+  /* Semantic Color Aliases */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -110,7 +169,7 @@
   --color-neutral-900: var(--neutral-900);
   --color-neutral-950: var(--neutral-950);
 
-  /* Semantic Extended */
+  /* Error Scale */
   --color-error-50: var(--error-50);
   --color-error-100: var(--error-100);
   --color-error-200: var(--error-200);
@@ -122,6 +181,7 @@
   --color-error-800: var(--error-800);
   --color-error-900: var(--error-900);
 
+  /* Success Scale */
   --color-success-50: var(--success-50);
   --color-success-100: var(--success-100);
   --color-success-200: var(--success-200);
@@ -133,6 +193,7 @@
   --color-success-800: var(--success-800);
   --color-success-900: var(--success-900);
 
+  /* Warning Scale */
   --color-warning-50: var(--warning-50);
   --color-warning-100: var(--warning-100);
   --color-warning-200: var(--warning-200);
@@ -144,34 +205,32 @@
   --color-warning-800: var(--warning-800);
   --color-warning-900: var(--warning-900);
 
-  /* Animation Tokens (Emil Kowalski's Design Engineering) */
+  /* Animation Tokens */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-
-  /* Precise Duration Ranges */
-  --duration-immediate: 100ms; /* Keyboard/Instant feedback */
-  --duration-feedback: 160ms;  /* Button press, small scales */
-  --duration-fast: 200ms;      /* Tooltips, small popovers */
-  --duration-normal: 250ms;    /* Dropdowns, selection entries */
-  --duration-slow: 400ms;      /* Modals, drawers (under 500ms) */
+  --duration-immediate: 100ms;  /* Keyboard/Instant feedback */
+  --duration-feedback: 160ms;   /* Button press, small scales */
+  --duration-fast: 200ms;       /* Tooltips, small popovers */
+  --duration-normal: 250ms;     /* Dropdowns, menus */
+  --duration-slow: 400ms;       /* Modals, side drawers */
 }
 
-/* ── COLOR TOKENS (OKLCH Conversion) ────────────────────── */
+/* ── COLOR TOKENS (Light Mode) ───────────────────────────── */
 :root {
   color-scheme: light;
 
-  /* Brand Scale */
-  --brand-50: oklch(0.985 0.000 89.88);
-  --brand-100: oklch(0.970 0.000 89.88);
-  --brand-200: oklch(0.922 0.000 89.88);
-  --brand-300: oklch(0.870 0.000 89.88);
-  --brand-400: oklch(0.715 0.000 89.88);
-  --brand-500: oklch(0.556 0.000 89.88);
-  --brand-600: oklch(0.269 0.000 89.88);
-  --brand-700: oklch(0.371 0.000 89.88);
-  --brand-800: oklch(0.269 0.000 89.88);
-  --brand-900: oklch(0.205 0.000 89.88);
+  /* Brand Scale - Dusty Olive */
+  --brand-50: oklch(0.97 0.01 151.6);
+  --brand-100: oklch(0.92 0.02 151.6);
+  --brand-200: oklch(0.85 0.03 151.6);
+  --brand-300: oklch(0.78 0.04 151.6);
+  --brand-400: oklch(0.70 0.05 151.6);
+  --brand-500: oklch(0.606 0.054 151.6);
+  --brand-600: oklch(0.52 0.05 151.6);
+  --brand-700: oklch(0.42 0.045 151.6);
+  --brand-800: oklch(0.32 0.035 151.6);
+  --brand-900: oklch(0.22 0.025 151.6);
 
   /* Neutral Scale */
   --neutral-0: oklch(1.000 0.000 89.88);
@@ -230,8 +289,8 @@
   --card-foreground: var(--neutral-900);
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-900);
-  --primary: var(--brand-600);
-  --primary-foreground: var(--neutral-0);
+  --primary: var(--brand-500);
+  --primary-foreground: oklch(0.98 0.01 151.6);
   --secondary: var(--neutral-100);
   --secondary-foreground: var(--neutral-900);
   --muted: var(--neutral-100);
@@ -242,23 +301,24 @@
   --destructive-foreground: var(--neutral-0);
   --border: var(--neutral-200);
   --input: var(--neutral-200);
-  --ring: var(--brand-600);
+  --ring: var(--brand-400);
 }
 
+/* ── COLOR TOKENS (Dark Mode) ────────────────────────────── */
 .dark {
   color-scheme: dark;
 
-  /* Brand Scale (Dark) */
-  --brand-50: oklch(0.205 0.000 89.88);
-  --brand-100: oklch(0.269 0.000 89.88);
-  --brand-200: oklch(0.371 0.000 89.88);
-  --brand-300: oklch(0.269 0.000 89.88);
-  --brand-400: oklch(0.556 0.000 89.88);
-  --brand-500: oklch(0.715 0.000 89.88);
-  --brand-600: oklch(0.870 0.000 89.88);
-  --brand-700: oklch(0.922 0.000 89.88);
-  --brand-800: oklch(0.970 0.000 89.88);
-  --brand-900: oklch(0.985 0.000 89.88);
+  /* Brand Scale Inversion - Dusty Olive */
+  --brand-50: oklch(0.22 0.025 151.6);
+  --brand-100: oklch(0.32 0.035 151.6);
+  --brand-200: oklch(0.42 0.045 151.6);
+  --brand-300: oklch(0.52 0.05 151.6);
+  --brand-400: oklch(0.606 0.054 151.6);
+  --brand-500: oklch(0.70 0.05 151.6);
+  --brand-600: oklch(0.78 0.04 151.6);
+  --brand-700: oklch(0.85 0.03 151.6);
+  --brand-800: oklch(0.92 0.02 151.6);
+  --brand-900: oklch(0.97 0.01 151.6);
 
   /* Neutral Scale (Dark) */
   --neutral-0: oklch(0.130 0.027 261.69);
@@ -311,8 +371,14 @@
   --warning-900: oklch(0.967 0.031 84.59);
 
   /* ShadCN Aliases (Dark) */
-  --primary: var(--brand-600);
-  --primary-foreground: var(--neutral-0);
+  --background: var(--neutral-0); /* References dark neutral-0 */
+  --foreground: var(--neutral-900);
+  --card: var(--neutral-50); /* Slightly elevated against dark background */
+  --card-foreground: var(--neutral-900);
+  --popover: var(--neutral-50);
+  --popover-foreground: var(--neutral-900);
+  --primary: var(--brand-400); 
+  --primary-foreground: oklch(0.15 0.02 151.6);
   --secondary: var(--neutral-100);
   --secondary-foreground: var(--neutral-900);
   --muted: var(--neutral-100);
@@ -323,58 +389,28 @@
   --destructive-foreground: var(--neutral-0);
   --border: var(--neutral-200);
   --input: var(--neutral-200);
-  --ring: var(--brand-600);
+  --ring: var(--brand-500);
 }
 
-/* ── UTILITIES ───────────────────────────────────────────── */
-@utility container {
-  padding-left: 1rem;
-  padding-right: 1rem;
-
-  @media (width >= 640px) {
-    padding-left: calc((100vw + 1rem - 640px) / 2);
-    padding-right: calc((100vw + 1rem - 640px) / 2);
-  }
-
-  @media (width >= 768px) {
-    padding-left: calc((100vw + 1rem - 768px) / 2);
-    padding-right: calc((100vw + 1rem - 768px) / 2);
-  }
-
-  @media (width >= 1024px) {
-    padding-left: calc((100vw + 1rem - 1024px) / 2);
-    padding-right: calc((100vw + 1rem - 1024px) / 2);
-  }
-
-  @media (width >= 1280px) {
-    padding-left: calc((100vw + 1rem - 1280px) / 2);
-    padding-right: calc((100vw + 1rem - 1280px) / 2);
-  }
-
-  @media (width >= 1536px) {
-    padding-left: calc((100vw + 1rem - 1536px) / 2);
-    padding-right: calc((100vw + 1rem - 1536px) / 2);
-  }
-}
-
-@custom-variant mobile (@media (max-width: 767px));
-
-/* ── BASE ────────────────────────────────────────────────── */
+/* ── BASE REFINEMENTS ────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  
   html {
     font-family: var(--font-sans);
     background: var(--background);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5, h6 {
-    color: var(--foreground);
+
+  /* Fixed Input Selector - Removes !important to allow overrides */
+  input:not([type="checkbox"]):not([type="radio"]) {
+    @apply h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-body ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
-  /* ── INTERACTIVE FEEDBACK (Design Engineering) ── */
+  /* Design Engineering: Interactive Feedback */
   button:not(:disabled),
   [role="button"]:not(:disabled),
   .interactive:not(:disabled) {
@@ -388,69 +424,13 @@
     transform: scale(0.97);
   }
 
-  /* Blur mask to bridge the gap during visual state changes */
-  .blur-bridge {
-    transition: filter var(--duration-normal) var(--ease-out),
-                opacity var(--duration-normal) var(--ease-out);
-  }
-
-  .blur-bridge[data-transitioning="true"] {
-    filter: blur(2px);
-    opacity: 0.7;
-  }
-
-  /* Standard Entrance Pattern */
-  .fade-in-scale {
-    opacity: 1;
-    transform: scale(1);
-    transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out);
-
-    @starting-style {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-
-  /* ── ADVANCED DESIGN REFINEMENTS (Design Engineering) ── */
-
-  /* 1. Origin Awareness: Popovers grow from their trigger */
-  [data-side], [data-state] {
-    transform-origin: var(--radix-popover-content-transform-origin, 
-                          var(--radix-dropdown-menu-content-transform-origin, 
-                          center));
-  }
-
-  /* 2. Inset Reveal Pattern (Hardware-accelerated reveals) */
-  .reveal-inset {
-    clip-path: inset(0 100% 0 0);
-    transition: clip-path var(--duration-normal) var(--ease-out);
-  }
-
-  .interactive:hover .reveal-inset,
-  .interactive:focus-within .reveal-inset {
-    clip-path: inset(0 0 0 0);
-  }
-
-  /* 3. Touch-Safe Hover (Prevents sticky mobile hover) */
-  @media (hover: hover) and (pointer: fine) {
-    .interactive:hover {
-      /* Subtle hover lift */
-      /* transform: translateY(-1px); */
-    }
-  }
-
-  /* 4. Accessibility: Reduced Motion */
+  /* Accessibility: Respect motion preferences */
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
-    }
-    
-    .fade-in-scale {
-      transform: none !important;
-      transition: opacity 0.2s ease !important;
     }
   }
 }
