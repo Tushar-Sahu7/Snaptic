@@ -36,7 +36,9 @@ import {
 
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
+import { AttendanceButton } from "@/components/shared/AttendanceButton";
 import { isWithinSchedule, WEEKDAYS } from "@/lib/utils";
+import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
 
 // Decomposed Page Components
 import ClassListHeader from "@/features/classes/components/ClassListHeader";
@@ -53,6 +55,8 @@ export default function ClassListPage() {
     bulkUnarchiveAll, 
     bulkDeleteAll 
   } = useClasses();
+
+  const { todaySessions } = useTodayAttendance();
 
   // Local State
   const [tab, setTab] = useState("active");
@@ -133,6 +137,18 @@ export default function ClassListPage() {
     await bulkDeleteAll(filteredClasses.map(c => c._id));
     setProcessing(false);
     setBulkDeleteConfirm(false);
+  };
+
+  const handleSelectClass = (cls, mode) => {
+    const { onTime } = isWithinSchedule(cls.schedule);
+    const session = todaySessions[cls._id];
+
+    if (session?.status === "finalized" || (session?.status === "submitted" && !onTime)) {
+      navigate(`/teacher/attendance/${session._id}/summary`);
+    } else {
+      const flag = mode === "manual" ? "?manual=true" : "?autoStart=true";
+      navigate(`/teacher/classes/${cls._id}/attendance${flag}`);
+    }
   };
 
   if (loading) {
@@ -236,16 +252,11 @@ export default function ClassListPage() {
               }
               footer={
                 cls.status !== "archived" && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("/teacher/take-attendance");
-                    }}
-                    className="w-full rounded-xl font-black h-10 uppercase text-[10px] tracking-widest gap-2 shadow-sm"
-                  >
-                    Take Attendance
-                    <UserCheck className="size-3.5" />
-                  </Button>
+                  <AttendanceButton
+                    cls={cls}
+                    session={todaySessions[cls._id]}
+                    onSelect={handleSelectClass}
+                  />
                 )
               }
             />

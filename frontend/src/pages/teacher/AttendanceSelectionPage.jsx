@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { fetchClasses } from "@/features/classes/api/classes.api";
-import { fetchTodaySessions } from "@/features/attendance/api/attendance.api";
+import { useClasses } from "@/features/classes/hooks/useClasses";
+import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -9,37 +8,14 @@ import AttendanceWizard from "@/features/attendance/components/AttendanceWizard"
 import { isWithinSchedule } from "@/lib/utils";
 
 export default function AttendanceSelectionPage() {
-  const [loading, setLoading] = useState(true);
-  const [classes, setClasses] = useState([]);
-  const [todaySessions, setTodaySessions] = useState({});
   const navigate = useNavigate();
+  const { classes, loading: classesLoading } = useClasses();
+  const { todaySessions, loading: sessionsLoading } = useTodayAttendance();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const [classesRes, sessionsRes] = await Promise.all([
-          fetchClasses(),
-          fetchTodaySessions(),
-        ]);
+  const loading = classesLoading || sessionsLoading;
 
-        setClasses(
-          classesRes.data.classes.filter((c) => c.status === "active"),
-        );
+  const activeClasses = classes.filter((c) => c.status === "active");
 
-        const sessionsMap = {};
-        sessionsRes.data.sessions.forEach((s) => {
-          sessionsMap[s.classId._id] = s;
-        });
-        setTodaySessions(sessionsMap);
-      } catch (err) {
-        toast.error("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
 
   if (loading) {
     return (
@@ -60,8 +36,9 @@ export default function AttendanceSelectionPage() {
   return (
     <div className="flex flex-col min-h-full sm:rounded-2xl md:rounded-3xl overflow-hidden bg-background relative sm:border sm:shadow-sm">
       <AttendanceWizard
-        classes={classes}
+        classes={activeClasses}
         todaySessions={todaySessions}
+
         isDirect={false}
         onSelectClass={(c, mode) => {
           const { onTime } = isWithinSchedule(c.schedule);

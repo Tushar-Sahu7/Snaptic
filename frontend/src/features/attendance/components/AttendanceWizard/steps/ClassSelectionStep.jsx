@@ -8,8 +8,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ClassCard from "@/components/shared/ClassCard";
+import { AttendanceButton } from "@/components/shared/AttendanceButton";
 import { Badge } from "@/components/ui/badge";
 import { isWithinSchedule, cn } from "@/lib/utils";
+
 
 export const ClassSelectionStep = ({
   session,
@@ -19,61 +21,36 @@ export const ClassSelectionStep = ({
   onSelectClass,
   onContinue,
 }) => {
-  if (session) {
+    if (session) {
     const isSubmitted = session.status === "submitted";
+    const baseClass = typeof session.classId === "object"
+      ? { ...session.classId, studentCount: studentsCount }
+      : { name: "Loading Class Details...", studentCount: studentsCount };
 
     return (
       <div className="h-full flex flex-col items-center">
         <div className="w-full max-w-xl sm:bg-card sm:border sm:rounded-3xl p-0 sm:p-8 sm:shadow-sm hover:shadow-md transition-shadow space-y-6 mt-12 md:mt-0 px-6 md:px-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
           <ClassCard
-            cls={
-              typeof session.classId === "object"
-                ? {
-                    ...session.classId,
-                    studentCount: studentsCount,
-                  }
-                : {
-                    name: "Loading Class Details...",
-                    studentCount: studentsCount,
-                  }
-            }
+            cls={baseClass}
             className="cursor-default hover:border-border hover:shadow-sm"
+            footer={
+              <AttendanceButton
+                cls={baseClass}
+                session={session}
+                onSelect={(_, mode) => {
+                  // In the wizard, auto mode goes to Scan (2), manual to Mark (3)
+                  if (mode === "auto") onContinue(2);
+                  else if (mode === "manual") onContinue(3);
+                  else if (mode === "history") onContinue(4); // Review/Summary
+                }}
+              />
+            }
           />
-
-          <div className="flex flex-col gap-3 w-full">
-            {isSubmitted ? (
-              <Button
-                onClick={() => onContinue(3)}
-                className="w-full h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-lg gap-2 shadow-xl shadow-primary/20"
-              >
-                Update Attendance Records
-                <ChevronRight className="size-4 sm:size-5" />
-              </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={() => onContinue(2)}
-                  className="w-full h-12 sm:h-14 rounded-2xl font-black text-sm sm:text-lg gap-2 shadow-xl shadow-primary/20"
-                >
-                  Start Automatic Recognition
-                  <ChevronRight className="size-4 sm:size-5" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={() => onContinue(3)}
-                  className="w-full h-11 sm:h-12 rounded-xl font-bold uppercase text-xs tracking-widest gap-2"
-                >
-                  Mark Attendance Manually
-                  <ArrowLeft className="size-4 rotate-180" />
-                </Button>
-              </>
-            )}
-          </div>
         </div>
       </div>
     );
   }
+
 
   const sortedClasses = [...classes].sort((a, b) => {
     const { onTime: onTimeA } = isWithinSchedule(a.schedule);
@@ -175,78 +152,14 @@ export const ClassSelectionStep = ({
                   ) : null
                 }
                 footer={
-                  sCount === 0 ? (
-                    <div className="flex items-center gap-2 text-amber-600 bg-amber-500/5 p-3 rounded-2xl border border-amber-500/10 shadow-xs">
-                      <AlertCircle className="size-4 shrink-0 text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">
-                        Assign students before starting
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="w-full">
-                      {isSubmitted && onTime ? (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectClass?.(c, "manual");
-                          }}
-                          className="w-full rounded-xl font-bold h-12 uppercase text-[11px] tracking-widest gap-2 shadow-sm"
-                        >
-                          Update Attendance
-                          <ChevronRight className="size-4" />
-                        </Button>
-                      ) : hasActiveSession ? (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectClass?.(c);
-                          }}
-                          className="w-full rounded-xl font-bold h-12 uppercase text-[11px] tracking-widest gap-2 shadow-sm"
-                        >
-                          Resume Session
-                          <ChevronRight className="size-4" />
-                        </Button>
-                      ) : onTime ? (
-                        <div className="flex flex-col gap-2">
-                          <Button
-                            variant="default"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectClass?.(c, "auto");
-                            }}
-                            className="w-full rounded-xl font-black h-10 sm:h-12 uppercase text-[10px] sm:text-[11px] tracking-widest gap-2 shadow-lg"
-                          >
-                            Start Recognition
-                            <Scan className="size-3.5 sm:size-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectClass?.(c, "manual");
-                            }}
-                            className="w-full rounded-xl font-bold h-9 sm:h-10 uppercase text-[9px] sm:text-[10px] tracking-widest gap-2 border-primary/20"
-                          >
-                            Manual Attendance
-                            <Users className="size-3 sm:size-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-dashed gap-1">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                            Off Schedule
-                          </span>
-                          {scheduleMsg && (
-                            <span className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-tighter tabular-nums">
-                              {scheduleMsg}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
+                  <AttendanceButton 
+                    cls={c}
+                    session={tSession}
+                    onSelect={onSelectClass}
+                  />
                 }
               />
+
             );
           })}
         </div>
