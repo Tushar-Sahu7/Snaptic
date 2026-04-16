@@ -333,23 +333,23 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={stage !== "enrolling"}
-        className="sm:max-w-md p-0 gap-0 overflow-hidden max-h-[90dvh] flex flex-col"
+        className="sm:max-w-md p-0 gap-0 overflow-hidden max-h-[90dvh] flex flex-col bg-card border-border shadow-lg rounded-xl"
       >
         {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3">
-          <DialogTitle className="text-lg">Enrol Your Face</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="text-heading-3">Enroll your face</DialogTitle>
+          <DialogDescription className="text-body text-muted-foreground">
             Position your face inside the guide. Capture happens automatically.
           </DialogDescription>
         </DialogHeader>
 
         {/* Camera / Preview Area */}
-        <div className="relative w-full bg-black aspect-3/4 sm:aspect-4/3 overflow-hidden">
+        <div className="relative w-full bg-neutral-950 aspect-3/4 sm:aspect-4/3 overflow-hidden">
           {/* Loading State */}
           {stage === "loading" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90 z-10">
-              <Loader2 className="size-10 text-white animate-spin" />
-              <p className="text-white/80 text-sm font-medium text-center px-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-neutral-950/95 z-10 transition-opacity">
+              <Loader2 className="size-10 text-brand-500 animate-spin" />
+              <p className="text-neutral-200 text-caption-bold text-center px-6">
                 {guide}
               </p>
             </div>
@@ -361,14 +361,20 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
             autoPlay
             playsInline
             muted
-            className={`absolute inset-0 w-full h-full object-cover ${stage === "camera" ? "block" : "hidden"}`}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover",
+              stage === "camera" ? "block" : "hidden"
+            )}
             style={{ transform: "scaleX(-1)" }}
           />
 
           {/* Face Landmarks Overlay */}
           <canvas
             ref={overlayCanvasRef}
-            className={`absolute inset-0 w-full h-full object-cover pointer-events-none z-10 ${stage === "camera" ? "block" : "hidden"}`}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover pointer-events-none z-10",
+              stage === "camera" ? "block" : "hidden"
+            )}
             style={{ transform: "scaleX(-1)" }}
           />
 
@@ -383,8 +389,8 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
 
           {/* Done check overlay */}
           {stage === "done" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
-              <div className="size-20 rounded-full bg-emerald-500 flex items-center justify-center animate-in zoom-in-50 duration-300">
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/40 z-10">
+              <div className="size-20 rounded-full bg-success-500 flex items-center justify-center animate-in zoom-in-50 duration-normal">
                 <CheckCircle2 className="size-10 text-white" />
               </div>
             </div>
@@ -392,28 +398,29 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
 
           {/* Enrolling overlay */}
           {stage === "enrolling" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/40 z-10">
               <Loader2 className="size-10 text-white animate-spin" />
             </div>
           )}
 
           {/* Live indicator */}
           {stage === "camera" && (
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg z-20">
-              <div className="size-2 rounded-full bg-red-500 animate-pulse" />
+            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-neutral-950/80 px-2.5 py-1 rounded-md z-20 border border-neutral-800">
+              <div className="size-2 rounded-full bg-error-500 animate-pulse" />
               <span className="text-[10px] font-bold text-white uppercase tracking-wider">Live</span>
             </div>
           )}
 
           {/* Guide message bar */}
           {(stage === "camera" || stage === "loading") && (
-            <div className={`absolute bottom-0 inset-x-0 py-3 px-4 text-center z-20 transition-colors duration-300 ${
+            <div className={cn(
+              "absolute bottom-0 inset-x-0 py-3 px-4 text-center z-20 transition-all duration-feedback",
               qualityOk
-                ? "bg-emerald-600/90 backdrop-blur-sm"
-                : "bg-black/70 backdrop-blur-sm"
-            }`}>
-              <p className="text-white text-sm font-semibold flex items-center justify-center gap-2">
-                {!qualityOk && stage === "camera" && <AlertTriangle className="size-4 text-amber-400 shrink-0" />}
+                ? "bg-success-600/90 text-white"
+                : "bg-neutral-900/90 text-white"
+            )}>
+              <p className="text-body-bold flex items-center justify-center gap-2">
+                {!qualityOk && stage === "camera" && <AlertTriangle className="size-4 text-warning-400 shrink-0" />}
                 {qualityOk && <CheckCircle2 className="size-4 shrink-0" />}
                 {guide}
               </p>
@@ -422,11 +429,12 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 space-y-3">
-          {/* Camera active → manual capture */}
+        <div className="p-6 space-y-3">
+          {/* Camera active ? manual capture */}
           {stage === "camera" && (
             <Button
-              className="w-full h-12 rounded-xl font-bold text-base"
+              size="lg"
+              className="w-full text-body-bold rounded-md active:scale-97 duration-feedback"
               onClick={() => captureFrame()}
             >
               <Camera className="size-5 mr-2" />
@@ -434,19 +442,21 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
             </Button>
           )}
 
-          {/* Captured → confirm or retake */}
+          {/* Captured ? confirm or retake */}
           {stage === "captured" && (
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="flex-1 h-12 rounded-xl font-semibold"
+                size="lg"
+                className="flex-1 text-body-bold rounded-md"
                 onClick={handleRetake}
               >
                 <RefreshCcw className="size-4 mr-2" />
                 Retake
               </Button>
               <Button
-                className="flex-1 h-12 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                size="lg"
+                className="flex-1 text-body-bold rounded-md bg-success-600 hover:bg-success-700 text-white"
                 onClick={handleConfirmEnroll}
                 disabled={enrolling}
               >
@@ -458,7 +468,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                 ) : (
                   <>
                     <CheckCircle2 className="size-4 mr-2" />
-                    Confirm & Enroll
+                    Confirm
                   </>
                 )}
               </Button>
@@ -468,7 +478,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
           {/* Done */}
           {stage === "done" && (
             <div className="text-center py-2">
-              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+              <p className="text-body-bold text-success-600 dark:text-success-400">
                 ✓ Face enrolled successfully
               </p>
             </div>

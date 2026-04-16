@@ -1,128 +1,13 @@
-/* ==========================================================================
-   INDEX.CSS / GLOBALS.CSS
-   Dusty Olive Design System — Tailwind CSS v4
-   ========================================================================== */
-
-/* 💡 COMPONENT RECIPES: HOW TO USE TOKENS IN GROUPS
-  ---------------------------------------------------------------------------
-  Don't mix and match randomly. Use these standard groupings for consistency:
-
-  1. CARDS & PANELS (Elevated Surfaces)
-     Container : `bg-card text-card-foreground border-border shadow-sm rounded-lg`
-     Padding   : `p-{--space-component-lg}`
-     Inner Gap : `gap-{--space-layout-xs}` (Between header, body, footer)
-
-  2. PRIMARY BUTTONS (Interactive)
-     Container : `bg-primary text-primary-foreground rounded-md shadow-xs`
-     Padding   : `px-{--space-component-lg} py-{--space-component-sm}`
-     Text      : `text-body-bold`
-     Animation : `transition-transform duration-feedback active:scale-97`
-
-  3. FORM FIELDS
-     Wrapper   : `flex flex-col gap-{--space-component-xs}`
-     Label     : `text-body-bold text-foreground`
-     Input     : `bg-background border-input text-body rounded-md`
-     Help Text : `text-caption text-muted-foreground`
-
-  4. DATA LISTS / ROWS
-     Row Wrap  : `flex items-center gap-{--space-layout-xs} py-{--space-component-md} border-b border-border`
-     Title     : `text-body-bold text-foreground`
-     Subtitle  : `text-body text-muted-foreground`
-     Metadata  : `text-caption text-foreground-dim`
-========================================================================== */
-
 @import "tailwindcss";
-@import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "tw-animate-css";
+@import "@fontsource-variable/merriweather";
+@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/inter";
 
-/* ── THEME LAYER (TailwindCSS v4) ────────────────────────── */
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
-  /* Font families */
-  --font-sans: "Geist Variable", system-ui, sans-serif;
-  --font-mono: ui-monospace, monospace;
-
-  /* TYPOGRAPHY SCALE & PAIRINGS 
-     Usage Rule: Always pair a Heading with Body or Muted text.
-     Never stack two headings next to each other.
-  */
-  
-  /* Use for helper text, timestamps, footer links */
-  --text-caption: 0.75rem;
-  --text-caption--line-height: 1rem;
-  --text-caption--font-weight: 400;
-
-  /* Use for badges, pill labels, table column headers (uppercase) */
-  --text-caption-bold: 0.75rem;
-  --text-caption-bold--line-height: 1rem;
-  --text-caption-bold--font-weight: 600;
-
-  /* Use for long-form reading, standard component descriptions */
-  --text-body: 0.875rem;
-  --text-body--line-height: 1.25rem;
-  --text-body--font-weight: 400;
-
-  /* Use for form labels, button text, list item primary titles */
-  --text-body-bold: 0.875rem;
-  --text-body-bold--line-height: 1.25rem;
-  --text-body-bold--font-weight: 600;
-
-  /* Use for card titles, widget headers, modal titles */
-  --text-heading-3: 1rem;
-  --text-heading-3--line-height: 1.5rem;
-  --text-heading-3--font-weight: 600;
-
-  /* Use for major page section headers, sidebar group titles */
-  --text-heading-2: 1.25rem;
-  --text-heading-2--line-height: 1.75rem;
-  --text-heading-2--font-weight: 700;
-
-  /* Use for main page titles (H1). Max 1 per screen. */
-  --text-heading-1: 1.5rem;
-  --text-heading-1--line-height: 2rem;
-  --text-heading-1--font-weight: 700;
-
-  /* Use for IDs, hashes, code snippets, confidence scores */
-  --text-monospace-body: 0.875rem;
-  --text-monospace-body--line-height: 1.25rem;
-  --text-monospace-body--font-weight: 400;
-
-  /* SEMANTIC SPACING LAYER
-     Usage Rule: Use in `p-[]`, `m-[]`, and `gap-[]` utilities.
-  */
-  
-  /* Component Internals (Tight) */
-  --space-component-xs: 0.25rem;  /* icon-to-label gap */
-  --space-component-sm: 0.5rem;   /* badge/chip internal padding, input focus ring gap */
-  --space-component-md: 0.75rem;  /* button padding-y, list row padding-y */
-  --space-component-lg: 1rem;     /* default card internal padding */
-
-  /* Layout & Structural (Loose) */
-  --space-layout-xs: 1rem;        /* gap between related form fields, buttons in a row */
-  --space-layout-sm: 1.5rem;      /* gap between widget cards in a grid */
-  --space-layout-md: 2rem;        /* margin between major page sections */
-  --space-layout-lg: 3rem;        /* main page vertical rhythm (header to content) */
-
-  /* Sizing Tokens (For widths/max-widths, never for spacing) */
-  --size-content-sm: 24rem;
-  --size-content-md: 36rem;
-  --size-content-lg: 48rem;
-  --size-content-xl: 64rem;
-
-  /* Radius - Linked to ShadCN contract */
-  --radius: 8px; 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-full: 9999px;
-
-  /* Shadows - Usage: shadow-sm for cards, shadow-md for dropdowns, shadow-lg for modals */
-  --shadow-xs: 0px 1px 2px 0px rgb(0 0 0 / 0.05);
-  --shadow-sm: 0px 2px 4px 0px rgb(0 0 0 / 0.05);
-  --shadow-md: 0px 4px 16px -2px rgb(0 0 0 / 0.08);
-  --shadow-lg: 0px 12px 32px -4px rgb(0 0 0 / 0.12);
-
-  /* Semantic Color Aliases */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -138,299 +23,112 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
-  /* Brand Scale */
-  --color-brand-50: var(--brand-50);
-  --color-brand-100: var(--brand-100);
-  --color-brand-200: var(--brand-200);
-  --color-brand-300: var(--brand-300);
-  --color-brand-400: var(--brand-400);
-  --color-brand-500: var(--brand-500);
-  --color-brand-600: var(--brand-600);
-  --color-brand-700: var(--brand-700);
-  --color-brand-800: var(--brand-800);
-  --color-brand-900: var(--brand-900);
-
-  /* Neutral Scale */
-  --color-neutral-0: var(--neutral-0);
-  --color-neutral-50: var(--neutral-50);
-  --color-neutral-100: var(--neutral-100);
-  --color-neutral-200: var(--neutral-200);
-  --color-neutral-300: var(--neutral-300);
-  --color-neutral-400: var(--neutral-400);
-  --color-neutral-500: var(--neutral-500);
-  --color-neutral-600: var(--neutral-600);
-  --color-neutral-700: var(--neutral-700);
-  --color-neutral-800: var(--neutral-800);
-  --color-neutral-900: var(--neutral-900);
-  --color-neutral-950: var(--neutral-950);
-
-  /* Error Scale */
-  --color-error-50: var(--error-50);
-  --color-error-100: var(--error-100);
-  --color-error-200: var(--error-200);
-  --color-error-300: var(--error-300);
-  --color-error-400: var(--error-400);
-  --color-error-500: var(--error-500);
-  --color-error-600: var(--error-600);
-  --color-error-700: var(--error-700);
-  --color-error-800: var(--error-800);
-  --color-error-900: var(--error-900);
-
-  /* Success Scale */
-  --color-success-50: var(--success-50);
-  --color-success-100: var(--success-100);
-  --color-success-200: var(--success-200);
-  --color-success-300: var(--success-300);
-  --color-success-400: var(--success-400);
-  --color-success-500: var(--success-500);
-  --color-success-600: var(--success-600);
-  --color-success-700: var(--success-700);
-  --color-success-800: var(--success-800);
-  --color-success-900: var(--success-900);
-
-  /* Warning Scale */
-  --color-warning-50: var(--warning-50);
-  --color-warning-100: var(--warning-100);
-  --color-warning-200: var(--warning-200);
-  --color-warning-300: var(--warning-300);
-  --color-warning-400: var(--warning-400);
-  --color-warning-500: var(--warning-500);
-  --color-warning-600: var(--warning-600);
-  --color-warning-700: var(--warning-700);
-  --color-warning-800: var(--warning-800);
-  --color-warning-900: var(--warning-900);
-
-  /* Animation Tokens */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --duration-immediate: 100ms;  /* Keyboard/Instant feedback */
-  --duration-feedback: 160ms;   /* Button press, small scales */
-  --duration-fast: 200ms;       /* Tooltips, small popovers */
-  --duration-normal: 250ms;     /* Dropdowns, menus */
-  --duration-slow: 400ms;       /* Modals, side drawers */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-serif: 'Merriweather Variable', serif;
+  --font-heading: var(--font-sans);
+  --font-sans: 'Inter Variable', sans-serif;
 }
 
-/* ── COLOR TOKENS (Light Mode) ───────────────────────────── */
 :root {
-  color-scheme: light;
-
-  /* Brand Scale - Dusty Olive */
-  --brand-50: oklch(0.97 0.01 151.6);
-  --brand-100: oklch(0.92 0.02 151.6);
-  --brand-200: oklch(0.85 0.03 151.6);
-  --brand-300: oklch(0.78 0.04 151.6);
-  --brand-400: oklch(0.70 0.05 151.6);
-  --brand-500: oklch(0.606 0.054 151.6);
-  --brand-600: oklch(0.52 0.05 151.6);
-  --brand-700: oklch(0.42 0.045 151.6);
-  --brand-800: oklch(0.32 0.035 151.6);
-  --brand-900: oklch(0.22 0.025 151.6);
-
-  /* Neutral Scale */
-  --neutral-0: oklch(1.000 0.000 89.88);
-  --neutral-50: oklch(0.985 0.002 247.84);
-  --neutral-100: oklch(0.967 0.003 264.54);
-  --neutral-200: oklch(0.928 0.006 264.53);
-  --neutral-300: oklch(0.872 0.009 258.34);
-  --neutral-400: oklch(0.714 0.019 261.32);
-  --neutral-500: oklch(0.551 0.023 264.36);
-  --neutral-600: oklch(0.446 0.026 256.80);
-  --neutral-700: oklch(0.373 0.031 259.73);
-  --neutral-800: oklch(0.278 0.030 256.85);
-  --neutral-900: oklch(0.210 0.032 264.66);
-  --neutral-950: oklch(0.130 0.027 261.69);
-
-  /* Error Scale */
-  --error-50: oklch(0.971 0.013 17.38);
-  --error-100: oklch(0.936 0.031 17.72);
-  --error-200: oklch(0.885 0.059 18.33);
-  --error-300: oklch(0.808 0.103 19.57);
-  --error-400: oklch(0.711 0.166 22.22);
-  --error-500: oklch(0.637 0.208 25.33);
-  --error-600: oklch(0.577 0.215 27.33);
-  --error-700: oklch(0.505 0.190 27.52);
-  --error-800: oklch(0.444 0.161 26.90);
-  --error-900: oklch(0.396 0.133 25.72);
-
-  /* Success Scale */
-  --success-50: oklch(0.984 0.014 180.72);
-  --success-100: oklch(0.953 0.050 180.80);
-  --success-200: oklch(0.910 0.093 180.43);
-  --success-300: oklch(0.855 0.125 181.07);
-  --success-400: oklch(0.785 0.133 181.91);
-  --success-500: oklch(0.704 0.123 182.50);
-  --success-600: oklch(0.600 0.104 184.70);
-  --success-700: oklch(0.511 0.086 186.39);
-  --success-800: oklch(0.437 0.071 188.22);
-  --success-900: oklch(0.386 0.059 188.42);
-
-  /* Warning Scale */
-  --warning-50: oklch(0.987 0.021 95.28);
-  --warning-100: oklch(0.962 0.058 95.62);
-  --warning-200: oklch(0.924 0.115 95.75);
-  --warning-300: oklch(0.879 0.153 91.61);
-  --warning-400: oklch(0.837 0.164 84.43);
-  --warning-500: oklch(0.769 0.165 70.08);
-  --warning-600: oklch(0.666 0.157 58.32);
-  --warning-700: oklch(0.555 0.146 49.00);
-  --warning-800: oklch(0.473 0.125 46.20);
-  --warning-900: oklch(0.414 0.105 45.90);
-
-  /* ShadCN Aliases */
-  --background: var(--neutral-0);
-  --foreground: var(--neutral-900);
-  --card: var(--neutral-0);
-  --card-foreground: var(--neutral-900);
-  --popover: var(--neutral-0);
-  --popover-foreground: var(--neutral-900);
-  --primary: var(--brand-500);
-  --primary-foreground: oklch(0.98 0.01 151.6);
-  --secondary: var(--neutral-100);
-  --secondary-foreground: var(--neutral-900);
-  --muted: var(--neutral-100);
-  --muted-foreground: var(--neutral-500);
-  --accent: var(--neutral-100);
-  --accent-foreground: var(--neutral-900);
-  --destructive: var(--error-600);
-  --destructive-foreground: var(--neutral-0);
-  --border: var(--neutral-200);
-  --input: var(--neutral-200);
-  --ring: var(--brand-400);
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* ── COLOR TOKENS (Dark Mode) ────────────────────────────── */
 .dark {
-  color-scheme: dark;
-
-  /* Brand Scale Inversion - Dusty Olive */
-  --brand-50: oklch(0.22 0.025 151.6);
-  --brand-100: oklch(0.32 0.035 151.6);
-  --brand-200: oklch(0.42 0.045 151.6);
-  --brand-300: oklch(0.52 0.05 151.6);
-  --brand-400: oklch(0.606 0.054 151.6);
-  --brand-500: oklch(0.70 0.05 151.6);
-  --brand-600: oklch(0.78 0.04 151.6);
-  --brand-700: oklch(0.85 0.03 151.6);
-  --brand-800: oklch(0.92 0.02 151.6);
-  --brand-900: oklch(0.97 0.01 151.6);
-
-  /* Neutral Scale (Dark) */
-  --neutral-0: oklch(0.130 0.027 261.69);
-  --neutral-50: oklch(0.210 0.032 264.66);
-  --neutral-100: oklch(0.278 0.030 256.85);
-  --neutral-200: oklch(0.373 0.031 259.73);
-  --neutral-300: oklch(0.446 0.026 256.80);
-  --neutral-400: oklch(0.551 0.023 264.36);
-  --neutral-500: oklch(0.714 0.019 261.32);
-  --neutral-600: oklch(0.872 0.009 258.34);
-  --neutral-700: oklch(0.928 0.006 264.53);
-  --neutral-800: oklch(0.967 0.003 264.54);
-  --neutral-900: oklch(0.985 0.002 247.84);
-  --neutral-950: oklch(1.000 0.000 89.88);
-
-  /* Error Scale (Dark) */
-  --error-50: oklch(0.263 0.057 18.35);
-  --error-100: oklch(0.289 0.070 18.67);
-  --error-200: oklch(0.313 0.085 19.36);
-  --error-300: oklch(0.353 0.104 21.23);
-  --error-400: oklch(0.406 0.133 22.80);
-  --error-500: oklch(0.484 0.170 24.67);
-  --error-600: oklch(0.626 0.193 23.03);
-  --error-700: oklch(0.663 0.193 22.29);
-  --error-800: oklch(0.701 0.190 21.20);
-  --error-900: oklch(0.958 0.020 9.78);
-
-  /* Success Scale (Dark) */
-  --success-50: oklch(0.254 0.041 179.10);
-  --success-100: oklch(0.283 0.046 181.19);
-  --success-200: oklch(0.311 0.051 180.88);
-  --success-300: oklch(0.349 0.059 181.20);
-  --success-400: oklch(0.402 0.069 180.75);
-  --success-500: oklch(0.481 0.083 182.58);
-  --success-600: oklch(0.649 0.114 181.96);
-  --success-700: oklch(0.690 0.120 183.57);
-  --success-800: oklch(0.740 0.131 183.33);
-  --success-900: oklch(0.965 0.027 179.70);
-
-  /* Warning Scale (Dark) */
-  --warning-50: oklch(0.253 0.056 66.67);
-  --warning-100: oklch(0.284 0.064 64.91);
-  --warning-200: oklch(0.317 0.071 65.12);
-  --warning-300: oklch(0.357 0.079 67.65);
-  --warning-400: oklch(0.409 0.088 66.87);
-  --warning-500: oklch(0.473 0.105 67.01);
-  --warning-600: oklch(0.817 0.164 75.84);
-  --warning-700: oklch(0.866 0.154 86.48);
-  --warning-800: oklch(0.769 0.162 73.12);
-  --warning-900: oklch(0.967 0.031 84.59);
-
-  /* ShadCN Aliases (Dark) */
-  --background: var(--neutral-0); /* References dark neutral-0 */
-  --foreground: var(--neutral-900);
-  --card: var(--neutral-50); /* Slightly elevated against dark background */
-  --card-foreground: var(--neutral-900);
-  --popover: var(--neutral-50);
-  --popover-foreground: var(--neutral-900);
-  --primary: var(--brand-400); 
-  --primary-foreground: oklch(0.15 0.02 151.6);
-  --secondary: var(--neutral-100);
-  --secondary-foreground: var(--neutral-900);
-  --muted: var(--neutral-100);
-  --muted-foreground: var(--neutral-500);
-  --accent: var(--neutral-100);
-  --accent-foreground: var(--neutral-900);
-  --destructive: var(--error-600);
-  --destructive-foreground: var(--neutral-0);
-  --border: var(--neutral-200);
-  --input: var(--neutral-200);
-  --ring: var(--brand-500);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* ── BASE REFINEMENTS ────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  
+
+  body {
+    @apply bg-background text-foreground;
+  }
   html {
-    font-family: var(--font-sans);
-    background: var(--background);
-    color: var(--foreground);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* Fixed Input Selector - Removes !important to allow overrides */
-  input:not([type="checkbox"]):not([type="radio"]) {
-    @apply h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-body ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
-  }
-
-  /* Design Engineering: Interactive Feedback */
-  button:not(:disabled),
-  [role="button"]:not(:disabled),
-  .interactive:not(:disabled) {
-    transition: transform var(--duration-feedback) var(--ease-out);
-    touch-action: manipulation;
-  }
-
-  button:not(:disabled):active,
-  [role="button"]:not(:disabled):active,
-  .interactive:not(:disabled):active {
-    transform: scale(0.97);
-  }
-
-  /* Accessibility: Respect motion preferences */
-  @media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
+    @apply font-sans;
   }
 }

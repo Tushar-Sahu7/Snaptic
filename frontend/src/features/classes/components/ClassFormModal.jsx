@@ -380,10 +380,10 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
           <Button
             variant="secondary"
             size="icon-sm"
-            className="absolute top-4 right-4 z-50 h-9 w-9 rounded-xl shadow-xs border bg-secondary/80 backdrop-blur-md hover:bg-secondary transition-all active:scale-95"
+            className="absolute top-4 right-4 z-50 h-9 w-9 rounded-xl shadow-sm border bg-secondary/80 backdrop-blur-md hover:bg-secondary transition-all active:scale-95"
             onClick={() => handleCloseAttempt()}
           >
-            <X className="size-4.5" />
+            <X className="size-5" />
             <span className="sr-only">Close</span>
           </Button>
 

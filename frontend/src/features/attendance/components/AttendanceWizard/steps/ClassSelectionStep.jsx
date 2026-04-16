@@ -12,7 +12,6 @@ import { AttendanceButton } from "@/components/shared/AttendanceButton";
 import { Badge } from "@/components/ui/badge";
 import { isWithinSchedule, cn } from "@/lib/utils";
 
-
 export const ClassSelectionStep = ({
   session,
   classes,
@@ -21,11 +20,12 @@ export const ClassSelectionStep = ({
   onSelectClass,
   onContinue,
 }) => {
-    if (session) {
+  if (session) {
     const isSubmitted = session.status === "submitted";
-    const baseClass = typeof session.classId === "object"
-      ? { ...session.classId, studentCount: studentsCount }
-      : { name: "Loading Class Details...", studentCount: studentsCount };
+    const baseClass =
+      typeof session.classId === "object"
+        ? { ...session.classId, studentCount: studentsCount }
+        : { name: "Loading Class Details...", studentCount: studentsCount };
 
     return (
       <div className="h-full flex flex-col items-center">
@@ -50,7 +50,6 @@ export const ClassSelectionStep = ({
       </div>
     );
   }
-
 
   const sortedClasses = [...classes].sort((a, b) => {
     const { onTime: onTimeA } = isWithinSchedule(a.schedule);
@@ -152,14 +151,13 @@ export const ClassSelectionStep = ({
                   ) : null
                 }
                 footer={
-                  <AttendanceButton 
+                  <AttendanceButton
                     cls={c}
                     session={tSession}
                     onSelect={onSelectClass}
                   />
                 }
               />
-
             );
           })}
         </div>

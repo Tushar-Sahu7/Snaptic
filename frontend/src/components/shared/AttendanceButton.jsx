@@ -18,17 +18,17 @@ export const AttendanceButton = ({ cls, session, onSelect, className }) => {
   };
 
   const commonBtnClass =
-    "rounded-xl font-black h-10 sm:h-11 uppercase text-[10px] sm:text-[11px] tracking-wider gap-1.5 shadow-sm transition-all active:scale-[0.98]";
+    "rounded-xl font-semibold h-11 sm:h-12 text-sm gap-2 shadow-sm transition-all duration-feedback ease-out";
 
   if (isSplit) {
     return (
-      <div className={cn("flex flex-col xl:flex-row gap-2 xl:gap-1.5 w-full", className)}>
+      <div className={cn("flex flex-col sm:flex-row gap-2 w-full", className)}>
         <Button
           onClick={(e) => {
             e.stopPropagation();
             handleSelect(primary.mode);
           }}
-          className={cn("w-full xl:flex-1 h-11 xl:h-11 px-4 xl:px-2", commonBtnClass)}
+          className={cn("w-full sm:flex-1", commonBtnClass)}
         >
           {primary.label}
           {primary.icon && (
@@ -42,7 +42,7 @@ export const AttendanceButton = ({ cls, session, onSelect, className }) => {
             handleSelect(secondary.mode);
           }}
           className={cn(
-            "w-full xl:flex-1 h-11 xl:h-11 px-4 xl:px-2 border-primary/20 hover:bg-primary/5",
+            "w-full sm:flex-1 border-primary/20 hover:bg-primary/5",
             commonBtnClass,
           )}
         >
@@ -65,7 +65,7 @@ export const AttendanceButton = ({ cls, session, onSelect, className }) => {
         handleSelect(primary.mode);
       }}
       className={cn(
-        "w-full px-6 h-12 sm:h-12",
+        "w-full px-6",
         commonBtnClass,
         primary.disabled &&
           "opacity-60 cursor-not-allowed border-dashed bg-muted/30 text-muted-foreground shadow-none",
@@ -77,12 +77,11 @@ export const AttendanceButton = ({ cls, session, onSelect, className }) => {
       {primary.icon && (
         <primary.icon
           className={cn(
-            "size-4 sm:size-5 shrink-0",
+            "size-5 shrink-0 transition-transform group-hover:scale-110",
             primary.disabled && "opacity-40",
           )}
         />
       )}
     </Button>
-
   );
 };

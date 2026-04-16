@@ -1,15 +1,15 @@
-import { 
-  CheckCircle2, 
-  ShieldCheck, 
-  ArrowLeft, 
-  Loader2, 
-  Users, 
-  Clock, 
-  MapPin, 
+import {
+  CheckCircle2,
+  ShieldCheck,
+  ArrowLeft,
+  Loader2,
+  Users,
+  Clock,
+  MapPin,
   AlertTriangle,
   RotateCcw,
   UserCheck,
-  UserX
+  UserX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,12 +45,12 @@ export const ReviewStep = ({
   loading,
   onSubmit,
   onToggleStatus,
-  onEdit
+  onEdit,
 }) => {
   const navigate = useNavigate();
 
   /**
-   * Auto-scroll to top when submission is successful to ensure the success 
+   * Auto-scroll to top when submission is successful to ensure the success
    * message is fully visible to the user.
    */
   useEffect(() => {
@@ -66,8 +66,12 @@ export const ReviewStep = ({
     return nameA.localeCompare(nameB);
   });
 
-  const absentees = sortedStudents.filter(s => attendanceState[s._id]?.status !== "present");
-  const presentStudents = sortedStudents.filter(s => attendanceState[s._id]?.status === "present");
+  const absentees = sortedStudents.filter(
+    (s) => attendanceState[s._id]?.status !== "present",
+  );
+  const presentStudents = sortedStudents.filter(
+    (s) => attendanceState[s._id]?.status === "present",
+  );
 
   const presentCount = presentStudents.length;
   const absentCount = absentees.length;
@@ -78,10 +82,10 @@ export const ReviewStep = ({
    */
   const handleToggle = (studentId) => {
     if (isFinalized || isSubmitted || loading) return;
-    
+
     const currentState = attendanceState[studentId];
     const isPresent = currentState?.status === "present";
-    
+
     if (isPresent) {
       onToggleStatus(studentId, "absent", "manual");
     } else {
@@ -105,18 +109,27 @@ export const ReviewStep = ({
                   Review Records
                 </h1>
                 <p className="text-xs sm:text-sm font-semibold text-muted-foreground/60 max-w-sm">
-                  Verify and correct student attendance markers before final submission to the database.
+                  Verify and correct student attendance markers before final
+                  submission to the database.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
                 <div className="bg-muted/30 border p-5 rounded-3xl flex flex-col items-center min-w-[120px]">
-                  <span className="text-3xl font-black text-primary leading-none mb-1">{presentCount}</span>
-                  <span className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Present</span>
+                  <span className="text-3xl font-black text-primary leading-none mb-1">
+                    {presentCount}
+                  </span>
+                  <span className="text-[10px] font-black uppercase text-primary/60 tracking-widest">
+                    Present
+                  </span>
                 </div>
                 <div className="bg-destructive/5 border border-destructive/10 p-5 rounded-3xl flex flex-col items-center min-w-[120px]">
-                  <span className="text-3xl font-black text-destructive/80 leading-none mb-1">{absentCount}</span>
-                  <span className="text-[10px] font-black uppercase text-destructive/60 tracking-widest">Absent</span>
+                  <span className="text-3xl font-black text-destructive/80 leading-none mb-1">
+                    {absentCount}
+                  </span>
+                  <span className="text-[10px] font-black uppercase text-destructive/60 tracking-widest">
+                    Absent
+                  </span>
                 </div>
               </div>
             </div>
@@ -132,19 +145,30 @@ export const ReviewStep = ({
                   Absentees ({absentCount})
                 </h2>
                 {absentCount === 0 && (
-                  <Badge variant="outline" className="rounded-full px-3 font-black text-[9px] uppercase tracking-widest text-emerald-600 border-emerald-200 bg-emerald-50">
+                  <Badge
+                    variant="outline"
+                    className="rounded-full px-3 font-black text-[9px] uppercase tracking-widest text-emerald-600 border-emerald-200 bg-emerald-50"
+                  >
                     Full Attendance
                   </Badge>
                 )}
               </div>
-              
-              <div className={cn(
-                "grid gap-3",
-                absentCount > 0 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"
-              )}>
+
+              <div
+                className={cn(
+                  "grid gap-3",
+                  absentCount > 0
+                    ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+                    : "grid-cols-1",
+                )}
+              >
                 {absentees.map((s) => {
                   const profile = profiles[s._id] || {};
-                  const name = profile.name || s.name || s.email?.split("@")[0] || "Unknown";
+                  const name =
+                    profile.name ||
+                    s.name ||
+                    s.email?.split("@")[0] ||
+                    "Unknown";
                   return (
                     <button
                       key={s._id}
@@ -176,7 +200,9 @@ export const ReviewStep = ({
                     <div className="size-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4">
                       <UserCheck className="size-8" />
                     </div>
-                    <p className="font-black uppercase tracking-widest text-[11px] text-muted-foreground">Perfect session recorded</p>
+                    <p className="font-black uppercase tracking-widest text-[11px] text-muted-foreground">
+                      Perfect session recorded
+                    </p>
                   </div>
                 )}
               </div>
@@ -188,11 +214,15 @@ export const ReviewStep = ({
                 <UserCheck className="size-3.5" />
                 Present ({presentCount})
               </h2>
-              
+
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {presentStudents.map((s) => {
                   const profile = profiles[s._id] || {};
-                  const name = profile.name || s.name || s.email?.split("@")[0] || "Unknown";
+                  const name =
+                    profile.name ||
+                    s.name ||
+                    s.email?.split("@")[0] ||
+                    "Unknown";
                   return (
                     <button
                       key={s._id}
@@ -242,7 +272,11 @@ export const ReviewStep = ({
                   disabled={loading}
                   className="rounded-3xl h-16 px-12 font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-primary/20 bg-primary hover:scale-[1.02] active:scale-95 transition-all w-full sm:w-auto"
                 >
-                  {loading ? <Loader2 className="size-5 animate-spin mr-2" /> : <ShieldCheck className="size-5 mr-3" />}
+                  {loading ? (
+                    <Loader2 className="size-5 animate-spin mr-2" />
+                  ) : (
+                    <ShieldCheck className="size-5 mr-3" />
+                  )}
                   Finish & Submit
                 </Button>
               </AlertDialogTrigger>
@@ -253,7 +287,8 @@ export const ReviewStep = ({
                     Submit Attendance?
                   </AlertDialogTitle>
                   <AlertDialogDescription className="font-bold text-muted-foreground">
-                    This will finalize the records for <b>{session.classId?.name}</b>. This action is irreversible.
+                    This will finalize the records for{" "}
+                    <b>{session.classId?.name}</b>. This action is irreversible.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="mt-6 flex-col sm:flex-row gap-2">
@@ -277,15 +312,19 @@ export const ReviewStep = ({
           <div className="bg-emerald-50/50 border border-emerald-200 rounded-[2.5rem] p-8 sm:p-12 flex flex-col items-center text-center gap-6 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 size-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 size-32 bg-emerald-500/5 rounded-full blur-3xl -ml-16 -mb-16" />
-            
+
             <div className="size-20 rounded-3xl bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/20 relative z-10">
               <CheckCircle2 className="size-10 stroke-3" />
             </div>
 
             <div className="space-y-2 relative z-10">
-              <h3 className="text-2xl font-black text-emerald-900 uppercase tracking-tight">Processed Successfully</h3>
+              <h3 className="text-2xl font-black text-emerald-900 uppercase tracking-tight">
+                Processed Successfully
+              </h3>
               <p className="text-emerald-700/70 text-sm font-semibold max-w-xs">
-                {isFinalized ? "This record has been archived and finalized." : "Attendance has been submitted successfully."}
+                {isFinalized
+                  ? "This record has been archived and finalized."
+                  : "Attendance has been submitted successfully."}
               </p>
             </div>
 
@@ -294,19 +333,44 @@ export const ReviewStep = ({
                 <div className="bg-white/80 backdrop-blur-md px-6 py-4 rounded-2xl border border-emerald-100 flex flex-col items-center gap-3 w-full shadow-xs">
                   <div className="flex flex-col items-center text-center">
                     <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 border border-emerald-500/20 mb-3">
-                      <ClassIcon name={session.classId.icon} className="size-5" />
+                      <ClassIcon
+                        name={session.classId.icon}
+                        className="size-5"
+                      />
                     </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600/60 block mb-1">Session Recorded For</span>
-                    <span className="font-black text-xl text-emerald-900 block tracking-tight">{session.classId.name}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600/60 block mb-1">
+                      Session Recorded For
+                    </span>
+                    <span className="font-black text-xl text-emerald-900 block tracking-tight">
+                      {session.classId.name}
+                    </span>
                   </div>
                   <div className="flex flex-col gap-2 w-full pt-2 border-t border-emerald-100 border-dashed">
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-700/60">
-                      <div className="flex items-center gap-2"><Clock className="size-3" /><span>Schedule</span></div>
-                      <span className="text-emerald-900">{session.classId.schedule?.startTime ? format12Hour(session.classId.schedule.startTime) : "--"} - {session.classId.schedule?.endTime ? format12Hour(session.classId.schedule.endTime) : "--"}</span>
+                      <div className="flex items-center gap-2">
+                        <Clock className="size-3" />
+                        <span>Schedule</span>
+                      </div>
+                      <span className="text-emerald-900">
+                        {session.classId.schedule?.startTime
+                          ? format12Hour(session.classId.schedule.startTime)
+                          : "--"}{" "}
+                        -{" "}
+                        {session.classId.schedule?.endTime
+                          ? format12Hour(session.classId.schedule.endTime)
+                          : "--"}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-700/60">
-                      <div className="flex items-center gap-2"><MapPin className="size-3" /><span>Location</span></div>
-                      <span className="text-emerald-900">{session.classId.schedule?.room ? formatRoom(session.classId.schedule.room) : "No Room Set"}</span>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="size-3" />
+                        <span>Location</span>
+                      </div>
+                      <span className="text-emerald-900">
+                        {session.classId.schedule?.room
+                          ? formatRoom(session.classId.schedule.room)
+                          : "No Room Set"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -315,22 +379,38 @@ export const ReviewStep = ({
 
             <div className="grid grid-cols-2 gap-3 w-full max-w-sm pt-4 relative z-10">
               <div className="bg-white/60 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center">
-                <span className="text-2xl font-black text-emerald-600">{presentCount}</span>
-                <span className="text-[9px] font-black uppercase text-emerald-600/60 tracking-widest">Present</span>
+                <span className="text-2xl font-black text-emerald-600">
+                  {presentCount}
+                </span>
+                <span className="text-[9px] font-black uppercase text-emerald-600/60 tracking-widest">
+                  Present
+                </span>
               </div>
               <div className="bg-destructive/5 border border-destructive/10 p-4 rounded-2xl flex flex-col items-center">
-                <span className="text-2xl font-black text-destructive/80">{absentCount}</span>
-                <span className="text-[9px] font-black uppercase text-destructive/60 tracking-widest">Absent</span>
+                <span className="text-2xl font-black text-destructive/80">
+                  {absentCount}
+                </span>
+                <span className="text-[9px] font-black uppercase text-destructive/60 tracking-widest">
+                  Absent
+                </span>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <Button size="lg" onClick={() => navigate(`/teacher/dashboard`)} className="rounded-2xl h-14 px-10 font-black border-2 shadow-xl hover:shadow-primary/10 transition-all active:scale-95">
+            <Button
+              size="lg"
+              onClick={() => navigate(`/teacher/dashboard`)}
+              className="rounded-2xl h-14 px-10 font-black border-2 shadow-xl hover:shadow-primary/10 transition-all active:scale-95"
+            >
               Return to Dashboard
             </Button>
             {isSubmitted && !isFinalized && (
-              <Button variant="link" onClick={onEdit} className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest hover:text-primary transition-colors">
+              <Button
+                variant="link"
+                onClick={onEdit}
+                className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest hover:text-primary transition-colors"
+              >
                 Mistake? Correct Records
               </Button>
             )}

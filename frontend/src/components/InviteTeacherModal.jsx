@@ -7,10 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-} from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import {
   Tooltip,
   TooltipContent,
@@ -149,8 +146,8 @@ export function InviteTeacherModal({ open, onOpenChange, inviteLink }) {
         </div>
 
         <div className="pt-2">
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             className="w-full h-11 rounded-xl font-semibold shadow-sm active:scale-[0.98] transition-all"
             onClick={() => onOpenChange(false)}
           >

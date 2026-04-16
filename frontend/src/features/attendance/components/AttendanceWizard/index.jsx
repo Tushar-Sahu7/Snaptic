@@ -16,7 +16,7 @@ export default function AttendanceWizard({
   records = [],
   classes = [],
   todaySessions = {},
-  onSelectClass
+  onSelectClass,
 }) {
   // 1. Core Logic Hook
   const {
@@ -30,11 +30,11 @@ export default function AttendanceWizard({
     handleFinishScan,
     handleSubmit,
     handleReopen,
-    handleTerminate
+    handleTerminate,
   } = useAttendanceSession({
     initialSession,
     students,
-    records
+    records,
   });
 
   // 1.5 Biometric Model Pre-loading
@@ -66,55 +66,73 @@ export default function AttendanceWizard({
     const isManual = params.get("manual") === "true";
 
     if (!initialSession) return 1;
-    
+
     // Finalized is always locked to review
     if (initialSession.status === "finalized") return 4;
-    
+
     // If user explicitly asked for manual mode (e.g. "Update Attendance"), go to step 3
     if (isManual) return 3;
 
     // Default for submitted is usually review, but we already handled the explicit manual intent above
     if (initialSession.status === "submitted") return 4;
-    
+
     if (initialSession.status === "ended") return 3;
-    if (params.get("autoStart") === "true" || initialSession.status === "inProgress") return 2;
-    
+    if (
+      params.get("autoStart") === "true" ||
+      initialSession.status === "inProgress"
+    )
+      return 2;
+
     return 1;
   });
 
   const [isTerminating, setIsTerminating] = useState(false);
 
   // 3. Time Locking Hook
-  const { timeLeft, endTimeFormatted, isFinalized } = useTimeLock(session, () => {
-    setStep(4); // Move to review step when time expires
-  });
+  const { timeLeft, endTimeFormatted, isFinalized } = useTimeLock(
+    session,
+    () => {
+      setStep(4); // Move to review step when time expires
+    },
+  );
 
   // 3.5 Auto-handle Manual Flag
-  // We use a ref for handleFinishScan because we call it inside an effect 
-  // that depends on 'step', and we want the latest version of the handler 
+  // We use a ref for handleFinishScan because we call it inside an effect
+  // that depends on 'step', and we want the latest version of the handler
   // without re-running the effect when the handler itself is recreated.
   const handleFinishScanRef = useRef(handleFinishScan);
-  useEffect(() => { handleFinishScanRef.current = handleFinishScan; }, [handleFinishScan]);
+  useEffect(() => {
+    handleFinishScanRef.current = handleFinishScan;
+  }, [handleFinishScan]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isManualMode = params.get("manual") === "true";
-    
-    if (isManualMode && session?.status === "inProgress" && step === 3 && !sessionLoading && !absencesProcessed) {
-       handleFinishScanRef.current();
+
+    if (
+      isManualMode &&
+      session?.status === "inProgress" &&
+      step === 3 &&
+      !sessionLoading &&
+      !absencesProcessed
+    ) {
+      handleFinishScanRef.current();
     }
   }, [step, session?.status, absencesProcessed, sessionLoading]);
 
   // 4. Intercept Stepper/Back Navigation
-  const handleStepChange = useCallback(async (s) => {
-    // If going to step 3 from step 4 and session is submitted, we must reopen
-    if (s === 3 && step === 4 && session?.status === "submitted") {
-      const reopened = await handleReopen();
-      if (reopened) setStep(3);
-    } else {
-      setStep(s);
-    }
-  }, [step, session?.status, isFinalized, handleReopen]);
+  const handleStepChange = useCallback(
+    async (s) => {
+      // If going to step 3 from step 4 and session is submitted, we must reopen
+      if (s === 3 && step === 4 && session?.status === "submitted") {
+        const reopened = await handleReopen();
+        if (reopened) setStep(3);
+      } else {
+        setStep(s);
+      }
+    },
+    [step, session?.status, isFinalized, handleReopen],
+  );
 
   // Pre-process profiles into a lookup map for faster access in child steps
   const profileMap = (profiles || []).reduce((acc, p) => {
@@ -127,28 +145,37 @@ export default function AttendanceWizard({
   // 4.5 Immersive Handlers
   const toggleFullscreen = useCallback(() => {
     if (containerRef.current && !document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => {
+      containerRef.current.requestFullscreen().catch((err) => {
         console.warn("Fullscreen request failed:", err);
       });
     }
   }, []);
 
-  const handleSelectClassWithFullscreen = useCallback((cls, mode) => {
-    toggleFullscreen();
-    onSelectClass?.(cls, mode);
-  }, [onSelectClass, toggleFullscreen]);
+  const handleSelectClassWithFullscreen = useCallback(
+    (cls, mode) => {
+      toggleFullscreen();
+      onSelectClass?.(cls, mode);
+    },
+    [onSelectClass, toggleFullscreen],
+  );
 
-  const handleContinueWithFullscreen = useCallback((s) => {
-    if (s === 2) toggleFullscreen();
-    setStep(s);
-  }, [toggleFullscreen]);
+  const handleContinueWithFullscreen = useCallback(
+    (s) => {
+      if (s === 2) toggleFullscreen();
+      setStep(s);
+    },
+    [toggleFullscreen],
+  );
 
   // 5. Render
   return (
-    <div ref={containerRef} className="flex flex-col h-dvh bg-background relative z-0 overflow-hidden">
+    <div
+      ref={containerRef}
+      className="flex flex-col h-dvh bg-background relative z-0 overflow-hidden"
+    >
       {/* 1. Header & Stepper */}
       <div className="shrink-0 sm:border-b sm:bg-card px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-4 sm:gap-8 sm:shadow-sm relative z-10">
-        <AttendanceHeader 
+        <AttendanceHeader
           session={session}
           isFinalized={isFinalized}
           timeLeft={timeLeft}
@@ -157,7 +184,7 @@ export default function AttendanceWizard({
           onTerminate={() => setIsTerminating(true)}
         />
 
-        <AttendanceStepper 
+        <AttendanceStepper
           step={step}
           isFinalized={isFinalized}
           onStepClick={handleStepChange}
@@ -167,7 +194,7 @@ export default function AttendanceWizard({
       {/* 2. Content Area */}
       <main className="flex-1 overflow-y-auto relative p-0 sm:p-4 md:p-8 bg-muted/10">
         {step === 1 && (
-          <ClassSelectionStep 
+          <ClassSelectionStep
             session={session}
             classes={classes}
             todaySessions={todaySessions}
@@ -178,7 +205,7 @@ export default function AttendanceWizard({
         )}
 
         {step === 2 && (
-          <ScanStep 
+          <ScanStep
             session={session}
             students={students}
             profiles={profileMap}
@@ -196,7 +223,7 @@ export default function AttendanceWizard({
         )}
 
         {step === 3 && (
-          <MarkStep 
+          <MarkStep
             students={students}
             profiles={profileMap}
             attendanceState={attendanceState}
@@ -209,7 +236,7 @@ export default function AttendanceWizard({
         )}
 
         {step === 4 && (
-          <ReviewStep 
+          <ReviewStep
             session={session}
             students={students}
             profiles={profileMap}
@@ -224,7 +251,7 @@ export default function AttendanceWizard({
         )}
       </main>
 
-      <TerminateDialog 
+      <TerminateDialog
         open={isTerminating}
         onOpenChange={setIsTerminating}
         onConfirm={handleTerminate}

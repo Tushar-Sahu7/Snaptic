@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Card,
   CardContent,
@@ -11,19 +12,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import validator from "validator";
 
 export default function RegisterForm({ className, ...props }) {
@@ -37,16 +37,24 @@ export default function RegisterForm({ className, ...props }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setFormError(null);
+    setFieldErrors({});
+
+    const errors = {};
+    if (!name.trim()) errors.name = "Full name is required";
+    if (!validator.isEmail(email))
+      errors.email = "Please enter a valid email address";
 
     if (!validator.isStrongPassword(password)) {
-      setFormError(
-        "Use a strong password (min 8 characters, with uppercase, lowercase, number & special character)",
-      );
+      errors.password =
+        "Use a strong password (min 8 chars, uppercase, lowercase, numbers & special characters)";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -59,7 +67,13 @@ export default function RegisterForm({ className, ...props }) {
         { replace: true },
       );
     } catch (err) {
-      setFormError(err.response?.data?.message || "Registration failed");
+      const message = err.response?.data?.message || "Registration failed";
+      // Intelligent fallback for field mapping
+      if (message.toLowerCase().includes("email")) {
+        setFieldErrors({ email: message });
+      } else {
+        setFieldErrors({ password: message });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -67,98 +81,159 @@ export default function RegisterForm({ className, ...props }) {
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="border-none shadow-none bg-transparent sm:bg-card sm:border sm:ring-1 sm:ring-border">
-        <CardHeader className="px-5 sm:p-6 text-center sm:text-left">
-          {inviteToken && (
-            <div className="mb-2 rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm dark:border-green-700 dark:bg-green-950/30">
-              <p className="font-medium text-green-700 dark:text-green-400">
-                🎉 You've been invited as a Teacher
-              </p>
-              <p className="mt-0.5 text-green-600/80 text-xs dark:text-green-500/80">
-                Sign up to start managing classes and taking attendance
-              </p>
-            </div>
-          )}
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription>Fill in your details to get started</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+      <Card className="bg-transparent border-none shadow-none ring-0 sm:bg-card sm:border-border sm:shadow-sm sm:ring-1">
+        <form onSubmit={handleSubmit}>
+          <CardHeader className="space-y-1.5 p-6 px-0 pt-0 text-center sm:px-6 sm:pt-6">
+            {inviteToken && (
+              <div className="mb-4 rounded-xl border border-primary/10 bg-accent/5 p-4 text-left">
+                <p className="text-sm font-bold text-primary">
+                  🎉 You're invited as a Teacher
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Create your account to start managing classes.
+                </p>
+              </div>
+            )}
+            <CardTitle className="text-xl font-bold tracking-tight md:text-2xl">
+              Create an account
+            </CardTitle>
+            <CardDescription className="text-xs md:text-sm">
+              Enter your details to get started with Snaptic
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="flex flex-col gap-6 p-6 px-1 pt-0 sm:px-6">
+            <FieldGroup className="gap-6">
+              <Field className="space-y-1.5" data-invalid={!!fieldErrors.name}>
+                <FieldLabel htmlFor="name">Full name</FieldLabel>
+                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
+                  <InputGroupAddon align="inline-start">
+                    <User data-icon="inline-start" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="name"
+                    type="text"
+                    placeholder="John Doe"
+                    aria-invalid={!!fieldErrors.name}
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) {
+                        setFieldErrors((prev) => ({ ...prev, name: null }));
+                      }
+                    }}
+                    required
+                  />
+                </InputGroup>
+                {fieldErrors.name && (
+                  <FieldDescription className="text-xs">
+                    {fieldErrors.name}
+                  </FieldDescription>
+                )}
               </Field>
-              <Field>
-                <FieldLabel htmlFor="reg-email">Email</FieldLabel>
-                <Input
-                  id="reg-email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+              <Field className="space-y-1.5" data-invalid={!!fieldErrors.email}>
+                <FieldLabel htmlFor="reg-email">Email address</FieldLabel>
+                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
+                  <InputGroupAddon align="inline-start">
+                    <Mail data-icon="inline-start" />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id="reg-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    aria-invalid={!!fieldErrors.email}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) {
+                        setFieldErrors((prev) => ({ ...prev, email: null }));
+                      }
+                    }}
+                    required
+                  />
+                </InputGroup>
+                {fieldErrors.email && (
+                  <FieldDescription className="text-xs">
+                    {fieldErrors.email}
+                  </FieldDescription>
+                )}
               </Field>
-              <Field>
+              <Field
+                className="space-y-1.5"
+                data-invalid={!!fieldErrors.password}
+              >
                 <FieldLabel htmlFor="reg-password">Password</FieldLabel>
-                <InputGroup>
+                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
+                  <InputGroupAddon align="inline-start">
+                    <Lock data-icon="inline-start" />
+                  </InputGroupAddon>
                   <InputGroupInput
                     id="reg-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
+                    placeholder="Enter Password"
+                    aria-invalid={!!fieldErrors.password}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (fieldErrors.password) {
+                        setFieldErrors((prev) => ({ ...prev, password: null }));
+                      }
+                    }}
                     required
                   />
                   <InputGroupAddon align="inline-end">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-8 p-0"
+                      className="size-8 p-0 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                       type="button"
                     >
                       {showPassword ? (
-                        <Eye data-icon="inline-end" className="text-muted-foreground" />
+                        <Eye data-icon="inline-start" />
                       ) : (
-                        <EyeOff data-icon="inline-end" className="text-muted-foreground" />
+                        <EyeOff data-icon="inline-start" />
                       )}
                     </Button>
                   </InputGroupAddon>
                 </InputGroup>
-              </Field>
-              {formError && (
-                <p className="text-sm text-destructive">{formError}</p>
-              )}
-              <Field>
-                <Button
-                  type="submit"
-                  className="shadow hover:shadow-none"
-                  disabled={submitting}
-                >
-                  {submitting ? "Creating account..." : "Sign Up"}
-                </Button>
-                <FieldDescription className="text-center">
-                  Already have an account? <Link to="/login">Log in</Link>
-                </FieldDescription>
-                {!inviteToken && (
-                  <FieldDescription className="text-center">
-                    Are you a teacher? Contact your department to get a
-                    registration link.
+                {fieldErrors.password && (
+                  <FieldDescription className="text-xs">
+                    {fieldErrors.password}
                   </FieldDescription>
                 )}
               </Field>
             </FieldGroup>
-          </form>
-        </CardContent>
+
+            <div className="flex flex-col gap-4">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full font-bold shadow-sm active:scale-95 transition-all h-10"
+                disabled={submitting}
+              >
+                {submitting && <Spinner data-icon="inline-start" />}
+                Sign up
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground md:text-sm">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="font-medium text-primary hover:underline underline-offset-4"
+                >
+                  Log in
+                </Link>
+              </p>
+
+              {!inviteToken && (
+                <p className="text-center text-xs text-muted-foreground italic">
+                  Are you a teacher? Contact your department for a link.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </form>
       </Card>
     </div>
   );

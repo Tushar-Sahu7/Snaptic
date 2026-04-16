@@ -318,7 +318,7 @@ export default function ClassDetailPage() {
           <div className="w-full">
             <div className="flex items-center justify-between w-full lg:w-auto gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="p-1.5 bg-accent/30 rounded-xl text-muted-foreground border shadow-xs shrink-0">
+                <span className="p-1.5 bg-accent/30 rounded-xl text-muted-foreground border shadow-sm shrink-0">
                   <ClassIcon name={classData.icon} className="size-6" />
                 </span>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight line-clamp-1">
@@ -429,14 +429,14 @@ export default function ClassDetailPage() {
                 return (
                   <div className="flex flex-col items-center w-full lg:w-auto">
                     <Button
-                      className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm w-full lg:w-auto"
+                      className="bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-sm w-full lg:w-auto font-semibold"
                       size="sm"
                       onClick={() => navigate(`/teacher/classes/${id}/attendance?origin=detail`)}
                     >
                       <Play className="size-4 mr-1.5" />
                       Resume Session
                     </Button>
-                    <span className="text-[10px] font-bold text-amber-600 mt-1 uppercase tracking-tighter">
+                    <span className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter">
                       Session in Progress
                     </span>
                   </div>
@@ -449,7 +449,7 @@ export default function ClassDetailPage() {
               return (
                 <div className="flex flex-col items-center w-full lg:w-auto">
                   <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition-all h-10 px-6 w-full lg:w-auto"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-all h-10 px-6 w-full lg:w-auto"
                     size="sm"
                     disabled={startingSession}
                     onClick={() => handleStartAttendance("detail")}
@@ -461,7 +461,7 @@ export default function ClassDetailPage() {
                     )}
                     {startingSession ? "Starting..." : "Take Attendance"}
                   </Button>
-                  <span className="text-[10px] font-bold text-emerald-600 mt-1 uppercase tracking-tighter">
+                  <span className="text-[10px] font-bold text-primary mt-1 uppercase tracking-tighter">
                     Live Now
                   </span>
                 </div>

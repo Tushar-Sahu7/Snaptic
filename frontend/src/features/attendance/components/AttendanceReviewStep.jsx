@@ -35,14 +35,14 @@ export default function ReviewStep({
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Present</span>
               <div className="flex items-center gap-2">
-                <div className="size-2 bg-emerald-500 rounded-full" />
+                <div className="size-2 bg-primary rounded-full" />
                 <span className="text-2xl font-black tabular-nums">{presentCount}</span>
               </div>
             </div>
             <div className="flex flex-col border-l pl-8">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Absent</span>
               <div className="flex items-center gap-2">
-                <div className="size-2 bg-red-500 rounded-full" />
+                <div className="size-2 bg-destructive rounded-full" />
                 <span className="text-2xl font-black tabular-nums">{absentCount}</span>
               </div>
             </div>
@@ -72,13 +72,13 @@ export default function ReviewStep({
             </TabsTrigger>
             <TabsTrigger 
               value="present" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent shadow-none h-full px-0 text-[11px] font-bold uppercase tracking-wider text-emerald-600"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent shadow-none h-full px-0 text-[11px] font-bold uppercase tracking-wider text-primary"
             >
               Confirmed
             </TabsTrigger>
             <TabsTrigger 
               value="absent" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:bg-transparent shadow-none h-full px-0 text-[11px] font-bold uppercase tracking-wider text-red-600"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent shadow-none h-full px-0 text-[11px] font-bold uppercase tracking-wider text-destructive"
             >
               Unconfirmed
             </TabsTrigger>
@@ -130,7 +130,7 @@ function StudentRow({ student, state, onMark }) {
     <div className={cn(
       "flex items-center justify-between p-3 rounded-2xl border transition-all",
       isPresent 
-        ? "bg-emerald-50/30 border-emerald-100 hover:border-emerald-200" 
+        ? "bg-primary/5 border-primary/20 hover:border-primary/30" 
         : "bg-background border-muted hover:border-muted-foreground/30"
     )}>
       <div className="flex items-center gap-4">
@@ -162,7 +162,7 @@ function StudentRow({ student, state, onMark }) {
           variant={isPresent ? "ghost" : "destructive"}
           className={cn(
             "h-9 px-3 rounded-xl font-bold transition-all",
-            isPresent ? "text-muted-foreground hover:bg-red-50 hover:text-red-600" : "bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/10"
+            isPresent ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive" : "bg-destructive hover:bg-destructive/90 shadow-sm"
           )}
           onClick={() => onMark(sId, "absent")}
         >
@@ -174,7 +174,7 @@ function StudentRow({ student, state, onMark }) {
           variant={isPresent ? "default" : "outline"}
           className={cn(
             "h-9 px-3 rounded-xl font-bold transition-all",
-            isPresent ? "bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/10" : "border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+            isPresent ? "bg-primary hover:bg-primary/90 shadow-sm" : "border-primary text-primary hover:bg-primary/10"
           )}
           onClick={() => onMark(sId, "present")}
         >

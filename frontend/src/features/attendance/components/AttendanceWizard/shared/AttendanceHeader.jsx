@@ -3,20 +3,23 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 
-export const AttendanceHeader = ({ 
-  session, 
-  isFinalized, 
-  timeLeft, 
+export const AttendanceHeader = ({
+  session,
+  isFinalized,
+  timeLeft,
   endTimeFormatted,
-  step, 
-  onTerminate 
+  step,
+  onTerminate,
 }) => {
   const navigate = useNavigate();
 
-  const statusLabel = isFinalized ? "Finalized" 
-    : session?.status === "submitted" ? "Submitted"
-    : session ? "Live" 
-    : "Not Started";
+  const statusLabel = isFinalized
+    ? "Finalized"
+    : session?.status === "submitted"
+      ? "Submitted"
+      : session
+        ? "Live"
+        : "Not Started";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
@@ -50,10 +53,10 @@ export const AttendanceHeader = ({
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
             <Clock className="size-3" />
-            {!session 
-              ? "Select a class" 
-              : isFinalized 
-                ? "Session Locked" 
+            {!session
+              ? "Select a class"
+              : isFinalized
+                ? "Session Locked"
                 : `Live until ${endTimeFormatted || "..."} (${timeLeft})`}
           </div>
         </div>

@@ -43,7 +43,9 @@ export const ScanStep = ({
       <div className="hidden sm:flex flex-col sm:flex-row items-stretch sm:items-center justify-between sm:bg-card p-2 sm:p-6 rounded-3xl sm:border sm:shadow-sm transition-all sm:hover:shadow-md gap-6 sm:gap-0">
         <div className="flex flex-row sm:flex-col items-center sm:items-start justify-between sm:justify-center px-4 sm:px-0 sm:ml-2">
           <div className="flex flex-col">
-            <span className="text-sm sm:text-base font-black tracking-tight leading-none mb-1">Detection</span>
+            <span className="text-sm sm:text-base font-black tracking-tight leading-none mb-1">
+              Detection
+            </span>
             <span className="inline text-[10px] text-muted-foreground font-black uppercase tracking-widest opacity-60">
               Real-time scanner active
             </span>

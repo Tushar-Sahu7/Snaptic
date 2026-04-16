@@ -1,5 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -10,14 +10,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const TerminateDialog = ({ 
-  open, 
-  onOpenChange, 
+export const TerminateDialog = ({
+  open,
+  onOpenChange,
   onConfirm,
   title = "Terminate Session?",
   description = "This will permanently delete all records for this session. This action cannot be undone.",
   actionLabel = "Yes, Terminate Session",
-  cancelLabel = "Wait, Keep Session"
+  cancelLabel = "Wait, Keep Session",
 }) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -32,7 +32,7 @@ export const TerminateDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col gap-2 mt-4 sm:mt-6">
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={onConfirm}
             className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground h-11 sm:h-12 font-black uppercase text-[10px] sm:text-xs tracking-widest w-full"
           >

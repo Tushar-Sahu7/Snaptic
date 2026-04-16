@@ -17,7 +17,22 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, LogOut, ChevronUp, Sun, Moon, Laptop, Palette, User, X, Copy, ScanFace, Check, LayoutDashboard, UserCheck } from "lucide-react";
+import {
+  BookOpen,
+  LogOut,
+  ChevronUp,
+  Sun,
+  Moon,
+  Laptop,
+  Palette,
+  User,
+  X,
+  Copy,
+  ScanFace,
+  Check,
+  LayoutDashboard,
+  UserCheck,
+} from "lucide-react";
 import { InviteTeacherModal } from "@/components/InviteTeacherModal";
 import { useTheme } from "@/components/ThemeProvider";
 import {
@@ -36,7 +51,11 @@ import {
 const teacherNavItems = [
   { title: "Dashboard", url: "/teacher/dashboard", icon: LayoutDashboard },
   { title: "My Classes", url: "/teacher/classes", icon: BookOpen },
-  { title: "Take Attendance", url: "/teacher/take-attendance", icon: UserCheck },
+  {
+    title: "Take Attendance",
+    url: "/teacher/take-attendance",
+    icon: UserCheck,
+  },
   { title: "Face ID", url: "/teacher/face-enrollment", icon: ScanFace },
 ];
 
@@ -72,9 +91,7 @@ export function AppSidebar() {
     }
   }
 
-  const initials = user?.email
-    ? user.email.slice(0, 2).toUpperCase()
-    : "U";
+  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
 
   return (
     <Sidebar collapsible="icon">
@@ -125,25 +142,30 @@ export function AppSidebar() {
       <SidebarFooter>
         {isTeacher && showInviteBox && (
           <div className="relative mx-3 my-2 rounded-xl border bg-card p-4 shadow-sm group-data-[collapsible=icon]:hidden">
-            <button 
+            <button
               onClick={() => setShowInviteBox(false)}
               className="absolute right-2 top-2 rounded-md p-1 opacity-70 hover:bg-accent hover:opacity-100"
             >
               <X className="size-3.5" />
             </button>
             <div className="mb-3 space-y-1 pr-6">
-              <h4 className="text-sm font-semibold leading-none tracking-tight">Expand the network</h4>
+              <h4 className="text-sm font-semibold leading-none tracking-tight">
+                Expand the network
+              </h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Invite teachers to Snaptic to manage their classes and take attendance.
+                Invite teachers to Snaptic to manage their classes and take
+                attendance.
               </p>
             </div>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="w-full text-xs font-semibold h-8"
               onClick={handleInvite}
               disabled={generatingInvite}
             >
-              {generatingInvite ? "Generating..." : (
+              {generatingInvite ? (
+                "Generating..."
+              ) : (
                 <>
                   <Copy data-icon="inline-start" className="size-3.5 mr-1" />
                   Copy Invite Link
@@ -161,8 +183,15 @@ export function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <div className="relative inline-block shrink-0">
-                    <Avatar className={`size-8 rounded-lg ${user?.faceEnrolled ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-sidebar" : ""}`}>
-                      {user?.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
+                    <Avatar
+                      className={`size-8 rounded-lg ${user?.faceEnrolled ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-sidebar" : ""}`}
+                    >
+                      {user?.avatar && (
+                        <AvatarImage
+                          src={user.avatar}
+                          className="object-cover"
+                        />
+                      )}
                       <AvatarFallback className="rounded-lg">
                         {initials}
                       </AvatarFallback>
@@ -210,7 +239,9 @@ export function AppSidebar() {
                   </DropdownMenuSub>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <NavLink to={isTeacher ? "/teacher/profile" : "/student/profile"}>
+                    <NavLink
+                      to={isTeacher ? "/teacher/profile" : "/student/profile"}
+                    >
                       <User className="mr-2 h-4 w-4" />
                       <span>View Profile</span>
                     </NavLink>
@@ -226,10 +257,10 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
 
-      <InviteTeacherModal 
-        open={inviteModalOpen} 
-        onOpenChange={setInviteModalOpen} 
-        inviteLink={currentInviteLink} 
+      <InviteTeacherModal
+        open={inviteModalOpen}
+        onOpenChange={setInviteModalOpen}
+        inviteLink={currentInviteLink}
       />
       <SidebarRail />
     </Sidebar>
