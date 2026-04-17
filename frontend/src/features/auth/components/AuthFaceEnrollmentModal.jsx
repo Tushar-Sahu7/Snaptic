@@ -333,27 +333,28 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={stage !== "enrolling"}
-        className="sm:max-w-md p-0 gap-0 overflow-hidden max-h-[90dvh] flex flex-col bg-card border-border shadow-lg rounded-xl"
       >
+
         {/* Header */}
-        <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="text-heading-3">Enroll your face</DialogTitle>
-          <DialogDescription className="text-body text-muted-foreground">
+        <DialogHeader>
+          <DialogTitle>Enroll your face</DialogTitle>
+          <DialogDescription>
             Position your face inside the guide. Capture happens automatically.
           </DialogDescription>
         </DialogHeader>
 
+
         {/* Camera / Preview Area */}
-        <div className="relative w-full bg-neutral-950 aspect-3/4 sm:aspect-4/3 overflow-hidden">
-          {/* Loading State */}
+        <div>
           {stage === "loading" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-neutral-950/95 z-10 transition-opacity">
-              <Loader2 className="size-10 text-brand-500 animate-spin" />
-              <p className="text-neutral-200 text-caption-bold text-center px-6">
+            <div>
+              <Loader2 />
+              <p>
                 {guide}
               </p>
             </div>
           )}
+
 
           {/* Live Camera Feed */}
           <video
@@ -361,113 +362,103 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
             autoPlay
             playsInline
             muted
-            className={cn(
-              "absolute inset-0 w-full h-full object-cover",
-              stage === "camera" ? "block" : "hidden"
-            )}
             style={{ transform: "scaleX(-1)" }}
           />
+
 
           {/* Face Landmarks Overlay */}
           <canvas
             ref={overlayCanvasRef}
-            className={cn(
-              "absolute inset-0 w-full h-full object-cover pointer-events-none z-10",
-              stage === "camera" ? "block" : "hidden"
-            )}
             style={{ transform: "scaleX(-1)" }}
           />
+
 
           {/* Captured Image Preview */}
           {(stage === "captured" || stage === "enrolling" || stage === "done") && capturedImage && (
             <img
               src={capturedImage}
               alt="Captured face"
-              className="absolute inset-0 w-full h-full object-cover"
             />
           )}
 
+
           {/* Done check overlay */}
           {stage === "done" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/40 z-10">
-              <div className="size-20 rounded-full bg-success-500 flex items-center justify-center animate-in zoom-in-50 duration-normal">
-                <CheckCircle2 className="size-10 text-white" />
+            <div>
+              <div>
+                <CheckCircle2 />
               </div>
             </div>
           )}
 
+
           {/* Enrolling overlay */}
           {stage === "enrolling" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/40 z-10">
-              <Loader2 className="size-10 text-white animate-spin" />
+            <div>
+              <Loader2 />
             </div>
           )}
+
 
           {/* Live indicator */}
           {stage === "camera" && (
-            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-neutral-950/80 px-2.5 py-1 rounded-md z-20 border border-neutral-800">
-              <div className="size-2 rounded-full bg-error-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider">Live</span>
+            <div>
+              <div />
+              <span>Live</span>
             </div>
           )}
 
+
           {/* Guide message bar */}
           {(stage === "camera" || stage === "loading") && (
-            <div className={cn(
-              "absolute bottom-0 inset-x-0 py-3 px-4 text-center z-20 transition-all duration-feedback",
-              qualityOk
-                ? "bg-success-600/90 text-white"
-                : "bg-neutral-900/90 text-white"
-            )}>
-              <p className="text-body-bold flex items-center justify-center gap-2">
-                {!qualityOk && stage === "camera" && <AlertTriangle className="size-4 text-warning-400 shrink-0" />}
-                {qualityOk && <CheckCircle2 className="size-4 shrink-0" />}
+            <div>
+              <p>
+                {!qualityOk && stage === "camera" && <AlertTriangle />}
+                {qualityOk && <CheckCircle2 />}
                 {guide}
               </p>
             </div>
           )}
         </div>
 
+
         {/* Action Buttons */}
-        <div className="p-6 space-y-3">
-          {/* Camera active ? manual capture */}
+        <div>
           {stage === "camera" && (
             <Button
               size="lg"
-              className="w-full text-body-bold rounded-md active:scale-97 duration-feedback"
               onClick={() => captureFrame()}
             >
-              <Camera className="size-5 mr-2" />
+              <Camera />
               Capture Now
             </Button>
           )}
 
+
           {/* Captured ? confirm or retake */}
           {stage === "captured" && (
-            <div className="flex gap-3">
+            <div>
               <Button
                 variant="outline"
                 size="lg"
-                className="flex-1 text-body-bold rounded-md"
                 onClick={handleRetake}
               >
-                <RefreshCcw className="size-4 mr-2" />
+                <RefreshCcw />
                 Retake
               </Button>
               <Button
                 size="lg"
-                className="flex-1 text-body-bold rounded-md bg-success-600 hover:bg-success-700 text-white"
                 onClick={handleConfirmEnroll}
                 disabled={enrolling}
               >
                 {enrolling ? (
                   <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    <Loader2 />
                     Enrolling…
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="size-4 mr-2" />
+                    <CheckCircle2 />
                     Confirm
                   </>
                 )}
@@ -475,18 +466,20 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
             </div>
           )}
 
+
           {/* Done */}
           {stage === "done" && (
-            <div className="text-center py-2">
-              <p className="text-body-bold text-success-600 dark:text-success-400">
+            <div>
+              <p>
                 ✓ Face enrolled successfully
               </p>
             </div>
           )}
         </div>
 
+
         {/* Hidden canvas for capture */}
-        <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={canvasRef} />
       </DialogContent>
     </Dialog>
   );

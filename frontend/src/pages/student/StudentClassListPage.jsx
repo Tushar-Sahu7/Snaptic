@@ -10,7 +10,6 @@ import {
   EmptyMedia,
   EmptyTitle,
   EmptyDescription,
-  EmptyContent,
 } from "@/components/ui/empty";
 import { BookOpen, GraduationCap } from "lucide-react";
 
@@ -45,24 +44,29 @@ export default function StudentClassListPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <Skeleton className="h-10 w-48" />
+      <div>
+
+        <div>
+          <Skeleton />
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <Skeleton className="h-10 w-full max-w-md" />
+
+        <div>
+          <Skeleton />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div>
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-64 rounded-xl" />
+            <Skeleton key={i} />
           ))}
         </div>
       </div>
+
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div>
+
       <ClassListHeader
         tab={tab}
         onTabChange={setTab}
@@ -74,7 +78,8 @@ export default function StudentClassListPage() {
       />
 
       {filteredClasses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+
           {filteredClasses.map((cls) => (
             <ClassCard
               key={cls._id}
@@ -82,19 +87,21 @@ export default function StudentClassListPage() {
               onClick={() => navigate(`/student/classes/${cls._id}`)}
               footer={
                 cls.teacher?.name && (
-                  <div className="flex items-center gap-2 text-[13px]">
-                    <GraduationCap className="size-3.5 text-muted-foreground" />
-                    <span className="font-bold text-foreground/90">
+                  <div>
+                    <GraduationCap />
+                    <span>
                       by {cls.teacher.name}
                     </span>
                   </div>
+
                 )
               }
             />
           ))}
         </div>
       ) : (
-        <Empty className="min-h-[400px]">
+        <Empty>
+
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <BookOpen />

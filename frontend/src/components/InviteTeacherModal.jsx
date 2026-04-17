@@ -71,42 +71,41 @@ export function InviteTeacherModal({ open, onOpenChange, inviteLink }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md gap-6">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-xl">Invite a Colleague</DialogTitle>
+          <DialogTitle>Invite a Colleague</DialogTitle>
           <DialogDescription>
             Share this link with other teachers to invite them to Snaptic.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 w-full max-w-full overflow-hidden">
-          <InputGroup className="bg-secondary/30 border-none h-11 min-w-0 w-full overflow-hidden">
-            <div className="flex-1 min-w-0 h-full flex items-center px-3 overflow-hidden">
-              <span className="truncate text-sm font-medium text-muted-foreground select-all w-full block">
+        <div>
+          <InputGroup>
+            <div>
+              <span>
                 {inviteLink}
               </span>
             </div>
-            <InputGroupAddon align="inline-end" className="p-0 pr-1">
+            <InputGroupAddon align="inline-end">
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-8 p-0 hover:bg-background/50 transition-colors"
                 onClick={handleCopy}
               >
                 {copied ? (
-                  <Check className="size-4 text-emerald-500" />
+                  <Check />
                 ) : (
-                  <Copy className="size-4" />
+                  <Copy />
                 )}
               </Button>
             </InputGroupAddon>
           </InputGroup>
 
-          <div className="flex flex-col gap-3">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <div>
+            <span>
               Share via
             </span>
-            <div className="flex items-center gap-2">
+            <div>
               {shareLinks.map((link) => (
                 <Tooltip key={link.name}>
                   <TooltipTrigger asChild>
@@ -114,9 +113,8 @@ export function InviteTeacherModal({ open, onOpenChange, inviteLink }) {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`flex h-10 flex-1 items-center justify-center rounded-lg border bg-card transition-all ${link.color}`}
                     >
-                      <link.icon className="size-5" />
+                      <link.icon />
                     </a>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
@@ -129,10 +127,9 @@ export function InviteTeacherModal({ open, onOpenChange, inviteLink }) {
                   <TooltipTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-10 grow"
                       onClick={handleNativeShare}
                     >
-                      <Share2 className="size-4 mr-2" />
+                      <Share2 />
                       More
                     </Button>
                   </TooltipTrigger>
@@ -145,10 +142,9 @@ export function InviteTeacherModal({ open, onOpenChange, inviteLink }) {
           </div>
         </div>
 
-        <div className="pt-2">
+        <div>
           <Button
             variant="secondary"
-            className="w-full h-11 rounded-xl font-semibold shadow-sm active:scale-[0.98] transition-all"
             onClick={() => onOpenChange(false)}
           >
             Done

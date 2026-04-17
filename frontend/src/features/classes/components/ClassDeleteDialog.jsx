@@ -45,21 +45,21 @@ export default function DeleteClassDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false}>
-        <DialogHeader className="items-center text-center">
+        <DialogHeader>
           <DialogTitle>
             Delete "{classData?.name}"?
           </DialogTitle>
+
           <DialogDescription>
             This will remove the class and all students from the roster. 
             You can temporarily undo this action from the notification toast.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="flex-col gap-2">
+        <DialogFooter>
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 
             disabled={deleting}
-            className="w-full sm:w-auto rounded-xl"
           >
             Cancel
           </Button>
@@ -67,11 +67,11 @@ export default function DeleteClassDialog({
             variant="destructive"
             onClick={handleDelete}
             disabled={deleting}
-            className="w-full sm:w-auto rounded-xl"
           >
             {deleting ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );

@@ -2,12 +2,16 @@ import AuthFaceEnrollmentCard from "@/features/auth/components/AuthFaceEnrollmen
 
 export default function FaceEnrollmentPage() {
   return (
-    <div className="flex flex-col gap-6 max-w-xl w-full pb-10">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-black tracking-tight">Face Enrollment</h1>
-        <p className="text-sm text-muted-foreground">
+    <div>
+
+      <div>
+
+        <h1>Face Enrollment</h1>
+
+        <p>
           Register your face for biometric attendance verification.
         </p>
+
       </div>
       <AuthFaceEnrollmentCard />
     </div>

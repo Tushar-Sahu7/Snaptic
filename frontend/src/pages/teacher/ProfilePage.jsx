@@ -120,73 +120,74 @@ export default function ProfilePage() {
     : user?.email?.slice(0, 2).toUpperCase() || "U";
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl pb-10">
+    <div>
+
       {/* Teacher Identity Hero Card */}
-      <Card className="rounded-3xl border shadow-md bg-card overflow-hidden">
-        <CardContent className="relative pt-8 px-6 sm:px-10 pb-10">
-          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6">
-            <div className="relative inline-block shrink-0">
-              <Avatar className={`size-24 sm:size-32 border-2 border-background shadow-xl ${user?.faceEnrolled ? "ring-2 ring-emerald-500 ring-offset-4 ring-offset-background" : "ring-1 ring-border"}`}>
-                {user?.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
-                <AvatarFallback className="text-3xl font-black bg-primary/5 text-primary">
+      <Card>
+        <CardContent>
+          <div>
+            <div>
+              <Avatar>
+                {user?.avatar && <AvatarImage src={user.avatar} />}
+                <AvatarFallback>
                   {initials}
                 </AvatarFallback>
               </Avatar>
               {user?.faceEnrolled && (
-                <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-emerald-500 rounded-full border-[3px] border-background shadow-sm text-white">
-                  <Check className="size-4 sm:size-5" />
+                <div>
+                  <Check />
                 </div>
               )}
             </div>
-            <div className="flex-1 space-y-2 text-center sm:text-left pt-2 pb-2">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <h1 className="text-3xl font-black tracking-tight">{user?.name}</h1>
+            <div>
+              <div>
+                <h1>{user?.name}</h1>
                 {user?.faceEnrolled && (
-                  <Badge variant="secondary" className="w-fit mx-auto sm:mx-0 bg-primary/10 text-primary border-primary/20 gap-1.5 py-1 px-3">
-                    <Verified className="size-3" />
+                  <Badge variant="secondary">
+                    <Verified />
                     Verified {user?.role === "teacher" ? "Teacher" : "Student"}
                   </Badge>
                 )}
               </div>
-              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-x-6 gap-y-2 text-muted-foreground text-sm font-medium">
-                <span className="flex items-center gap-1.5">
-                  <Mail className="size-4" />
+              <div>
+                <span>
+                  <Mail />
                   {user?.email}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="size-4" />
+                <span>
+                  <Calendar />
                   Joined {user?.joinedAt ? new Date(user.joinedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'N/A'}
                 </span>
                 <button 
                   onClick={handleCopyId}
-                  className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer group"
                 >
-                  <Fingerprint className="size-4" />
+                  <Fingerprint />
                   ID: {user?._id?.slice(-8)}...
-                  {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3 transition-transform" />}
+                  {copied ? <Check /> : <Copy />}
                 </button>
               </div>
             </div>
           </div>
 
-          <Separator className="my-8" />
+          <Separator />
+
 
           {/* Activity Metrics Grouped */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2">
-            <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/70">
+          <div>
+            <div>
+              <p>
                 {user?.role === "teacher" ? "Total Classes" : "Enrolled Classes"}
               </p>
-              <div className="flex items-center gap-2 text-2xl font-bold">
-                < BookOpen className="size-5 text-primary/60" />
+              <div>
+                < BookOpen />
                 {user?.classCount || 0}
               </div>
             </div>
             {user?.role === "teacher" && (
-              <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/70">Students Managed</p>
-                <div className="flex items-center gap-2 text-2xl font-bold">
-                  <Users className="size-5 text-primary/60" />
+              <div>
+                <p>Students Managed</p>
+                <div>
+                  <Users />
                   {user?.studentCount || 0}
                 </div>
               </div>
@@ -195,40 +196,42 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+
       {/* Operational Forms */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
+      <div>
         {/* Personal Details Card */}
-        <Card className="rounded-2xl border shadow-sm h-full">
-          <CardHeader className="pb-3 px-6 sm:px-8">
-            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-2">
-              <User className="size-5" />
+        <Card>
+          <CardHeader>
+            <div>
+              <User />
             </div>
             <CardTitle>Personal Details</CardTitle>
             <CardDescription>Update your display name and contact information.</CardDescription>
           </CardHeader>
-          <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
-            <Separator className="mb-6 opacity-60" />
-            <FieldGroup className="space-y-6">
-              <form onSubmit={handleProfileUpdate} className="space-y-6">
+          <CardContent>
+            <Separator />
+            <FieldGroup>
+              <form onSubmit={handleProfileUpdate}>
+
                 <Field>
-                  <FieldLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground opacity-70">Register Email (Static)</FieldLabel>
-                  <InputGroup className="h-12 bg-muted/30 border-transparent">
+                  <FieldLabel>Register Email (Static)</FieldLabel>
+                  <InputGroup>
                     <InputGroupAddon align="inline-start">
-                      <Mail data-icon="inline-start" />
+                      <Mail />
                     </InputGroupAddon>
                     <InputGroupInput
                       value={user?.email || ""}
                       disabled
-                      className="cursor-not-allowed font-semibold"
                     />
                   </InputGroup>
                 </Field>
 
+
                 <Field>
-                  <FieldLabel htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground opacity-70">Full Display Name</FieldLabel>
-                  <InputGroup className="h-12 bg-secondary/20 border-none transition-all">
+                  <FieldLabel htmlFor="name">Full Display Name</FieldLabel>
+                  <InputGroup>
                     <InputGroupAddon align="inline-start">
-                      <User data-icon="inline-start" />
+                      <User />
                     </InputGroupAddon>
                     <InputGroupInput
                       id="name"
@@ -236,42 +239,45 @@ export default function ProfilePage() {
                       onChange={(e) => setProfileName(e.target.value)}
                       placeholder="Enter your professional name"
                       required
-                      className="font-medium"
                     />
                   </InputGroup>
                 </Field>
 
-                <div className="pt-2">
-                  <Button type="submit" className="w-full h-12 rounded-xl text-md font-bold shadow-lg shadow-primary/10 transition-colors" disabled={updatingProfile || profileName === user?.name}>
-                    <Save data-icon="inline-start" />
+
+                <div>
+                  <Button type="submit" disabled={updatingProfile || profileName === user?.name}>
+                    <Save />
                     {updatingProfile ? "Saving..." : "Update Details"}
                   </Button>
                 </div>
+
               </form>
             </FieldGroup>
           </CardContent>
         </Card>
 
         {/* Account Security Card */}
-        <Card className="rounded-2xl border shadow-sm h-full">
-          <CardHeader className="pb-3 px-6 sm:px-8">
-            <div className="size-10 rounded-xl bg-neutral-500/10 flex items-center justify-center mb-2 font-bold">
-              <ShieldCheck className="size-5" />
+        {/* Account Security Card */}
+        <Card>
+          <CardHeader>
+            <div>
+              <ShieldCheck />
             </div>
             <CardTitle>Account Security</CardTitle>
             <CardDescription>
               Protect your {user?.role === "teacher" ? "teacher" : "student"} portal with a regular password rotation.
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-6 sm:px-8 pb-6 sm:pb-8">
-             <Separator className="mb-6 opacity-60" />
-            <form onSubmit={handlePasswordChange} className="space-y-5">
-              <FieldGroup className="space-y-5">
+          <CardContent>
+             <Separator />
+            <form onSubmit={handlePasswordChange}>
+
+              <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="currentPassword">Current Security Password</FieldLabel>
-                  <InputGroup className="h-11 bg-secondary/10 border-none">
+                  <InputGroup>
                     <InputGroupAddon align="inline-start">
-                      <Lock data-icon="inline-start" />
+                      <Lock />
                     </InputGroupAddon>
                     <InputGroupInput
                       id="currentPassword"
@@ -284,19 +290,19 @@ export default function ProfilePage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 p-0"
                         onClick={() => setShowPasswords(p => ({...p, current: !p.current}))}
                       >
-                        {showPasswords.current ? <EyeOff data-icon="inline-end" /> : <Eye data-icon="inline-end" />}
+                        {showPasswords.current ? <EyeOff /> : <Eye />}
                       </Button>
                     </InputGroupAddon>
                   </InputGroup>
                 </Field>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div>
                   <Field>
                     <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
-                    <InputGroup className="h-11 bg-secondary/10 border-none">
+                    <InputGroup>
                       <InputGroupInput
                         id="newPassword"
                         type={showPasswords.new ? "text" : "password"}
@@ -308,18 +314,18 @@ export default function ProfilePage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8 p-0"
                           onClick={() => setShowPasswords(p => ({...p, new: !p.new}))}
                         >
-                          {showPasswords.new ? <EyeOff data-icon="inline-end" /> : <Eye data-icon="inline-end" />}
+                          {showPasswords.new ? <EyeOff /> : <Eye />}
                         </Button>
                       </InputGroupAddon>
                     </InputGroup>
                   </Field>
 
+
                   <Field>
                     <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
-                    <InputGroup className="h-11 bg-secondary/10 border-none">
+                    <InputGroup>
                       <InputGroupInput
                         id="confirmPassword"
                         type={showPasswords.confirm ? "text" : "password"}
@@ -331,10 +337,9 @@ export default function ProfilePage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8 p-0"
                           onClick={() => setShowPasswords(p => ({...p, confirm: !p.confirm}))}
                         >
-                          {showPasswords.confirm ? <EyeOff data-icon="inline-end" /> : <Eye data-icon="inline-end" />}
+                          {showPasswords.confirm ? <EyeOff /> : <Eye />}
                         </Button>
                       </InputGroupAddon>
                     </InputGroup>
@@ -342,26 +347,27 @@ export default function ProfilePage() {
                 </div>
               </FieldGroup>
 
-                <div className="pt-2 space-y-4">
+
+                <div>
                   {passwordError && (
-                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-xs font-semibold flex items-center gap-2">
-                       <ShieldCheck className="size-3.5" />
+                    <div>
+                       <ShieldCheck />
                        {passwordError}
                     </div>
                   )}
                   <Button 
                     type="submit" 
                     variant="secondary"
-                    className="w-full h-12 rounded-xl text-md font-bold bg-muted hover:bg-muted/80 transition-colors border-none"
                     disabled={changingPassword || !passwords.currentPassword || !passwords.newPassword}
                   >
-                    <KeyRound className="size-4 mr-2" />
+                    <KeyRound />
                     {changingPassword ? "Processing..." : "Secure Update"}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
+
         <AuthFaceEnrollmentCard />
         </div>
     </div>

@@ -1,11 +1,12 @@
 import { isWithinSchedule } from "@/lib/utils";
 import {
-  Scan,
-  Users,
-  ChevronRight,
+  ScanFace,
+  SquarePen,
+  Play,
   Clock,
   AlertCircle,
-  History
+  History,
+  Trash2
 } from "lucide-react";
 
 /**
@@ -24,7 +25,7 @@ export const useAttendanceAction = (cls, session) => {
   let primary = {
     label: "Take Attendance",
     mode: "auto",
-    icon: Scan,
+    icon: ScanFace,
     variant: "default",
     disabled: false,
     description: null
@@ -47,10 +48,16 @@ export const useAttendanceAction = (cls, session) => {
   else if (session?.status === "inProgress") {
     primary = {
       label: "Resume Session",
-      mode: "auto",
-      icon: Scan,
+      mode: "manual",
+      icon: Play,
       variant: "default",
       disabled: false
+    };
+    secondary = {
+      mode: "reset",
+      icon: Trash2,
+      variant: "outline",
+      iconOnly: true
     };
   }
   // 3. Submitted Session Logic
@@ -59,9 +66,15 @@ export const useAttendanceAction = (cls, session) => {
       primary = {
         label: "Update Records",
         mode: "manual",
-        icon: ChevronRight,
+        icon: SquarePen,
         variant: "default",
         disabled: false
+      };
+      secondary = {
+        mode: "reset",
+        icon: Trash2,
+        variant: "outline",
+        iconOnly: true
       };
     } else {
       primary = {
@@ -76,16 +89,16 @@ export const useAttendanceAction = (cls, session) => {
   // 4. Not Started Logic
   else if (onTime) {
     primary = {
-      label: "Recognition",
+      label: "Face AI",
       mode: "auto",
-      icon: Scan,
+      icon: ScanFace,
       variant: "default",
       disabled: false
     };
     secondary = {
       label: "Manual Entry",
       mode: "manual",
-      icon: Users,
+      icon: SquarePen,
       variant: "outline",
       disabled: false
     };

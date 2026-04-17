@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+
 
 const RECOGNITION_THRESHOLD = 0.6;
 
@@ -113,14 +113,16 @@ export default function RecognitionStep({
         });
 
       labeledDescriptorsRef.current = descriptors;
-      
+
       if (descriptors.length > 0) {
         faceMatcherRef.current = new faceapi.FaceMatcher(
           descriptors,
           RECOGNITION_THRESHOLD,
         );
         if (!isDataSynced) setIsDataSynced(true);
-        console.log(`[Biometric] Pool updated: ${descriptors.length} identities remaining.`);
+        console.log(
+          `[Biometric] Pool updated: ${descriptors.length} identities remaining.`,
+        );
       } else {
         faceMatcherRef.current = null;
         if (!isDataSynced) setIsDataSynced(true);
@@ -279,10 +281,9 @@ export default function RecognitionStep({
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full overflow-hidden flex flex-col bg-black lg:rounded-3xl"
     >
+
       <div
-        className="relative flex-1 touch-none overflow-hidden"
         onTouchStart={(e) =>
           e.touches.length === 2 &&
           (prevPinchDistRef.current = Math.hypot(
@@ -293,131 +294,135 @@ export default function RecognitionStep({
         onTouchMove={handleTouchMove}
         onTouchEnd={() => (prevPinchDistRef.current = null)}
       >
+
         <video
           ref={videoRef}
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
         />
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10 opacity-60"
         />
 
-        <div className="absolute inset-0 pointer-events-none z-20">
+
+        <div>
           {activeMatches.map((match) => (
             <div
               key={match.id}
-              className="absolute transition-all duration-200"
               style={{
                 left: `${(match.box.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
                 top: `${(match.box.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
                 width: `${(match.box.width / (videoRef.current?.videoWidth || 1)) * 100}%`,
               }}
             >
-              <div className="relative -top-14 left-1/2 -translate-x-1/2 flex flex-col items-center animate-in zoom-in-75 duration-300">
-                <div className="bg-background/80 backdrop-blur-xl border-2 border-primary rounded-2xl p-1.5 shadow-2xl flex items-center gap-2 min-w-[120px]">
-                  <Avatar className="size-7 border-2 border-background shadow-sm shrink-0">
-                    <AvatarImage src={match.avatar} className="object-cover" />
-                    <AvatarFallback className="text-[10px] bg-primary/20 text-primary font-black">
+              <div>
+                <div>
+
+                  <Avatar>
+                    {student?.avatar && <AvatarImage src={match.avatar} />}
+                    <AvatarFallback>
                       {match.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col min-w-0 pr-1">
-                    <span className="text-[10px] font-black text-foreground truncate uppercase leading-none mb-1">
+
+                  <div>
+                    <span>
                       {match.name}
                     </span>
-                    <div className="flex items-center gap-1">
-                      <div className="size-1 bg-primary rounded-full" />
-                      <span className="text-[8px] font-black text-primary uppercase">
+                    <div>
+                      <div />
+                      <span>
                         Recognized
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="w-0.5 h-4 bg-primary/40 mt-1" />
+                <div />
               </div>
             </div>
           ))}
         </div>
 
-        <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-30">
-          <div className="flex justify-between items-start pointer-events-auto">
-            <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
-              <div className="size-1.5 bg-primary rounded-full" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-white/90">
+
+        <div>
+          <div>
+            <div>
+              <div />
+              <span>
                 Biometric Live
               </span>
             </div>
-            <div className="flex gap-3">
+
+            <div>
               <Button
                 variant="secondary"
                 size="icon"
-                className="size-11 rounded-2xl bg-black/40 border border-white/10 text-white"
                 onClick={() =>
                   setFacingMode((f) => (f === "user" ? "environment" : "user"))
                 }
               >
-                <RefreshCw className="size-5" />
+                <RefreshCw />
               </Button>
+
               <Button
                 variant="secondary"
                 size="icon"
-                className="size-11 rounded-2xl bg-black/40 border border-white/10 text-white"
                 onClick={toggleFullscreen}
               >
                 {isFullscreen ? (
-                  <Minimize2 className="size-5" />
+                  <Minimize2 />
                 ) : (
-                  <Maximize2 className="size-5" />
+                  <Maximize2 />
                 )}
               </Button>
             </div>
           </div>
 
-          <div className="flex flex-col gap-6 items-center">
+
+          <div>
             {capabilities?.zoom && (
-              <div className="bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-[9px] font-black text-white/60 uppercase tracking-widest">
+              <div>
                 Zoom {zoom.toFixed(1)}x
               </div>
             )}
-            <div className="w-full flex items-center justify-between pointer-events-auto">
-              <div className="flex flex-col">
-                <span className="text-3xl font-black text-white shadow-black drop-shadow-lg tabular-nums">
+            <div>
+              <div>
+                <span>
                   {markedCount}
-                  <span className="text-xs opacity-40 ml-1">
+                  <span>
                     /{students.length}
                   </span>
                 </span>
-                <span className="text-[9px] font-black text-white/50 uppercase tracking-widest">
+                <span>
                   Marked Present
                 </span>
               </div>
+
               <Button
                 onClick={onComplete}
-                className="rounded-2xl h-14 px-8 font-black text-xs uppercase tracking-[0.2em] shadow-2xl bg-white text-black hover:bg-white/90 active:scale-95 transition-all"
               >
-                Finish Scan <ChevronRight className="size-4 ml-2" />
+                Finish Scan <ChevronRight />
               </Button>
+
             </div>
           </div>
         </div>
 
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-50 p-12">
-            <div className="w-full max-w-[280px] space-y-8 animate-in fade-in duration-700">
-              <div className="flex justify-center mb-4">
-                <div className="size-16 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <div>
+            <div>
+              <div>
+                <div>
                   {!isDataSynced ? (
-                    <Database className="size-8 text-primary" />
+                    <Database />
                   ) : (
-                    <Cpu className="size-8 text-primary" />
+                    <Cpu />
                   )}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+              <div>
+                <div>
                   <span>
                     {!isDataSynced
                       ? "Syncing Biometrics"
@@ -427,17 +432,17 @@ export default function RecognitionStep({
                 </div>
                 <Progress
                   value={initializationProgress}
-                  className="h-1.5 bg-white/5"
                 />
               </div>
 
-              <div className="text-center space-y-1.5 pt-4">
-                <p className="text-[11px] font-black text-white uppercase tracking-[0.3em]">
+
+              <div>
+                <p>
                   {!isDataSynced
                     ? "Downloading Class Profiles"
                     : "Biometric Engine Ready"}
                 </p>
-                <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <p>
                   {!isDataSynced
                     ? "Establishing Secure Data Link..."
                     : "Sensor Calibration Complete"}
@@ -448,5 +453,6 @@ export default function RecognitionStep({
         )}
       </div>
     </div>
+
   );
 }

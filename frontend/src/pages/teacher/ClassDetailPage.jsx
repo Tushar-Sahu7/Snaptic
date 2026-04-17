@@ -13,7 +13,10 @@ import {
   searchStudents,
   updateClass,
 } from "@/features/classes/api/classes.api";
-import { fetchTodaySession, startAttendanceSession } from "@/features/attendance/api/attendance.api";
+import {
+  fetchTodaySession,
+  startAttendanceSession,
+} from "@/features/attendance/api/attendance.api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +44,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ClassIcon } from "@/components/shared/ClassIcon";
 import ClassFormModal from "@/features/classes/components/ClassFormModal";
@@ -76,8 +79,6 @@ export default function ClassDetailPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
 
-
-
   // Bulk Remove state
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [removingBulk, setRemovingBulk] = useState(false);
@@ -111,7 +112,9 @@ export default function ClassDetailPage() {
       await startAttendanceSession(id);
       navigate(`/teacher/classes/${id}/attendance?origin=${origin}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to start attendance session");
+      toast.error(
+        err.response?.data?.message || "Failed to start attendance session",
+      );
     } finally {
       setStartingSession(false);
     }
@@ -274,7 +277,7 @@ export default function ClassDetailPage() {
               }
             },
           },
-        }
+        },
       );
     } catch (err) {
       toast.error("Failed to update class status");
@@ -289,20 +292,20 @@ export default function ClassDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3 w-full lg:w-auto">
-            <Skeleton className="size-12 rounded-xl shrink-0" />
-            <div className="space-y-2 flex-1 lg:flex-none">
-              <Skeleton className="h-8 w-2/3 lg:w-48" />
-              <Skeleton className="h-4 w-1/3 lg:w-32" />
+      <div>
+        <div>
+          <div>
+            <Skeleton />
+            <div>
+              <Skeleton />
+              <Skeleton />
             </div>
           </div>
-          <div className="flex items-center w-full lg:w-auto">
-            <Skeleton className="h-10 w-full lg:w-40" />
+          <div>
+            <Skeleton />
           </div>
         </div>
-        <Skeleton className="h-10 w-full" />
+        <Skeleton />
         <ClassStudentDataTable data={[]} loading={true} />
       </div>
     );
@@ -311,196 +314,224 @@ export default function ClassDetailPage() {
   if (!classData) return null;
 
   return (
-    <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
+    <div>
+
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3 w-full lg:w-auto">
-          <div className="w-full">
-            <div className="flex items-center justify-between w-full lg:w-auto gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="p-1.5 bg-accent/30 rounded-xl text-muted-foreground border shadow-sm shrink-0">
-                  <ClassIcon name={classData.icon} className="size-6" />
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span>
+                  <ClassIcon name={classData.icon} />
                 </span>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight line-clamp-1">
+                <h1>
                   {classData.name}
                 </h1>
                 {classData.status === "archived" && (
-                  <Badge variant="secondary" className="shrink-0">Archived</Badge>
+                  <Badge variant="secondary">
+                    Archived
+                  </Badge>
                 )}
               </div>
-              
-              <div className="flex lg:hidden shrink-0">
+
+
+              <div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 -mr-3">
-                      <MoreVertical className="size-5" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                    >
+                      <MoreVertical />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+
+                  <DropdownMenuContent align="end">
                     {classData.status !== "archived" && (
                       <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                        <Pencil className="size-4 mr-2" />
+                        <Pencil />
                         Edit Class
                       </DropdownMenuItem>
                     )}
+
                     <DropdownMenuItem onClick={handleToggleArchive}>
                       {classData.status === "archived" ? (
                         <>
-                          <ArchiveRestore className="size-4 mr-2" />
+                          <ArchiveRestore />
                           Unarchive Class
                         </>
                       ) : (
                         <>
-                          <Archive className="size-4 mr-2" />
+                          <Archive />
                           Archive Class
                         </>
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    <DropdownMenuItem
                       onClick={() => setDeleteOpen(true)}
                     >
-                      <Trash2 className="size-4 mr-2" />
+                      <Trash2 />
                       Delete Class
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
+
             {(classData.schedule?.days?.length > 0 ||
               classData.schedule?.day) && (
-              <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mt-1.5">
+              <p>
                 <ClassScheduleDisplay schedule={classData.schedule} />
               </p>
             )}
+
           </div>
         </div>
-        <div className="flex items-center gap-4 w-full lg:w-auto">
-          {classData.students?.length > 0 && classData.status !== "archived" && (() => {
-            const { onTime, message } = isWithinSchedule(classData.schedule);
-            
-            // PRIORITY 1: Existing Session Today
-            if (activeSession) {
-              const isFinalized = activeSession.status === "finalized";
-              const isSubmitted = activeSession.status === "submitted";
-              
-              // Case 1: Session is locked (Finalized or Submitted & Time Lapsed)
-              if (isFinalized || (isSubmitted && !onTime)) {
+        <div>
+
+          {classData.students?.length > 0 &&
+            classData.status !== "archived" &&
+            (() => {
+              const { onTime, message } = isWithinSchedule(classData.schedule);
+
+              // PRIORITY 1: Existing Session Today
+              if (activeSession) {
+                const isFinalized = activeSession.status === "finalized";
+                const isSubmitted = activeSession.status === "submitted";
+
+                // Case 1: Session is locked (Finalized or Submitted & Time Lapsed)
+                if (isFinalized || (isSubmitted && !onTime)) {
+                  return (
+                    <div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          navigate(
+                            `/teacher/attendance/${activeSession._id}/summary`,
+                          )
+                        }
+                      >
+                        <Eye />
+                        View Summary
+                      </Button>
+                      <span>
+                        Attendance {isFinalized ? "Finalized" : "Closed"}
+                      </span>
+                    </div>
+                  );
+                }
+
+
+                // Case 2: Session is Submitted but still On-Time (Allow Updates)
+                if (isSubmitted && onTime) {
+                  return (
+                    <div>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          navigate(
+                            `/teacher/classes/${id}/attendance?manual=true&origin=detail`,
+                          )
+                        }
+                      >
+                        <Pencil />
+                        Update Attendance
+                      </Button>
+                      <span>
+                        Live Submission
+                      </span>
+                    </div>
+                  );
+                }
+
+
+                // Case 3: In-Progress Session
+                if (activeSession.status === "inProgress") {
+                  return (
+                    <div>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          navigate(
+                            `/teacher/classes/${id}/attendance?origin=detail`,
+                          )
+                        }
+                      >
+                        <Play />
+                        Resume Session
+                      </Button>
+                      <span>
+                        Session in Progress
+                      </span>
+                    </div>
+                  );
+                }
+
+              }
+
+              // PRIORITY 2: On-Time (New Session)
+              if (onTime) {
                 return (
-                  <div className="flex flex-col items-center w-full lg:w-auto">
+                  <div>
                     <Button
-                      variant="secondary"
-                      className="bg-accent/10 hover:bg-accent/20 border text-foreground w-full lg:w-auto"
                       size="sm"
-                      onClick={() => navigate(`/teacher/attendance/${activeSession._id}/summary`)}
+                      disabled={startingSession}
+                      onClick={() => handleStartAttendance("detail")}
                     >
-                      <Eye className="size-4 mr-1.5" />
-                      View Summary
+                      {startingSession ? (
+                        <Loader2 />
+                      ) : (
+                        <UserCheck />
+                      )}
+                      {startingSession ? "Starting..." : "Take Attendance"}
                     </Button>
-                    <span className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter">
-                      Attendance {isFinalized ? "Finalized" : "Closed"}
+                    <span>
+                      Live Now
                     </span>
                   </div>
                 );
               }
 
-              // Case 2: Session is Submitted but still On-Time (Allow Updates)
-              if (isSubmitted && onTime) {
-                return (
-                  <div className="flex flex-col items-center w-full lg:w-auto">
-                    <Button
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm w-full lg:w-auto"
-                      size="sm"
-                      onClick={() => navigate(`/teacher/classes/${id}/attendance?manual=true&origin=detail`)}
-                    >
-                      <Pencil className="size-4 mr-1.5" />
-                      Update Attendance
-                    </Button>
-                    <span className="text-[10px] font-bold text-primary mt-1 uppercase tracking-tighter">
-                      Live Submission
-                    </span>
-                  </div>
-                );
-              }
 
-              // Case 3: In-Progress Session
-              if (activeSession.status === "inProgress") {
-                return (
-                  <div className="flex flex-col items-center w-full lg:w-auto">
-                    <Button
-                      className="bg-secondary hover:bg-secondary/80 text-secondary-foreground shadow-sm w-full lg:w-auto font-semibold"
-                      size="sm"
-                      onClick={() => navigate(`/teacher/classes/${id}/attendance?origin=detail`)}
-                    >
-                      <Play className="size-4 mr-1.5" />
-                      Resume Session
-                    </Button>
-                    <span className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter">
-                      Session in Progress
-                    </span>
-                  </div>
-                );
-              }
-            }
-
-            // PRIORITY 2: On-Time (New Session)
-            if (onTime) {
+              // PRIORITY 3: Off-Schedule
               return (
-                <div className="flex flex-col items-center w-full lg:w-auto">
+                <div>
                   <Button
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-all h-10 px-6 w-full lg:w-auto"
                     size="sm"
-                    disabled={startingSession}
-                    onClick={() => handleStartAttendance("detail")}
+                    disabled
                   >
-                    {startingSession ? (
-                      <Loader2 className="size-4 mr-1.5 animate-spin" />
-                    ) : (
-                      <UserCheck className="size-4 mr-1.5" />
-                    )}
-                    {startingSession ? "Starting..." : "Take Attendance"}
+                    <UserCheck />
+                    Take Attendance
                   </Button>
-                  <span className="text-[10px] font-bold text-primary mt-1 uppercase tracking-tighter">
-                    Live Now
+                  <span>
+                    {message}
                   </span>
                 </div>
               );
-            }
+            })()}
 
-            // PRIORITY 3: Off-Schedule
-            return (
-              <div className="flex flex-col items-center w-full lg:w-auto">
-                <Button
-                  className="bg-muted text-muted-foreground cursor-not-allowed w-full lg:w-auto"
-                  size="sm"
-                  disabled
-                >
-                  <UserCheck className="size-4 mr-1.5" />
-                  Take Attendance
-                </Button>
-                <span className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter underline decoration-dotted underline-offset-2">
-                  {message}
-                </span>
-              </div>
-            );
-          })()}
- 
-          <div className="hidden lg:flex items-center gap-3">
+          <div>
             {classData.status !== "archived" && (
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="size-4 mr-1.5" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil />
                 Edit
               </Button>
             )}
             <Button variant="secondary" size="sm" onClick={handleToggleArchive}>
               {classData.status === "archived" ? (
                 <>
-                  <ArchiveRestore data-icon="inline-start" /> Unarchive
+                  <ArchiveRestore /> Unarchive
                 </>
               ) : (
                 <>
-                  <Archive data-icon="inline-start" /> Archive
+                  <Archive /> Archive
                 </>
               )}
             </Button>
@@ -509,170 +540,164 @@ export default function ClassDetailPage() {
               size="sm"
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 data-icon="inline-start" />
+              <Trash2 />
               Delete
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="w-full space-y-6">
-          {/* Add Student Section */}
-          {classData.status !== "archived" && (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <UserPlus className="size-5" />
-                Add Student
-              </h2>
+      <div>
+        {/* Add Student Section */}
+        {classData.status !== "archived" && (
+          <div>
+            <h2>
+              <UserPlus />
+              Add Student
+            </h2>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    ref={searchInputRef}
-                    placeholder="Search by name…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="pl-9 pr-9"
-                  />
-                  {query.length > 0 && (
-                    <button
-                      onClick={() => setQuery("")}
-                      className="absolute right-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-                <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                  Import Students
-                </Button>
+            <div>
+              <div>
+                <Search />
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Search by name…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                {query.length > 0 && (
+                  <button
+                    onClick={() => setQuery("")}
+                  >
+                    <X />
+                  </button>
+                )}
               </div>
+              <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                Import Students
+              </Button>
+            </div>
 
-              {/* Search Results */}
-              {debouncedQuery.trim().length > 0 && (
-                <div className="animate-in fade-in slide-in-from-top-1 mt-6">
-                  {searchResults.length > 0 ? (
-                    <ClassStudentDataTable
-                      data={searchResults}
-                      loading={searching}
-                      hideToolbar={true}
-                      syncUrl={false}
-                      actionsRender={(student) => {
-                        const alreadyAdded = isStudentInClass(student._id);
-                        if (alreadyAdded) {
-                          return (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border-none"
-                              onClick={() => handleRemoveStudent(student)}
-                            >
-                              Remove
-                            </Button>
-                          );
-                        }
+            {/* Search Results */}
+            {debouncedQuery.trim().length > 0 && (
+              <div>
+                {searchResults.length > 0 ? (
+                  <ClassStudentDataTable
+                    data={searchResults}
+                    loading={searching}
+                    hideToolbar={true}
+                    syncUrl={false}
+                    actionsRender={(student) => {
+                      const alreadyAdded = isStudentInClass(student._id);
+                      if (alreadyAdded) {
                         return (
                           <Button
                             size="sm"
-                            onClick={() => handleAddStudent(student)}
+                            variant="destructive"
+                            onClick={() => handleRemoveStudent(student)}
                           >
-                            Add
+                            Remove
                           </Button>
                         );
-                      }}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-8 text-center border rounded-xl bg-accent/30 border-dashed">
-                      <p className="text-sm font-semibold text-foreground">
-                        No students found
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1 max-w-md">
-                        No matching records for "{debouncedQuery}". Ensure the
-                        student has registered for a Snaptic account to appear in
-                        the directory.
-                      </p>
-                    </div>
-                  )}
-                </div>
-            )}
-            </div>
-          )}
-
-          {classData.status !== "archived" && <Separator />}
-
-          {/* Enrolled Students */}
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-lg font-semibold">
-                Enrolled Students ({classData.students?.length || 0})
-              </h2>
-            </div>
-
-            {classData.students?.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No students in this class yet. Use the search above to add
-                students.
-              </p>
-            ) : (
-              <ClassStudentDataTable
-                data={classData.students}
-                loading={loading}
-                selectable
-                onSelectionChange={setSelectedStudents}
-                toolbarActions={
-                  selectedStudents.length > 0 && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleBulkRemove}
-                      disabled={removingBulk}
-                    >
-                      <Trash2 className="size-4 mr-1.5" />
-                      Remove Selected ({selectedStudents.length})
-                    </Button>
-                  )
-                }
-                actionsRender={(student) => (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      >
-                        <MoreVertical className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem
-                        onClick={() => toast.info("View Profile: Coming soon")}
-                      >
-                        <User className="size-4 mr-2" />
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          toast.info("View Attendance: Coming soon")
-                        }
-                      >
-                        <CalendarDays className="size-4 mr-2" />
-                        View Attendance
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                        onClick={() => handleRemoveStudent(student)}
-                      >
-                        <Trash2 className="size-4 mr-2" />
-                        Remove from Class
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      }
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddStudent(student)}
+                        >
+                          Add
+                        </Button>
+                      );
+                    }}
+                  />
+                ) : (
+                  <div>
+                    <p>
+                      No students found
+                    </p>
+                    <p>
+                      No matching records for "{debouncedQuery}". Ensure the
+                      student has registered for a Snaptic account to appear in
+                      the directory.
+                    </p>
+                  </div>
                 )}
-              />
+              </div>
             )}
           </div>
+        )}
+
+        {classData.status !== "archived" && <Separator />}
+
+        {/* Enrolled Students */}
+        <div>
+          <div>
+            <h2>
+              Enrolled Students ({classData.students?.length || 0})
+            </h2>
+          </div>
+
+          {classData.students?.length === 0 ? (
+            <p>
+              No students in this class yet. Use the search above to add
+              students.
+            </p>
+          ) : (
+            <ClassStudentDataTable
+              data={classData.students}
+              loading={loading}
+              selectable
+              onSelectionChange={setSelectedStudents}
+              toolbarActions={
+                selectedStudents.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkRemove}
+                    disabled={removingBulk}
+                  >
+                    <Trash2 />
+                    Remove Selected ({selectedStudents.length})
+                  </Button>
+                )
+              }
+              actionsRender={(student) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                    >
+                      <MoreVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => toast.info("View Profile: Coming soon")}
+                    >
+                      <User />
+                      View Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => toast.info("View Attendance: Coming soon")}
+                    >
+                      <CalendarDays />
+                      View Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleRemoveStudent(student)}
+                    >
+                      <Trash2 />
+                      Remove from Class
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            />
+          )}
+        </div>
       </div>
+
 
       {/* Edit Modal */}
       <ClassFormModal

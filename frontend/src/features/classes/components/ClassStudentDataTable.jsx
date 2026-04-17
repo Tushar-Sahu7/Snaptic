@@ -149,34 +149,35 @@ export default function StudentDataTable({
         header: ({ column }) => (
           <Button
             variant="ghost"
-            className="-ml-4 h-8"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Student
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            <ArrowUpDown />
           </Button>
         ),
+
         cell: ({ row }) => {
           const student = row.original;
           return (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="relative inline-block shrink-0">
-                <Avatar className={`size-10 sm:size-12 ${student?.faceEnrolled ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-background" : ""}`}>
-                  {student?.avatar && <AvatarImage src={student.avatar} className="object-cover" />}
-                  <AvatarFallback className="text-[10px] sm:text-sm font-semibold">
+            <div>
+              <div>
+                <Avatar>
+                  {student?.avatar && <AvatarImage src={student.avatar} />}
+                  <AvatarFallback>
                     {getInitials(student.name)}
                   </AvatarFallback>
                 </Avatar>
                 {student?.faceEnrolled && (
-                  <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 rounded-full border-2 border-background text-white shadow-sm">
-                    <Check className="size-3 sm:size-3.5" />
+                  <div>
+                    <Check />
                   </div>
                 )}
               </div>
-              <span className="text-xs sm:text-sm font-medium">{student.name}</span>
+              <span>{student.name}</span>
             </div>
           );
         },
+
       },
 
       {
@@ -187,20 +188,19 @@ export default function StudentDataTable({
           return isEnrolled ? (
             <Badge
               variant="secondary"
-              className="bg-muted text-foreground border-transparent whitespace-nowrap"
             >
-              <CheckCircle className="size-3 mr-1 text-emerald-500" />
+              <CheckCircle />
               Face Enrolled
             </Badge>
           ) : (
             <Badge
               variant="outline"
-              className="text-muted-foreground border-dashed whitespace-nowrap"
             >
-              <XCircle className="size-3 mr-1 text-muted-foreground/50" />
+              <XCircle />
               Not Enrolled
             </Badge>
           );
+
         },
       },
       {
@@ -219,7 +219,7 @@ export default function StudentDataTable({
       finalCols.unshift({
         id: "select",
         header: ({ table }) => (
-          <div className="pl-3 sm:pl-5 pr-2">
+          <div>
             <Checkbox
               checked={
                 table.getIsAllPageRowsSelected() ||
@@ -233,7 +233,7 @@ export default function StudentDataTable({
           </div>
         ),
         cell: ({ row }) => (
-          <div className="pl-3 sm:pl-5 pr-2">
+          <div>
             <Checkbox
               checked={row.getIsSelected()}
               onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -271,10 +271,10 @@ export default function StudentDataTable({
   });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div>
       {!hideToolbar && (
-        <div className="flex items-center gap-3">
-          <InputGroup className="w-full max-w-sm h-8 bg-secondary/20 border-none">
+        <div>
+          <InputGroup>
           <InputGroupAddon align="inline-start">
             <Search data-icon="inline-start" />
           </InputGroupAddon>
@@ -286,16 +286,17 @@ export default function StudentDataTable({
           />
         </InputGroup>
 
+
         {toolbarActions && (
-          <div className="flex flex-wrap items-center gap-2">{toolbarActions}</div>
+          <div>{toolbarActions}</div>
         )}
 
-        <div className="ml-auto hidden sm:block">
+        <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 Columns{" "}
-                <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
+                <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -306,7 +307,6 @@ export default function StudentDataTable({
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
-                      className="capitalize"
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
@@ -324,10 +324,12 @@ export default function StudentDataTable({
       </div>
       )}
 
-      <div className="relative w-full">
-        <div className="border rounded-2xl bg-card overflow-hidden">
-          <Table className="[&_td]:p-3 sm:[&_td]:p-4 [&_th]:p-3 sm:[&_th]:p-4">
-            <TableHeader className="bg-muted/30">
+
+      <div>
+        <div>
+          <Table>
+            <TableHeader>
+
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -335,11 +337,8 @@ export default function StudentDataTable({
                   return (
                     <TableHead
                       key={header.id}
-                      className={cn(
-                        "font-semibold text-muted-foreground",
-                        isFaceStatus && "hidden md:table-cell"
-                      )}
                     >
+
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -358,7 +357,7 @@ export default function StudentDataTable({
                 <TableRow key={i}>
                   {columns.map((_, j) => (
                     <TableCell key={j}>
-                      <Skeleton className="h-5 w-full rounded-md opacity-70" />
+                      <Skeleton />
                     </TableCell>
                   ))}
                 </TableRow>
@@ -367,14 +366,13 @@ export default function StudentDataTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="hover:bg-muted/30 transition-colors"
                 >
+
                   {row.getVisibleCells().map((cell) => {
                     const isFaceStatus = cell.column.id === "faceEnrolled";
                     return (
                       <TableCell 
                         key={cell.id}
-                        className={cn(isFaceStatus && "hidden md:table-cell")}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -389,7 +387,6 @@ export default function StudentDataTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground italic"
                 >
                   No students found.
                 </TableCell>
@@ -400,23 +397,23 @@ export default function StudentDataTable({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-1">
-        <div className="text-sm text-muted-foreground order-2 sm:order-1 whitespace-nowrap text-center sm:text-left w-full sm:w-auto">
+      <div>
+        <div>
           {selectable
             ? `${table.getFilteredSelectedRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} row(s) selected.`
             : `Showing ${table.getRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} row(s).`}
         </div>
 
-        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-4 sm:gap-x-6 gap-y-2 order-1 sm:order-2 w-full sm:w-auto">
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <p className="text-xs sm:text-sm font-medium">Rows per page</p>
+        <div>
+          <div>
+            <p>Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
                 table.setPageSize(Number(value));
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger>
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
@@ -431,17 +428,14 @@ export default function StudentDataTable({
             </Select>
           </div>
 
-          <Pagination className="justify-end w-auto mx-0">
+
+          <Pagination>
+
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className={
-                    !table.getCanPreviousPage()
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
                 />
               </PaginationItem>
 
@@ -482,7 +476,6 @@ export default function StudentDataTable({
                       <PaginationLink
                         onClick={() => table.setPageIndex(page - 1)}
                         isActive={currentPage === page}
-                        className="cursor-pointer"
                       >
                         {page}
                       </PaginationLink>
@@ -495,11 +488,6 @@ export default function StudentDataTable({
                 <PaginationNext
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className={
-                    !table.getCanNextPage()
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
                 />
               </PaginationItem>
             </PaginationContent>

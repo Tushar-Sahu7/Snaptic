@@ -1,9 +1,16 @@
 import { memo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, CalendarDays, MapPin, Clock } from "lucide-react";
 import { ClassIcon } from "./ClassIcon";
-import { formatDays, format12Hour, formatRoom, cn } from "@/lib/utils";
+import { formatDays, format12Hour, formatRoom } from "@/lib/utils";
+
 
 const calculateDuration = (start, end) => {
   if (!start || !end) return "";
@@ -47,53 +54,36 @@ const ClassCard = memo(
 
     return (
       <Card
-        className={cn(
-          "group relative cursor-pointer transition-all border-2 rounded-3xl overflow-hidden shadow-xs hover:shadow-lg bg-card active:scale-[0.98]",
-          variant === "highlight"
-            ? "border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-50/5"
-            : "hover:border-primary/40",
-          isArchived && "opacity-80 grayscale-[0.2]",
-          className,
-        )}
+        className={className}
         onClick={() => onClick?.(cls._id)}
       >
-        <CardContent className="px-5 py-3.5 h-full flex flex-col">
+
+        <CardContent>
+
           {/* Header Section */}
-          <div className="flex items-start justify-between mb-4 gap-2">
-            <div className="flex items-center gap-4 min-w-0">
-              <div
-                className={cn(
-                  "size-10 rounded-xl flex items-center justify-center border shadow-xs shrink-0 transition-transform group-hover:scale-105",
-                  variant === "highlight"
-                    ? "bg-emerald-500 text-white border-emerald-400"
-                    : "bg-accent text-accent-foreground",
-                  isArchived && "opacity-70",
-                )}
-              >
-                <ClassIcon name={cls.icon} className="size-5" />
+          <div>
+            <div>
+              <div>
+
+                <ClassIcon name={cls.icon} />
               </div>
 
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3
-                    className={cn(
-                      "font-bold text-base leading-tight truncate",
-                      isArchived && "text-muted-foreground",
-                    )}
-                  >
+              <div>
+                <div>
+                  <h3>
+
                     {cls.name}
                   </h3>
                   {isArchived && (
-                    <Badge
-                      variant="outline"
-                      className="rounded-full px-2 py-0 font-black text-[8px] uppercase tracking-wider text-muted-foreground border-muted-foreground/20 bg-muted/20 shrink-0"
-                    >
+                    <Badge variant="outline">
                       Archived
                     </Badge>
+
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground mt-0.5">
-                  <MapPin className="size-2.5" />
+                <div>
+                  <MapPin />
+
                   <span className="truncate">
                     {cls.schedule?.room
                       ? formatRoom(cls.schedule.room)
@@ -104,21 +94,21 @@ const ClassCard = memo(
             </div>
 
             <div
-              className="flex items-center gap-2 shrink-0"
               onClick={(e) => e.stopPropagation()}
-              aria-label="Class management actions"
             >
+
               {badge}
               {actions}
             </div>
           </div>
 
           {/* Schedule & Stats Section */}
-          <div className="space-y-1.5 flex-1">
-            <div className="flex items-center gap-2 text-[13px]">
-              <Clock className="size-3.5 text-muted-foreground" />
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-bold text-foreground/90">
+          <div>
+            <div>
+              <Clock />
+              <div>
+                <span>
+
                   {cls.schedule?.startTime
                     ? format12Hour(cls.schedule.startTime)
                     : "--"}{" "}
@@ -128,40 +118,40 @@ const ClassCard = memo(
                     : "--"}
                 </span>
                 {duration && (
-                  <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">
+                  <span>
                     ({duration})
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-[13px]">
-              <CalendarDays className="size-3.5 text-muted-foreground" />
-              <span className="font-bold text-foreground/90 truncate">
+            <div>
+              <CalendarDays />
+              <span>
+
                 {cls.schedule?.days?.length > 0
                   ? formatDays(cls.schedule.days)
                   : "No days set"}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-[13px]">
-              <Users className="size-3.5 text-muted-foreground" />
-              <span className="font-bold text-foreground/90">
+            <div>
+              <Users />
+              <span>
                 {cls.studentCount || cls.studentIds?.length || 0} Students
                 Enrolled
               </span>
             </div>
           </div>
 
-          {/* Footer Section */}
           {footer && (
             <div
-              className="mt-4 pt-4 border-t border-dashed"
               onClick={(e) => e.stopPropagation()}
             >
               {footer}
             </div>
           )}
+
         </CardContent>
       </Card>
     );

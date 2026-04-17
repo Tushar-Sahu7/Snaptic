@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
 import {
@@ -24,9 +26,10 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { Badge } from "@/components/ui/badge";
 import validator from "validator";
 
-export default function RegisterForm({ className, ...props }) {
+export default function RegisterForm({ ...props }) {
   const { register } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -68,7 +71,6 @@ export default function RegisterForm({ className, ...props }) {
       );
     } catch (err) {
       const message = err.response?.data?.message || "Registration failed";
-      // Intelligent fallback for field mapping
       if (message.toLowerCase().includes("email")) {
         setFieldErrors({ email: message });
       } else {
@@ -80,36 +82,28 @@ export default function RegisterForm({ className, ...props }) {
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="bg-transparent border-none shadow-none ring-0 sm:bg-card sm:border-border sm:shadow-sm sm:ring-1">
-        <form onSubmit={handleSubmit}>
-          <CardHeader className="space-y-1.5 p-6 px-0 pt-0 text-center sm:px-6 sm:pt-6">
-            {inviteToken && (
-              <div className="mb-4 rounded-xl border border-primary/10 bg-accent/5 p-4 text-left">
-                <p className="text-sm font-bold text-primary">
-                  🎉 You're invited as a Teacher
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Create your account to start managing classes.
-                </p>
-              </div>
-            )}
-            <CardTitle className="text-xl font-bold tracking-tight md:text-2xl">
-              Create an account
-            </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              Enter your details to get started with Snaptic
-            </CardDescription>
-          </CardHeader>
+    <div {...props}>
+      <Card className="bg-transparent ring-0 md:bg-card md:ring-1 md:ring-foreground/10">
+        <CardHeader className="px-1 md:px-4">
+          {inviteToken && (
+            <Badge variant="secondary" className="col-span-full self-start">
+              🎉 You&apos;re invited as a Teacher
+            </Badge>
+          )}
+          <CardTitle>Create an account</CardTitle>
+          <CardDescription>
+            {inviteToken
+              ? "Create your account to start managing classes."
+              : "Enter your details to get started with Snaptic"}
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent className="flex flex-col gap-6 p-6 px-1 pt-0 sm:px-6">
-            <FieldGroup className="gap-6">
-              <Field className="space-y-1.5" data-invalid={!!fieldErrors.name}>
+        <CardContent className="px-1 md:px-4">
+          <form id="register-form" onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field data-invalid={!!fieldErrors.name}>
                 <FieldLabel htmlFor="name">Full name</FieldLabel>
-                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
-                  <InputGroupAddon align="inline-start">
-                    <User data-icon="inline-start" />
-                  </InputGroupAddon>
+                <InputGroup>
                   <InputGroupInput
                     id="name"
                     type="text"
@@ -124,19 +118,18 @@ export default function RegisterForm({ className, ...props }) {
                     }}
                     required
                   />
+                  <InputGroupAddon>
+                    <User />
+                  </InputGroupAddon>
                 </InputGroup>
                 {fieldErrors.name && (
-                  <FieldDescription className="text-xs">
-                    {fieldErrors.name}
-                  </FieldDescription>
+                  <FieldDescription>{fieldErrors.name}</FieldDescription>
                 )}
               </Field>
-              <Field className="space-y-1.5" data-invalid={!!fieldErrors.email}>
+
+              <Field data-invalid={!!fieldErrors.email}>
                 <FieldLabel htmlFor="reg-email">Email address</FieldLabel>
-                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
-                  <InputGroupAddon align="inline-start">
-                    <Mail data-icon="inline-start" />
-                  </InputGroupAddon>
+                <InputGroup>
                   <InputGroupInput
                     id="reg-email"
                     type="email"
@@ -151,89 +144,84 @@ export default function RegisterForm({ className, ...props }) {
                     }}
                     required
                   />
+                  <InputGroupAddon>
+                    <Mail />
+                  </InputGroupAddon>
                 </InputGroup>
                 {fieldErrors.email && (
-                  <FieldDescription className="text-xs">
-                    {fieldErrors.email}
-                  </FieldDescription>
+                  <FieldDescription>{fieldErrors.email}</FieldDescription>
                 )}
               </Field>
-              <Field
-                className="space-y-1.5"
-                data-invalid={!!fieldErrors.password}
-              >
+
+              <Field data-invalid={!!fieldErrors.password}>
                 <FieldLabel htmlFor="reg-password">Password</FieldLabel>
-                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
-                  <InputGroupAddon align="inline-start">
-                    <Lock data-icon="inline-start" />
-                  </InputGroupAddon>
+                <InputGroup>
                   <InputGroupInput
                     id="reg-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter Password"
+                    placeholder="Enter password"
                     aria-invalid={!!fieldErrors.password}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (fieldErrors.password) {
-                        setFieldErrors((prev) => ({ ...prev, password: null }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          password: null,
+                        }));
                       }
                     }}
                     required
                   />
+                  <InputGroupAddon>
+                    <Lock />
+                  </InputGroupAddon>
                   <InputGroupAddon align="inline-end">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 p-0 text-muted-foreground hover:text-foreground"
+                    <InputGroupButton
+                      size="icon-xs"
                       onClick={() => setShowPassword(!showPassword)}
                       type="button"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
-                      {showPassword ? (
-                        <Eye data-icon="inline-start" />
-                      ) : (
-                        <EyeOff data-icon="inline-start" />
-                      )}
-                    </Button>
+                      {showPassword ? <Eye /> : <EyeOff />}
+                    </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>
                 {fieldErrors.password && (
-                  <FieldDescription className="text-xs">
-                    {fieldErrors.password}
-                  </FieldDescription>
+                  <FieldDescription>{fieldErrors.password}</FieldDescription>
                 )}
               </Field>
             </FieldGroup>
+          </form>
+        </CardContent>
 
-            <div className="flex flex-col gap-4">
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full font-bold shadow-sm active:scale-95 transition-all h-10"
-                disabled={submitting}
-              >
-                {submitting && <Spinner data-icon="inline-start" />}
-                Sign up
-              </Button>
-
-              <p className="text-center text-xs text-muted-foreground md:text-sm">
-                Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="font-medium text-primary hover:underline underline-offset-4"
-                >
-                  Log in
-                </Link>
-              </p>
-
-              {!inviteToken && (
-                <p className="text-center text-xs text-muted-foreground italic">
-                  Are you a teacher? Contact your department for a link.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </form>
+        <CardFooter className="flex-col gap-2 border-t-0 bg-transparent px-1 md:border-t md:bg-muted/50 md:px-4">
+          <Button
+            type="submit"
+            form="register-form"
+            className="w-full"
+            disabled={submitting}
+          >
+            {submitting && <Spinner data-icon="inline-start" />}
+            Sign up
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-foreground underline underline-offset-4"
+            >
+              Log in
+            </Link>
+          </p>
+          {!inviteToken && (
+            <p className="text-center text-xs text-muted-foreground">
+              Are you a teacher? Contact your department for a link.
+            </p>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );

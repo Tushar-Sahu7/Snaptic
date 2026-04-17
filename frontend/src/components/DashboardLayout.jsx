@@ -81,18 +81,21 @@ export default function DashboardLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex flex-col min-h-screen">
-        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 transition-all">
+      <SidebarInset>
+        <header>
           <Breadcrumb>
+
             <BreadcrumbList>
               <BreadcrumbItem>
-                <SidebarTrigger className="-ml-1" />
+                <SidebarTrigger />
               </BreadcrumbItem>
+
               
               {crumbs.map((crumb, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem className="hidden md:block">
+                <div key={idx}>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+
                     {crumb.isCurrent ? (
                       <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                     ) : (
@@ -106,25 +109,27 @@ export default function DashboardLayout() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div>
+
             {isTeacher && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-8 gap-1.5 text-xs font-semibold px-3"
                 onClick={handleInvite}
                 disabled={generatingInvite}
               >
-                <UserPlus className="size-3.5" />
+                <UserPlus />
                 {generatingInvite ? "Generating..." : "Invite"}
               </Button>
             )}
+
           </div>
         </header>
-        <div className="flex-1 p-0 sm:p-4 md:p-6">
+        <div>
           <Outlet context={{ setDynamicLabel }} />
         </div>
       </SidebarInset>
+
 
       <InviteTeacherModal 
         open={inviteModalOpen} 

@@ -1,9 +1,4 @@
-import { 
-  Plus, 
-  Search, 
-  ArchiveRestore, 
-  Trash2 
-} from "lucide-react";
+import { Plus, Search, ArchiveRestore, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -11,7 +6,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+
 
 export default function ClassListHeader({
   tab,
@@ -24,81 +19,70 @@ export default function ClassListHeader({
   canBulkAction,
   hasSearchQuery,
   hideTabs = false,
-  hideCreate = false
+  hideCreate = false,
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-balance">
+    <div>
+      <div>
+
+        <h1>
           {hideTabs ? "Enrolled Classes" : "My Classes"}
         </h1>
-        {!hideCreate && (
-          tab === "active" ? (
+
+        {!hideCreate &&
+          (tab === "active" ? (
             <Button onClick={onCreateClick}>
               <Plus data-icon="inline-start" />
               Create Class
             </Button>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button 
-                variant="outline" 
+            <div>
+              <Button
+                variant="outline"
                 size="sm"
-                className="h-9 font-semibold text-xs transition-all hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+
                 disabled={!canBulkAction}
                 onClick={onUnarchiveAll}
               >
-                <ArchiveRestore className="size-4 mr-2" />
+                <ArchiveRestore />
                 Unarchive All {hasSearchQuery && "Results"}
               </Button>
 
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 size="sm"
-                className="h-9 font-semibold text-xs"
+
                 disabled={!canBulkAction}
                 onClick={onDeleteAll}
               >
-                <Trash2 className="size-4 mr-2" />
+                <Trash2 />
                 Delete All {hasSearchQuery && "Results"}
               </Button>
             </div>
-          )
-        )}
+          ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
         {!hideTabs ? (
-          <div className="flex bg-secondary/40 p-1 rounded-xl w-full sm:w-auto">
+          <div>
             <button
               onClick={() => onTabChange("active")}
-              className={cn(
-                "flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-lg transition-all",
-                tab === "active"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
             >
               Active
             </button>
             <button
               onClick={() => onTabChange("archived")}
-              className={cn(
-                "flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-lg transition-all",
-                tab === "archived"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
             >
               Archived
             </button>
           </div>
         ) : (
-          <div className="sm:flex-1" />
+          <div />
         )}
 
-        <InputGroup className="max-w-md w-full sm:w-80">
+        <InputGroup>
           <InputGroupAddon>
-            <Search className="size-4 text-muted-foreground" />
+            <Search />
           </InputGroupAddon>
           <InputGroupInput
             placeholder="Search classes by name..."
@@ -107,6 +91,7 @@ export default function ClassListHeader({
           />
         </InputGroup>
       </div>
+
     </div>
   );
 }

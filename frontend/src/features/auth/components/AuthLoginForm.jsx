@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,11 +16,11 @@ import {
   FieldLabel,
   FieldDescription,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { useAuth } from "@/context/AuthContext";
@@ -27,7 +28,7 @@ import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 import validator from "validator";
 
-export default function LoginForm({ className, ...props }) {
+export default function LoginForm({ ...props }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,26 +79,21 @@ export default function LoginForm({ className, ...props }) {
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="bg-transparent border-none shadow-none ring-0 sm:bg-card sm:border-border sm:shadow-sm sm:ring-1">
-        <form onSubmit={handleSubmit}>
-          <CardHeader className="space-y-1.5 p-6 px-0 pt-0 text-center sm:px-6 sm:pt-6">
-            <CardTitle className="text-xl font-bold tracking-tight md:text-2xl">
-              Welcome back
-            </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              Login to your account to continue
-            </CardDescription>
-          </CardHeader>
+    <div {...props}>
+      <Card className="bg-transparent ring-0 md:bg-card md:ring-1 md:ring-foreground/10">
+        <CardHeader className="px-1 md:px-4">
+          <CardTitle>Welcome back</CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent className="flex flex-col gap-6 p-6 px-1 pt-0 sm:px-6">
-            <FieldGroup className="gap-6">
-              <Field className="space-y-1.5" data-invalid={!!fieldErrors.email}>
-                <FieldLabel htmlFor="email">Email address</FieldLabel>
-                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
-                  <InputGroupAddon align="inline-start">
-                    <Mail data-icon="inline-start" />
-                  </InputGroupAddon>
+        <CardContent className="px-1 md:px-4">
+          <form id="login-form" onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field data-invalid={!!fieldErrors.email}>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <InputGroup>
                   <InputGroupInput
                     id="email"
                     type="email"
@@ -112,94 +108,93 @@ export default function LoginForm({ className, ...props }) {
                     }}
                     required
                   />
+                  <InputGroupAddon>
+                    <Mail />
+                  </InputGroupAddon>
                 </InputGroup>
                 {fieldErrors.email && (
-                  <FieldDescription className="text-xs">
-                    {fieldErrors.email}
-                  </FieldDescription>
+                  <FieldDescription>{fieldErrors.email}</FieldDescription>
                 )}
               </Field>
-              <Field
-                className="space-y-1.5"
-                data-invalid={!!fieldErrors.password}
-              >
-                <div className="flex items-center justify-between">
+
+              <Field data-invalid={!!fieldErrors.password}>
+                <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <button
                     type="button"
+                    className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline"
                     onClick={() =>
                       toast.info("Contact your department for reset.")
                     }
-                    className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors"
                   >
                     Forgot password?
                   </button>
                 </div>
-                <InputGroup className="bg-background h-10 overflow-hidden [&_input]:autofill:rounded-md [&_input]:autofill:p-1 [&_input]:autofill:m-1">
-                  <InputGroupAddon align="inline-start">
-                    <Lock data-icon="inline-start" />
-                  </InputGroupAddon>
+                <InputGroup>
                   <InputGroupInput
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter Password"
+                    placeholder="Enter password"
                     aria-invalid={!!fieldErrors.password}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (fieldErrors.password) {
-                        setFieldErrors((prev) => ({ ...prev, password: null }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          password: null,
+                        }));
                       }
                     }}
                     required
                   />
+                  <InputGroupAddon>
+                    <Lock />
+                  </InputGroupAddon>
                   <InputGroupAddon align="inline-end">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 p-0 text-muted-foreground hover:text-foreground"
+                    <InputGroupButton
+                      size="icon-xs"
                       onClick={() => setShowPassword(!showPassword)}
                       type="button"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
-                      {showPassword ? (
-                        <Eye data-icon="inline-start" />
-                      ) : (
-                        <EyeOff data-icon="inline-start" />
-                      )}
-                    </Button>
+                      {showPassword ? <Eye /> : <EyeOff />}
+                    </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>
                 {fieldErrors.password && (
-                  <FieldDescription className="text-xs">
-                    {fieldErrors.password}
-                  </FieldDescription>
+                  <FieldDescription>{fieldErrors.password}</FieldDescription>
                 )}
               </Field>
             </FieldGroup>
+          </form>
+        </CardContent>
 
-            <div className="flex flex-col gap-4">
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full font-bold shadow-sm active:scale-95 transition-all h-10"
-                disabled={submitting}
-              >
-                {submitting && <Spinner data-icon="inline-start" />}
-                Login
-              </Button>
-
-              <p className="text-center text-xs text-muted-foreground md:text-sm">
-                Don't have an account?{" "}
-                <Link
-                  to="/register"
-                  className="font-medium text-primary hover:underline underline-offset-4"
-                >
-                  Sign up
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </form>
+        <CardFooter className="flex-col gap-2 border-t-0 bg-transparent px-1 md:border-t md:bg-muted/50 md:px-4">
+          <Button
+            type="submit"
+            form="login-form"
+            className="w-full"
+            disabled={submitting}
+          >
+            {submitting && <Spinner data-icon="inline-start" />}
+            Login
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              to="/register"
+              className="text-foreground underline underline-offset-4"
+            >
+              Sign up
+            </Link>
+          </p>
+          <p className="text-center text-xs text-muted-foreground">
+            Are you a teacher? Contact your department for a link.
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/input-group";
 import { Clock, Navigation, X, AlertCircle } from "lucide-react";
 import { cn, WEEKDAYS, format12Hour, formatRoom } from "@/lib/utils";
+
 import { ClassIcon, AVAILABLE_ICONS } from "@/components/shared/ClassIcon";
 
 // Helper to get nearest 15-min interval for current time
@@ -88,9 +89,9 @@ function TimeInput({ value, onChange, placeholder, intervals, id, formatTimeOpti
 
   return (
     <div
-      className="relative flex flex-1 h-full items-center z-10"
       ref={containerRef}
     >
+
       <input
         id={id}
         type="time"
@@ -99,11 +100,11 @@ function TimeInput({ value, onChange, placeholder, intervals, id, formatTimeOpti
         onFocus={() => setOpen(true)}
         onClick={() => setOpen(true)}
         placeholder={placeholder}
-        className="w-full h-full bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground selection:bg-accent selection:text-accent-foreground [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
         autoComplete="off"
       />
+
       {open && (
-        <div className="absolute top-[calc(100%+8px)] left-0 z-50 max-h-[180px] w-[190px] overflow-y-auto rounded-lg border bg-popover text-popover-foreground shadow-xl animate-in fade-in-0 zoom-in-95 scrollbar-thin">
+        <div>
           {intervals.map((t) => (
             <div
               key={t}
@@ -113,19 +114,17 @@ function TimeInput({ value, onChange, placeholder, intervals, id, formatTimeOpti
                 onChange(t);
                 setOpen(false);
               }}
-              className={cn(
-                "flex items-center justify-between cursor-pointer select-none px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                value === t ? "bg-accent text-accent-foreground font-semibold" : "font-medium"
-              )}
             >
+
               {formatTimeOption ? formatTimeOption(t) : <span>{format12Hour(t)}</span>}
             </div>
           ))}
           {intervals.length === 0 && (
-            <div className="px-3 py-2 text-sm text-muted-foreground italic">
+            <div>
               No times available
             </div>
           )}
+
         </div>
       )}
     </div>
@@ -301,9 +300,10 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
     return (
       <>
         <span>{formatted}</span>
-        <span className="text-muted-foreground/60 text-xs font-normal ml-3 whitespace-nowrap">({durationStr})</span>
+        <span>({durationStr})</span>
       </>
     );
+
   };
 
   async function handleSubmit(e) {
@@ -374,51 +374,48 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-2xl" showCloseButton={false}>
-        <div className="flex flex-col max-h-[96svh] relative">
-          {/* Custom Enhanced Close Button */}
+      <DialogContent showCloseButton={false}>
+        <div>
           <Button
             variant="secondary"
             size="icon-sm"
-            className="absolute top-4 right-4 z-50 h-9 w-9 rounded-xl shadow-sm border bg-secondary/80 backdrop-blur-md hover:bg-secondary transition-all active:scale-95"
             onClick={() => handleCloseAttempt()}
           >
-            <X className="size-5" />
-            <span className="sr-only">Close</span>
+            <X />
+            <span>Close</span>
           </Button>
 
-          <div className="px-4 py-5 sm:p-6 lg:p-8 overflow-y-auto scrollbar-thin">
-            <DialogHeader className="mb-4 pr-10">
-              <DialogTitle className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+
+          <div>
+            <DialogHeader>
+              <DialogTitle>
                 {isEdit ? "Edit Class" : "Create Class"}
               </DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm text-muted-foreground/80 mt-1.5">
+              <DialogDescription>
                 {isEdit ? "Update class details and schedule." : "Create a new class and schedule."}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+            <form onSubmit={handleSubmit}>
               <Field>
                 <FieldLabel
                   htmlFor="class-name"
-                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 block"
                 >
                   Class Name
                 </FieldLabel>
-                <div className="flex gap-3">
-                  <div className="relative" ref={iconPickerRef}>
+
+                <div>
+                  <div ref={iconPickerRef}>
                     <button
                       type="button"
                       onClick={() => setShowIconPicker(!showIconPicker)}
-                      className={cn(
-                        "h-11 w-11 flex items-center justify-center rounded-xl bg-secondary/30 border border-accent hover:bg-secondary/50 transition-colors text-muted-foreground",
-                        showIconPicker && "bg-secondary border-primary/40 ring-2 ring-primary/10"
-                      )}
                     >
-                      <ClassIcon name={icon} className="size-5" />
+                      <ClassIcon name={icon} />
                     </button>
+
                     {showIconPicker && (
-                      <div className="absolute top-full left-0 mt-2 p-2 bg-popover border shadow-lg rounded-xl flex flex-wrap gap-1.5 w-[230px] animate-in fade-in-0 zoom-in-95 z-50">
+                      <div>
                         {AVAILABLE_ICONS.map(iName => (
                           <button
                             key={iName}
@@ -427,12 +424,8 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
                               setIcon(iName);
                               setShowIconPicker(false);
                             }}
-                            className={cn(
-                              "h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent hover:scale-110 transition-all cursor-pointer text-muted-foreground hover:text-foreground", 
-                              icon === iName && "bg-accent text-foreground scale-110"
-                            )}
                           >
-                            <ClassIcon name={iName} className="size-5" />
+                            <ClassIcon name={iName} />
                           </button>
                         ))}
                       </div>
@@ -443,48 +436,39 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
                     placeholder="e.g. CS101 - Intro to Programming"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="h-11 flex-1 rounded-xl text-base bg-secondary/30 focus-visible:bg-transparent transition-all border-accent focus-visible:ring-2 focus-visible:ring-ring"
                     autoFocus
                   />
                 </div>
               </Field>
 
-              <div className="space-y-7 pt-2">
+
+              <div>
                 <Field>
-                  <div className="flex items-center justify-between mb-2">
-                    <FieldLabel className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                  <div>
+                    <FieldLabel>
                       Days
                     </FieldLabel>
                     <button
                       type="button"
                       onClick={toggleMonToSat}
-                      className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                     >
                       {monToSatSelected ? "Clear Mon-Sat" : "Select Mon-Sat"}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+
+                  <div>
                     {WEEKDAYS.map((d) => {
                       const isSelected = days.includes(d);
                       return (
                         <label
                           key={d}
-                          className="relative cursor-pointer group"
                         >
                           <input
                             type="checkbox"
-                            className="peer sr-only"
                             checked={isSelected}
                             onChange={() => toggleDay(d)}
                           />
-                          <div
-                            className={cn(
-                              "px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-200 ease-out select-none",
-                              isSelected
-                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                : "bg-transparent border-input text-muted-foreground group-hover:border-primary/40 group-hover:bg-accent/40"
-                            )}
-                          >
+                          <div>
                             {d.slice(0, 3)}
                           </div>
                         </label>
@@ -493,16 +477,17 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
                   </div>
                 </Field>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field className="relative z-20">
-                    <FieldLabel className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-2 block">
+
+                <div>
+                  <Field>
+                    <FieldLabel>
                       Start Time
                     </FieldLabel>
-                    <InputGroup className="h-11 rounded-xl bg-secondary/30 border-accent focus-within:bg-transparent">
-                      <InputGroupAddon className="px-3 border-r border-accent/50 group-focus-within/input-group:border-primary/20">
-                        <Clock className="text-muted-foreground/70 size-4" />
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <Clock />
                       </InputGroupAddon>
-                      <div className="flex-1 px-3 py-0 relative flex items-center h-full">
+                      <div>
                         <TimeInput
                           id="class-start"
                           value={startTime}
@@ -514,15 +499,16 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
                     </InputGroup>
                   </Field>
 
-                  <Field className="relative z-10">
-                    <FieldLabel className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-2 block">
+
+                  <Field>
+                    <FieldLabel>
                       End Time
                     </FieldLabel>
-                    <InputGroup className="h-11 rounded-xl bg-secondary/30 border-accent focus-within:bg-transparent">
-                      <InputGroupAddon className="px-3 border-r border-accent/50 group-focus-within/input-group:border-primary/20">
-                        <Clock className="text-muted-foreground/70 size-4" />
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <Clock />
                       </InputGroupAddon>
-                      <div className="flex-1 px-3 py-0 relative flex items-center h-full">
+                      <div>
                         <TimeInput
                           id="class-end"
                           value={endTime}
@@ -536,16 +522,16 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
                   </Field>
                 </div>
 
+
                 <Field>
                   <FieldLabel
                     htmlFor="class-room"
-                    className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1.5 block"
                   >
                     Room No.
                   </FieldLabel>
-                  <InputGroup className="h-11 rounded-xl bg-secondary/30 border-accent focus-within:bg-transparent overflow-hidden">
-                    <InputGroupAddon className="px-3 border-r border-accent/50 group-focus-within/input-group:border-primary/20">
-                      <Navigation className="text-muted-foreground/70 size-4" />
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <Navigation />
                     </InputGroupAddon>
                     <input
                       id="class-room"
@@ -553,31 +539,32 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
                       placeholder="e.g. 101, 202-A"
                       value={room}
                       onChange={(e) => setRoom(e.target.value)}
-                      className="flex-1 bg-transparent px-3 text-sm font-medium outline-none placeholder:text-muted-foreground"
                     />
                   </InputGroup>
                 </Field>
               </div>
 
-              <div className="h-4 sm:hidden shrink-0" aria-hidden="true" /> {/* Dropdown buffer for mobile */}
+
+              <div aria-hidden="true" /> {/* Dropdown buffer for mobile */}
 
               {formError && (
-                <div className="bg-destructive/10 text-destructive text-sm font-medium px-4 py-3 rounded-xl flex items-center gap-2">
-                  <span className="shrink-0 size-1.5 rounded-full bg-destructive" />
+                <div>
+                  <span />
                   {formError}
                 </div>
               )}
 
-              <DialogFooter className="mt-2">
+
+              <DialogFooter>
                 <Button
                   type="submit"
                   disabled={submitting}
                   size="lg"
-                  className="w-full sm:w-auto rounded-xl font-semibold shadow-md active:scale-[0.98] transition-all"
                 >
                   {submitting ? "Processing..." : isEdit ? "Save Changes" : "Create Class"}
                 </Button>
               </DialogFooter>
+
             </form>
           </div>
         </div>
@@ -585,27 +572,26 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
 
       {/* Discard Confirmation Dialog */}
       <Dialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
-        <DialogContent showCloseButton={false} className="p-6 rounded-3xl">
-          <DialogHeader className="items-center text-center">
-            <div className="h-12 w-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2">
-              <AlertCircle className="size-6 text-destructive" />
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <div>
+              <AlertCircle />
             </div>
-            <DialogTitle className="text-lg font-bold">Discard changes?</DialogTitle>
-            <DialogDescription className="text-sm font-medium">
+            <DialogTitle>Discard changes?</DialogTitle>
+            <DialogDescription>
               You have unsaved changes. Are you sure you want to close this form?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col gap-2 mt-4">
+
+          <DialogFooter>
             <Button
               variant="destructive"
-              className="w-full rounded-xl font-bold h-11"
               onClick={() => handleCloseAttempt(true)}
             >
               Discard Changes
             </Button>
             <Button
               variant="outline"
-              className="w-full rounded-xl font-bold h-11 border-2"
               onClick={() => setShowDiscardConfirm(false)}
             >
               Keep Editing
@@ -613,6 +599,7 @@ export default function ClassFormModal({ open, onOpenChange, onSuccess, classDat
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </Dialog>
   );
 }

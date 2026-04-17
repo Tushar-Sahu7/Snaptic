@@ -1,16 +1,9 @@
-import {
-  CalendarDays,
-  ChevronRight,
-  Scan,
-  Users,
-  ArrowLeft,
-  AlertCircle,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CalendarDays } from "lucide-react";
 import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceButton } from "@/components/shared/AttendanceButton";
 import { Badge } from "@/components/ui/badge";
-import { isWithinSchedule, cn } from "@/lib/utils";
+import { isWithinSchedule } from "@/lib/utils";
+
 
 export const ClassSelectionStep = ({
   session,
@@ -27,12 +20,13 @@ export const ClassSelectionStep = ({
         ? { ...session.classId, studentCount: studentsCount }
         : { name: "Loading Class Details...", studentCount: studentsCount };
 
-    return (
-      <div className="h-full flex flex-col items-center">
-        <div className="w-full max-w-xl sm:bg-card sm:border sm:rounded-3xl p-0 sm:p-8 sm:shadow-sm hover:shadow-md transition-shadow space-y-6 mt-12 md:mt-0 px-6 md:px-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+  return (
+    <div>
+      <div>
+
           <ClassCard
             cls={baseClass}
-            className="cursor-default hover:border-border hover:shadow-sm"
+
             footer={
               <AttendanceButton
                 cls={baseClass}
@@ -80,33 +74,36 @@ export const ClassSelectionStep = ({
   });
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-8 mt-4">
-      <div className="flex flex-col items-center text-center space-y-2 px-4">
-        <h2 className="text-lg sm:text-xl font-black tracking-tight text-foreground uppercase">
+    <div>
+      <div>
+        <h2>
           Choose a Class
         </h2>
-        <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+        <p>
           Select an active class to begin the recognition process.
         </p>
       </div>
 
+
       {sortedClasses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-muted/20 border-2 border-border border-dashed rounded-[2.5rem] animate-in fade-in zoom-in-95 duration-700">
-          <div className="size-20 rounded-3xl bg-background border shadow-xs flex items-center justify-center mb-2">
-            <CalendarDays className="size-10 text-primary/20" />
+        <div>
+          <div>
+            <CalendarDays />
           </div>
-          <div className="space-y-1">
-            <h3 className="text-xl font-black text-foreground tracking-tight">
+          <div>
+            <h3>
               No Active Sessions
             </h3>
-            <p className="text-sm text-muted-foreground font-medium max-w-[280px]">
+            <p>
               Looks like you're all caught up! Check your schedule or create a
               new session.
             </p>
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 px-6 sm:px-0">
+
+        <div>
+
           {sortedClasses.map((c) => {
             const { onTime, message: scheduleMsg } = isWithinSchedule(
               c.schedule,
@@ -131,25 +128,23 @@ export const ClassSelectionStep = ({
                   studentCount: sCount,
                 }}
                 onClick={() => canStart && onSelectClass?.(c, primaryMode)}
-                className={cn(
-                  !canStart &&
-                    "opacity-60 grayscale border-dashed cursor-not-allowed",
-                )}
+
                 badge={
                   hasActiveSession ? (
-                    <Badge className="bg-amber-500/10 text-amber-600 border-amber-200/50 hover:bg-amber-500/20 animate-pulse text-[9px] font-black uppercase tracking-widest px-2 shadow-none">
+                    <Badge>
                       In Progress
                     </Badge>
                   ) : isSubmitted ? (
-                    <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 text-[9px] font-black uppercase tracking-widest px-2 shadow-none">
+                    <Badge>
                       Submitted
                     </Badge>
                   ) : onTime ? (
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200/50 hover:bg-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-2 shadow-none">
+                    <Badge>
                       Live Now
                     </Badge>
                   ) : null
                 }
+
                 footer={
                   <AttendanceButton
                     cls={c}

@@ -3,7 +3,6 @@ import { useAttendanceSession } from "./useAttendanceSession";
 import { useTimeLock } from "./useTimeLock";
 import { AttendanceHeader } from "./shared/AttendanceHeader";
 import { AttendanceStepper } from "./shared/AttendanceStepper";
-import { TerminateDialog } from "./shared/TerminateDialog";
 import { ClassSelectionStep } from "./steps/ClassSelectionStep";
 import { ScanStep } from "./steps/ScanStep";
 import { MarkStep } from "./steps/MarkStep";
@@ -21,7 +20,6 @@ export default function AttendanceWizard({
   // 1. Core Logic Hook
   const {
     session,
-    setSession,
     attendanceState,
     loading: sessionLoading,
     isSubmitted,
@@ -30,7 +28,6 @@ export default function AttendanceWizard({
     handleFinishScan,
     handleSubmit,
     handleReopen,
-    handleTerminate,
   } = useAttendanceSession({
     initialSession,
     students,
@@ -86,7 +83,7 @@ export default function AttendanceWizard({
     return 1;
   });
 
-  const [isTerminating, setIsTerminating] = useState(false);
+
 
   // 3. Time Locking Hook
   const { timeLeft, endTimeFormatted, isFinalized } = useTimeLock(
@@ -171,17 +168,17 @@ export default function AttendanceWizard({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col h-dvh bg-background relative z-0 overflow-hidden"
     >
+
       {/* 1. Header & Stepper */}
-      <div className="shrink-0 sm:border-b sm:bg-card px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-4 sm:gap-8 sm:shadow-sm relative z-10">
+      <div>
+
         <AttendanceHeader
           session={session}
           isFinalized={isFinalized}
           timeLeft={timeLeft}
           endTimeFormatted={endTimeFormatted}
           step={step}
-          onTerminate={() => setIsTerminating(true)}
         />
 
         <AttendanceStepper
@@ -192,7 +189,8 @@ export default function AttendanceWizard({
       </div>
 
       {/* 2. Content Area */}
-      <main className="flex-1 overflow-y-auto relative p-0 sm:p-4 md:p-8 bg-muted/10">
+      <main>
+
         {step === 1 && (
           <ClassSelectionStep
             session={session}
@@ -251,11 +249,7 @@ export default function AttendanceWizard({
         )}
       </main>
 
-      <TerminateDialog
-        open={isTerminating}
-        onOpenChange={setIsTerminating}
-        onConfirm={handleTerminate}
-      />
+
     </div>
   );
 }

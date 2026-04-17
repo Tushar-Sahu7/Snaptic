@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+
 import { ClipboardX, Check } from "lucide-react";
 
 function getInitials(name) {
@@ -118,31 +118,34 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden rounded-2xl">
-        <div className="flex flex-col max-h-[96svh]">
-          <div className="px-4 py-5 sm:p-6 lg:p-8 overflow-y-auto scrollbar-thin">
-            <DialogHeader className="mb-2 shrink-0">
-              <DialogTitle className="text-xl sm:text-2xl font-semibold tracking-tight">Import Students</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
+      <DialogContent showCloseButton={false}>
+        <div>
+          <div>
+
+            <DialogHeader>
+              <DialogTitle>Import Students</DialogTitle>
+              <DialogDescription>
                 Select students from your other active classes to quickly bulk-add them to this roster.
               </DialogDescription>
             </DialogHeader>
 
+
         {classes.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-secondary mb-4">
-              <span className="text-xl"><ClipboardX /></span>
+          <div>
+            <div>
+              <span><ClipboardX /></span>
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-1">No other classes to import from</h3>
-            <p className="text-sm text-muted-foreground max-w-sm">
+            <h3>No other classes to import from</h3>
+            <p>
               The import feature lets you quickly copy rosters from your other existing classes. You currently don't have any other active classes.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 overflow-hidden flex-1">
-            <div className="shrink-0 pt-2">
+          <div>
+            <div>
+
               <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                <SelectTrigger className="w-full h-11 bg-secondary/30 border-accent">
+                <SelectTrigger>
                   <SelectValue placeholder="Select a class to import from..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,32 +156,35 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
               </Select>
             </div>
 
-            <div className="flex-1 overflow-y-auto border rounded-xl bg-card relative">
+            <div>
+
               {loadingStudents ? (
-                <div className="p-4 flex flex-col gap-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+                <div>
+                  {[1, 2, 3].map(i => <Skeleton key={i} />)}
                 </div>
               ) : !selectedClassId ? (
-                <div className="p-8 text-center text-sm text-muted-foreground italic h-full flex items-center justify-center">
+                <div>
                   Select a class above to view its roster.
                 </div>
               ) : students.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted-foreground italic h-full flex items-center justify-center">
+                <div>
                   This class has no students.
                 </div>
               ) : (
-                <div className="flex flex-col">
+                <div>
+
                   {/* Header Row */}
-                  <div className="sticky top-0 bg-muted/80 backdrop-blur-md border-b px-4 py-3 flex items-center gap-3 z-10">
+                  <div>
                     <Checkbox 
                       checked={selectedStudents.size === students.length && students.length > 0} 
                       onCheckedChange={handleSelectAll} 
                     />
-                    <span className="text-sm font-semibold text-muted-foreground">Select All</span>
-                    <span className="ml-auto text-xs font-medium bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
+                    <span>Select All</span>
+                    <span>
                       {selectedStudents.size} selected
                     </span>
                   </div>
+
                   {/* Roster Rows */}
                   {students.map(student => {
                     const isAlreadyAdded = existingStudents.some(es => es._id === student._id);
@@ -186,12 +192,9 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
                     return (
                       <div 
                         key={student._id} 
-                        className={cn(
-                          "flex items-center gap-3 border-b border-border/50 px-4 py-3 transition-colors last:border-0",
-                          isAlreadyAdded ? "bg-muted/30 opacity-70" : "hover:bg-muted/30 cursor-pointer"
-                        )} 
                         onClick={() => !isAlreadyAdded && handleSelectStudent(student._id, !isChecked)}
                       >
+
                         {!isAlreadyAdded ? (
                           <Checkbox 
                             checked={isChecked} 
@@ -199,27 +202,28 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
-                          <div className="size-4" /> // spacing filler
+                          <div /> // spacing filler
                         )}
-                        <div className="relative inline-block shrink-0">
-                          <Avatar className={`size-8 ${student?.faceEnrolled ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-background" : ""}`}>
-                            {student?.avatar && <AvatarImage src={student.avatar} className="object-cover" />}
-                            <AvatarFallback className="text-xs">{getInitials(student.name)}</AvatarFallback>
+                        <div>
+                          <Avatar>
+                            {student?.avatar && <AvatarImage src={student.avatar} />}
+                            <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
                           </Avatar>
                           {student?.faceEnrolled && (
-                            <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 rounded-full border-2 border-background text-white shadow-sm">
-                              <Check className="size-2.5" />
+                            <div>
+                              <Check />
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col flex-1">
-                          <span className="text-sm font-medium">{student.name}</span>
+                        <div>
+                          <span>{student.name}</span>
                         </div>
                         {isAlreadyAdded && (
-                          <Badge variant="outline" className="bg-background text-muted-foreground ml-auto">Added</Badge>
+                          <Badge variant="outline">Added</Badge>
                         )}
                       </div>
                     );
+
                   })}
                 </div>
               )}
@@ -227,12 +231,13 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
           </div>
         )}
 
-        <DialogFooter className="mt-4 shrink-0">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleImport} disabled={selectedStudents.size === 0 || importing}>
             {importing ? "Importing..." : `Import ${selectedStudents.size > 0 ? selectedStudents.size : ""} Students`}
           </Button>
         </DialogFooter>
+
           </div>
         </div>
       </DialogContent>

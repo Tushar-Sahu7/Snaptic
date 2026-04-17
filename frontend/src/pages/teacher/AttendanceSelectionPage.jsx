@@ -19,22 +19,26 @@ export default function AttendanceSelectionPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 px-4 pt-6 sm:px-6 md:px-0 md:pt-0">
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-4 w-64" />
+      <div>
+
+        <div>
+          <Skeleton />
+          <Skeleton />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div>
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-40 rounded-3xl" />
+            <Skeleton key={i} />
           ))}
         </div>
       </div>
+
     );
   }
 
   return (
-    <div className="flex flex-col min-h-full sm:rounded-2xl md:rounded-3xl overflow-hidden bg-background relative sm:border sm:shadow-sm">
+    <div>
+
       <AttendanceWizard
         classes={activeClasses}
         todaySessions={todaySessions}

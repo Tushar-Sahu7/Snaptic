@@ -100,14 +100,12 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <NavLink to={portalUrl}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <span className="text-sm font-bold">S</span>
+                <div>
+                  <span>S</span>
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Snaptic</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {isTeacher ? "Teacher Portal" : "Student Portal"}
-                  </span>
+                <div>
+                  <span>Snaptic</span>
+                  <span>{isTeacher ? "Teacher Portal" : "Student Portal"}</span>
                 </div>
               </NavLink>
             </SidebarMenuButton>
@@ -141,25 +139,19 @@ export function AppSidebar() {
 
       <SidebarFooter>
         {isTeacher && showInviteBox && (
-          <div className="relative mx-3 my-2 rounded-xl border bg-card p-4 shadow-sm group-data-[collapsible=icon]:hidden">
-            <button
-              onClick={() => setShowInviteBox(false)}
-              className="absolute right-2 top-2 rounded-md p-1 opacity-70 hover:bg-accent hover:opacity-100"
-            >
-              <X className="size-3.5" />
+          <div>
+            <button onClick={() => setShowInviteBox(false)}>
+              <X />
             </button>
-            <div className="mb-3 space-y-1 pr-6">
-              <h4 className="text-sm font-semibold leading-none tracking-tight">
-                Expand the network
-              </h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+            <div>
+              <h4>Expand the network</h4>
+              <p>
                 Invite teachers to Snaptic to manage their classes and take
                 attendance.
               </p>
             </div>
             <Button
               size="sm"
-              className="w-full text-xs font-semibold h-8"
               onClick={handleInvite}
               disabled={generatingInvite}
             >
@@ -167,7 +159,7 @@ export function AppSidebar() {
                 "Generating..."
               ) : (
                 <>
-                  <Copy data-icon="inline-start" className="size-3.5 mr-1" />
+                  <Copy data-icon="inline-start" />
                   Copy Invite Link
                 </>
               )}
@@ -178,60 +170,43 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <div className="relative inline-block shrink-0">
-                    <Avatar
-                      className={`size-8 rounded-lg ${user?.faceEnrolled ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-sidebar" : ""}`}
-                    >
-                      {user?.avatar && (
-                        <AvatarImage
-                          src={user.avatar}
-                          className="object-cover"
-                        />
-                      )}
-                      <AvatarFallback className="rounded-lg">
-                        {initials}
-                      </AvatarFallback>
+                <SidebarMenuButton size="lg">
+                  <div>
+                    <Avatar>
+                      {user?.avatar && <AvatarImage src={user.avatar} />}
+                      <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                     {user?.faceEnrolled && (
-                      <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full border-2 border-sidebar text-white shadow-sm">
-                        <Check className="size-2.5" />
+                      <div>
+                        <Check />
                       </div>
                     )}
                   </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate text-xs text-muted-foreground">
-                      {user?.email}
-                    </span>
+                  <div>
+                    <span>{user?.email}</span>
                   </div>
-                  <ChevronUp className="ml-auto" />
+                  <ChevronUp />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                className="w-[--radix-popper-anchor-width]"
-              >
+              <DropdownMenuContent side="top">
                 <DropdownMenuGroup>
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
-                      <Palette className="mr-2 h-4 w-4" />
+                      <Palette />
                       <span>Theme</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent sideOffset={8} className="w-36">
+                      <DropdownMenuSubContent sideOffset={8}>
                         <DropdownMenuItem onClick={() => setTheme("light")}>
-                          <Sun className="mr-2 h-4 w-4" />
+                          <Sun />
                           <span>Light</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme("dark")}>
-                          <Moon className="mr-2 h-4 w-4" />
+                          <Moon />
                           <span>Dark</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme("system")}>
-                          <Laptop className="mr-2 h-4 w-4" />
+                          <Laptop />
                           <span>System</span>
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
@@ -242,12 +217,12 @@ export function AppSidebar() {
                     <NavLink
                       to={isTeacher ? "/teacher/profile" : "/student/profile"}
                     >
-                      <User className="mr-2 h-4 w-4" />
+                      <User />
                       <span>View Profile</span>
                     </NavLink>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut />
                     <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
