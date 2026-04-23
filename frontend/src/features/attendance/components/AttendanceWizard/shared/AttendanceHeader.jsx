@@ -60,7 +60,7 @@ export const AttendanceHeader = ({
           <AttendanceResetButton
             sessionId={session?._id}
             showLabel
-            onSuccess={() => navigate("/teacher/dashboard")}
+            onSuccess={() => navigate("/teacher/take-attendance")}
           />
         )}
         <div>

@@ -191,9 +191,6 @@ export default function LoginForm({ ...props }) {
               Sign up
             </Link>
           </p>
-          <p className="text-center text-xs text-muted-foreground">
-            Are you a teacher? Contact your department for a link.
-          </p>
         </CardFooter>
       </Card>
     </div>

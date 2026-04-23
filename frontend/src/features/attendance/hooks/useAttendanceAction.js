@@ -40,11 +40,21 @@ export const useAttendanceAction = (cls, session) => {
       icon: AlertCircle,
       variant: "outline",
       disabled: false,
-      classListOnly: true, // Hint for ClassListPage
+      classListOnly: true,
       description: "Enroll students to start tracking"
     };
   }
-  // 2. Active Session Logic
+  // 2. Finalized Session (Always History)
+  else if (session?.status === "finalized") {
+    primary = {
+      label: "View Records",
+      mode: "history",
+      icon: History,
+      variant: "outline",
+      disabled: false
+    };
+  }
+  // 3. Active Session Logic
   else if (session?.status === "inProgress") {
     primary = {
       label: "Resume Session",
@@ -60,7 +70,7 @@ export const useAttendanceAction = (cls, session) => {
       iconOnly: true
     };
   }
-  // 3. Submitted Session Logic
+  // 4. Submitted Session Logic
   else if (session?.status === "submitted") {
     if (onTime) {
       primary = {
@@ -86,7 +96,7 @@ export const useAttendanceAction = (cls, session) => {
       };
     }
   }
-  // 4. Not Started Logic
+  // 5. Not Started Logic
   else if (onTime) {
     primary = {
       label: "Face AI",
@@ -103,7 +113,7 @@ export const useAttendanceAction = (cls, session) => {
       disabled: false
     };
   }
-  // 5. Off-Schedule Logic
+  // 6. Off-Schedule Logic
   else {
     primary = {
       label: message || "Off Schedule",

@@ -1,5 +1,7 @@
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, SquarePen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import AttendanceRecognitionStep from "../../AttendanceRecognitionStep";
 
 export const ScanStep = ({
@@ -17,6 +19,8 @@ export const ScanStep = ({
   const presentCount = Object.values(attendanceState).filter(
     (v) => v.status === "present",
   ).length;
+
+  const isMobile = useIsMobile();
 
   return (
     <div>
@@ -73,14 +77,26 @@ export const ScanStep = ({
               Detected
             </span>
           </div>
-          <Button
-            onClick={onComplete}
-            disabled={loading || isFinalized}
-          >
-            {loading ? <Loader2 /> : null}
-            Next Step
-            <ChevronRight />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={onComplete}
+              disabled={loading || isFinalized}
+              size={isMobile ? "icon" : "default"}
+              title="Skip to Manual"
+            >
+              <SquarePen data-icon={!isMobile ? "inline-start" : undefined} />
+              {!isMobile && "Skip to Manual"}
+            </Button>
+            <Button
+              onClick={onComplete}
+              disabled={loading || isFinalized}
+            >
+              {loading ? <Spinner data-icon="inline-start" /> : null}
+              Next Step
+              <ChevronRight data-icon="inline-end" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

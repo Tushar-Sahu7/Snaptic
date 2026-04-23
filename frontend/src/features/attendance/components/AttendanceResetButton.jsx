@@ -89,7 +89,7 @@ export const AttendanceResetButton = ({ sessionId, showLabel, disabled, onSucces
             variant="destructive"
             onClick={handleReset}
           >
-            Yes, Reset Session
+            {isMobile ? "Reset Session" : "Yes, Reset Session"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

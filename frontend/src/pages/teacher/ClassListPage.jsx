@@ -25,7 +25,6 @@ import {
   BookOpen,
   Plus,
   MoreVertical,
-  UserCheck,
   History,
   UserPlus,
   Pencil,
@@ -43,7 +42,7 @@ import {
 
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
-import { AttendanceButton } from "@/components/shared/AttendanceButton";
+import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import { isWithinSchedule, WEEKDAYS } from "@/lib/utils";
 import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
 
@@ -146,20 +145,7 @@ export default function ClassListPage() {
     setBulkDeleteConfirm(false);
   };
 
-  const handleSelectClass = (cls, mode) => {
-    const { onTime } = isWithinSchedule(cls.schedule);
-    const session = todaySessions[cls._id];
 
-    if (
-      session?.status === "finalized" ||
-      (session?.status === "submitted" && !onTime)
-    ) {
-      navigate(`/teacher/attendance/${session._id}/summary`);
-    } else {
-      const flag = mode === "manual" ? "?manual=true" : "?autoStart=true";
-      navigate(`/teacher/classes/${cls._id}/attendance${flag}`);
-    }
-  };
 
   if (loading) {
     return (
@@ -278,10 +264,10 @@ export default function ClassListPage() {
               }
               footer={
                 cls.status !== "archived" && (
-                  <AttendanceButton
+                  <AttendanceActionGroup
                     cls={cls}
                     session={todaySessions[cls._id]}
-                    onSelect={handleSelectClass}
+                    className="w-full"
                   />
                 )
               }

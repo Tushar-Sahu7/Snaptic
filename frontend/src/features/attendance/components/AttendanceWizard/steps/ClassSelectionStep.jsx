@@ -1,6 +1,7 @@
 import { CalendarDays } from "lucide-react";
 import ClassCard from "@/components/shared/ClassCard";
-import { AttendanceButton } from "@/components/shared/AttendanceButton";
+import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
+import { PrimaryAttendanceAction } from "@/features/attendance/components/PrimaryAttendanceAction";
 import { Badge } from "@/components/ui/badge";
 import { isWithinSchedule } from "@/lib/utils";
 
@@ -14,7 +15,6 @@ export const ClassSelectionStep = ({
   onContinue,
 }) => {
   if (session) {
-    const isSubmitted = session.status === "submitted";
     const baseClass =
       typeof session.classId === "object"
         ? { ...session.classId, studentCount: studentsCount }
@@ -28,14 +28,16 @@ export const ClassSelectionStep = ({
             cls={baseClass}
 
             footer={
-              <AttendanceButton
+              <PrimaryAttendanceAction
                 cls={baseClass}
                 session={session}
-                onSelect={(_, mode) => {
-                  // In the wizard, auto mode goes to Scan (2), manual to Mark (3)
-                  if (mode === "auto") onContinue(2);
-                  else if (mode === "manual") onContinue(3);
-                  else if (mode === "history") onContinue(4); // Review/Summary
+                className="w-full"
+                onClick={(cls, state) => {
+                  // Intercept navigation — route within the wizard instead
+                  if (session.status === "inProgress") onContinue(2);
+                  else if (session.status === "submitted") onContinue(3);
+                  else if (session.status === "finalized") onContinue(4);
+                  return false; // Prevent self-navigation
                 }}
               />
             }
@@ -105,20 +107,12 @@ export const ClassSelectionStep = ({
         <div>
 
           {sortedClasses.map((c) => {
-            const { onTime, message: scheduleMsg } = isWithinSchedule(
-              c.schedule,
-            );
+            const { onTime } = isWithinSchedule(c.schedule);
             const tSession = todaySessions[c._id];
             const sCount = c.studentIds?.length || 0;
             const hasActiveSession = tSession?.status === "inProgress";
             const isSubmitted = tSession?.status === "submitted";
             const canStart = onTime || hasActiveSession || isSubmitted;
-
-            // Determine primary interaction mode for card click
-            let primaryMode = undefined;
-            if (isSubmitted && onTime) primaryMode = "manual";
-            else if (hasActiveSession) primaryMode = undefined;
-            else if (onTime) primaryMode = "auto";
 
             return (
               <ClassCard
@@ -127,7 +121,7 @@ export const ClassSelectionStep = ({
                   ...c,
                   studentCount: sCount,
                 }}
-                onClick={() => canStart && onSelectClass?.(c, primaryMode)}
+                onClick={() => canStart && onSelectClass?.(c, onTime ? "auto" : "manual")}
 
                 badge={
                   hasActiveSession ? (
@@ -146,10 +140,10 @@ export const ClassSelectionStep = ({
                 }
 
                 footer={
-                  <AttendanceButton
+                  <AttendanceActionGroup
                     cls={c}
                     session={tSession}
-                    onSelect={onSelectClass}
+                    className="w-full"
                   />
                 }
               />

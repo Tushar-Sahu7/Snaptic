@@ -1,11 +1,8 @@
 import { useClasses } from "@/features/classes/hooks/useClasses";
 import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
 import { useNavigate } from "react-router";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import AttendanceWizard from "@/features/attendance/components/AttendanceWizard";
-import { isWithinSchedule } from "@/lib/utils";
 
 export default function AttendanceSelectionPage() {
   const navigate = useNavigate();
@@ -45,20 +42,10 @@ export default function AttendanceSelectionPage() {
 
         isDirect={false}
         onSelectClass={(c, mode) => {
-          const { onTime } = isWithinSchedule(c.schedule);
-          const session = todaySessions[c._id];
-
-          // If session is hard locked (finalized) or submitted but off-schedule, show static summary
-          if (
-            session?.status === "finalized" ||
-            (session?.status === "submitted" && !onTime)
-          ) {
-            navigate(`/teacher/attendance/${session._id}/summary`);
-          } else {
-            // Otherwise, enter/resume the wizard (including updating submitted on-time sessions)
-            const flag = mode === "manual" ? "?manual=true" : "?autoStart=true";
-            navigate(`/teacher/classes/${c._id}/attendance${flag}`);
-          }
+          // The AttendanceActionGroup buttons handle their own routing now.
+          // This callback is only used for the ClassCard's card-level click.
+          const flag = mode === "manual" ? "?manual=true" : "?autoStart=true";
+          navigate(`/teacher/classes/${c._id}/attendance${flag}`);
         }}
       />
     </div>

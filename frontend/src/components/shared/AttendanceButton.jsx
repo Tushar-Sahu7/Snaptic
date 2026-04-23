@@ -17,88 +17,13 @@ export const AttendanceButton = ({ cls, session, onSelect }) => {
 
   const handleSelect = (mode) => {
     if (primary.disabled && mode === primary.mode) return;
-
-
-
     onSelect?.(cls, mode);
   };
 
   const resolveVariant = (v) => (v === "secondary" ? "outline" : v);
 
-  // --- Split: two related buttons ---
-  if (isSplit || secondary) {
-    const isReset = secondary.mode === "reset";
-
-    // Nested ButtonGroup: [Primary] gap [Trash]
-    if (isReset) {
-      return (
-        <>
-          <ButtonGroup className="w-full">
-            <ButtonGroup className="flex-1">
-              <Button
-                size={btnSize}
-                className="w-full"
-                disabled={primary.disabled}
-                variant={resolveVariant(primary.variant)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelect(primary.mode);
-                }}
-              >
-                {primary.icon && <primary.icon data-icon="inline-start" />}
-                {primary.label}
-              </Button>
-            </ButtonGroup>
-            <ButtonGroup>
-              <AttendanceResetButton
-                sessionId={session?._id}
-                disabled={secondary.disabled}
-                aria-label="Reset session"
-              />
-            </ButtonGroup>
-          </ButtonGroup>
-        </>
-      );
-    }
-
-    return (
-      <ButtonGroup className="w-full">
-        <ButtonGroup className="flex-1">
-          <Button
-            size={btnSize}
-            className="w-full"
-            disabled={primary.disabled}
-            variant={resolveVariant(primary.variant)}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSelect(primary.mode);
-            }}
-          >
-            {primary.icon && <primary.icon data-icon="inline-start" />}
-            {primary.label}
-          </Button>
-        </ButtonGroup>
-        <ButtonGroup className="flex-1">
-          <Button
-            size={btnSize}
-            className="w-full"
-            disabled={secondary.disabled}
-            variant={secondary.variant || "outline"}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSelect(secondary.mode);
-            }}
-          >
-            {secondary.icon && <secondary.icon data-icon="inline-start" />}
-            {secondary.label}
-          </Button>
-        </ButtonGroup>
-      </ButtonGroup>
-    );
-  }
-
-  // --- Single button (off-schedule, no students, view records) ---
-  return (
+  // Helper to render the primary button
+  const renderPrimary = (className = "w-full") => (
     <Button
       size={btnSize}
       className="w-full"
@@ -113,4 +38,43 @@ export const AttendanceButton = ({ cls, session, onSelect }) => {
       {primary.label}
     </Button>
   );
+
+  // --- Split or Double Action ---
+  if (isSplit || secondary) {
+    const isReset = secondary?.mode === "reset";
+
+    return (
+      <ButtonGroup className="w-full">
+        <ButtonGroup className="flex-1">
+          {renderPrimary()}
+        </ButtonGroup>
+        <ButtonGroup className={isReset ? undefined : "flex-1"}>
+          {isReset ? (
+            <AttendanceResetButton
+              sessionId={session?._id}
+              disabled={secondary.disabled}
+              aria-label="Reset session"
+            />
+          ) : (
+            <Button
+              size={btnSize}
+              className="w-full"
+              disabled={secondary.disabled}
+              variant={secondary.variant || "outline"}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect(secondary.mode);
+              }}
+            >
+              {secondary.icon && <secondary.icon data-icon="inline-start" />}
+              {secondary.label}
+            </Button>
+          )}
+        </ButtonGroup>
+      </ButtonGroup>
+    );
+  }
+
+  // --- Single Action ---
+  return renderPrimary();
 };

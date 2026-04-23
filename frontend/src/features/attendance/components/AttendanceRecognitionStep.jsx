@@ -8,11 +8,21 @@ import {
   RefreshCw,
   Cpu,
   Database,
+  SquarePen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+} from "@/components/ui/empty";
 
 
 const RECOGNITION_THRESHOLD = 0.6;
@@ -32,6 +42,7 @@ export default function RecognitionStep({
   const streamRef = useRef(null);
   const faceApiRef = useRef(globalFaceApi);
   const animFrameRef = useRef(null);
+  const isMobile = useIsMobile();
 
   const [facingMode, setFacingMode] = useState("environment");
   const [zoom, setZoom] = useState(1);
@@ -40,6 +51,7 @@ export default function RecognitionStep({
   const [activeMatches, setActiveMatches] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDataSynced, setIsDataSynced] = useState(false);
+  const [isCameraStarted, setIsCameraStarted] = useState(false);
   const [initializationProgress, setInitializationProgress] = useState(0);
 
   const labeledDescriptorsRef = useRef([]);
@@ -66,11 +78,11 @@ export default function RecognitionStep({
 
   // 1.5 Fullscreen & Camera Setup
   useEffect(() => {
-    if (globalModelsLoaded) {
+    if (globalModelsLoaded && isCameraStarted) {
       faceApiRef.current = globalFaceApi;
       startCamera(facingMode);
     }
-  }, [globalModelsLoaded]);
+  }, [globalModelsLoaded, isCameraStarted, facingMode]);
 
   useEffect(() => {
     const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -299,13 +311,50 @@ export default function RecognitionStep({
           ref={videoRef}
           muted
           playsInline
+          style={{ display: isCameraStarted ? 'block' : 'none' }}
         />
         <canvas
           ref={canvasRef}
+          style={{ display: isCameraStarted ? 'block' : 'none' }}
         />
 
+        {!isCameraStarted && (
+          <Empty className="my-4 border-2">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Camera />
+              </EmptyMedia>
+              <EmptyTitle className="text-xl">Face AI Scanner</EmptyTitle>
+              <EmptyDescription>
+                Zoom and pan across the class, pointing the camera towards students' faces.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <div className="flex w-full max-w-[320px] gap-3 sm:flex-row mt-4">
+                <Button 
+                  onClick={() => setIsCameraStarted(true)} 
+                  size={isMobile ? "default" : "lg"}
+                  className="flex-1"
+                >
+                  <Camera data-icon="inline-start" />
+                  Start Camera
+                </Button>
+                <Button 
+                  onClick={onComplete} 
+                  variant="outline" 
+                  size={isMobile ? "default" : "lg"}
+                  className="flex-1"
+                >
+                  <SquarePen data-icon="inline-start" />
+                  Skip to Manual
+                </Button>
+              </div>
+            </EmptyContent>
+          </Empty>
+        )}
 
-        <div>
+
+        <div style={{ display: isCameraStarted ? 'block' : 'none' }}>
           {activeMatches.map((match) => (
             <div
               key={match.id}
@@ -319,7 +368,7 @@ export default function RecognitionStep({
                 <div>
 
                   <Avatar>
-                    {student?.avatar && <AvatarImage src={match.avatar} />}
+                    {match.avatar && <AvatarImage src={match.avatar} />}
                     <AvatarFallback>
                       {match.name.charAt(0)}
                     </AvatarFallback>
@@ -398,11 +447,22 @@ export default function RecognitionStep({
                 </span>
               </div>
 
-              <Button
-                onClick={onComplete}
-              >
-                Finish Scan <ChevronRight />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={onComplete}
+                  size={isMobile ? "icon" : "default"}
+                  title="Skip to Manual"
+                >
+                  <SquarePen data-icon={!isMobile ? "inline-start" : undefined} />
+                  {!isMobile && "Skip to Manual"}
+                </Button>
+                <Button
+                  onClick={onComplete}
+                >
+                  Finish Scan <ChevronRight data-icon="inline-end" />
+                </Button>
+              </div>
 
             </div>
           </div>
@@ -451,6 +511,7 @@ export default function RecognitionStep({
             </div>
           </div>
         )}
+
       </div>
     </div>
 
