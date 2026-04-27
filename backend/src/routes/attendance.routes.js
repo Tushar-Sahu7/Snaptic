@@ -5,7 +5,9 @@ const {
   markAttendance,
   getSessionRecords,
   resetSession,
-  getTodaySession
+  getTodaySession,
+  submitSession,
+  reopenSession
 } = require("../controllers/attendance.controller");
 
 const router = express.Router();

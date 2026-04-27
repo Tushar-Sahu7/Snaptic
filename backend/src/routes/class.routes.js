@@ -17,6 +17,8 @@ const {
   createLabel,
   deleteLabel,
   getAvailability,
+  deleteSingleSession,
+  deleteAllForDay,
 } = require("../controllers/class.controller");
 const { protect, restrictTo } = require("../middlewares/auth.middleware");
 
@@ -34,6 +36,10 @@ router.route("/:id")
   .get(getClassById)
   .put(restrictTo("teacher"), updateClass)
   .delete(restrictTo("teacher"), deleteClass);
+
+// --- SCHEDULE & SESSION ROUTES ---
+router.delete("/sessions/:sessionId", restrictTo("teacher"), deleteSingleSession);
+router.delete("/:classId/schedules/:scheduleId/day/:dayOfWeek", restrictTo("teacher"), deleteAllForDay);
 
 // Bulk ops
 router.put("/bulk/status", restrictTo("teacher"), bulkUpdateStatus);

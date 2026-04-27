@@ -205,7 +205,7 @@ const updateClass = async (req, res) => {
     // 4. Regenerate future sessions
     if (schedules) {
       for (const schedule of classDoc.schedules) {
-        await sessionManager.generateSessionsForSchedule(classDoc, schedule);
+        await sessionManager.regenerateSessions(classDoc, schedule);
       }
     }
 
@@ -515,6 +515,100 @@ const getAvailability = async (req, res) => {
   }
 };
 
+const AttendanceSession = require("../models/AttendanceSession");
+const TemporalService = require("../services/temporalService");
+
+// DELETE /api/classes/sessions/:sessionId
+const deleteSingleSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    const session = await AttendanceSession.findById(sessionId);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    // Validate future start datetime
+    if (TemporalService.isPast(session.startInstant)) {
+      return res.status(400).json({ message: "Cannot delete a session that has already started or passed." });
+    }
+
+    // Add exdate to parent schedule
+    await Class.updateOne(
+      { _id: session.classId, "schedules._id": session.scheduleId },
+      { $addToSet: { "schedules.$.exdates": session.dateString } }
+    );
+
+    // Physically delete session
+    await AttendanceSession.findByIdAndDelete(sessionId);
+
+    return res.status(200).json({ message: "Session deleted successfully" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+// DELETE /api/classes/:classId/schedules/:scheduleId/day/:dayOfWeek
+const deleteAllForDay = async (req, res) => {
+  try {
+    const { classId, scheduleId, dayOfWeek } = req.params;
+    const dayInt = parseInt(dayOfWeek); // 1 (Mon) to 7 (Sun)
+
+    const classDoc = await Class.findById(classId);
+    if (!classDoc || classDoc.teacherId.toString() !== req.user.userId) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    const schedule = classDoc.schedules.id(scheduleId);
+    if (!schedule) return res.status(404).json({ message: "Schedule not found" });
+
+    // Identify the rrule BYDAY mapping
+    const rruleDays = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+    const targetDayStr = rruleDays[dayInt - 1];
+
+    if (schedule.rrule.includes(targetDayStr)) {
+      // Rebuild the rrule without that day
+      const parts = schedule.rrule.split(";");
+      const newParts = parts.map(part => {
+        if (part.startsWith("BYDAY=")) {
+          const days = part.split("=")[1].split(",").filter(d => d !== targetDayStr);
+          return days.length > 0 ? `BYDAY=${days.join(",")}` : null;
+        }
+        return part;
+      }).filter(Boolean);
+
+      schedule.rrule = newParts.join(";");
+
+      // If no BYDAY left and it was a weekly rule, hide it
+      if (!schedule.rrule.includes("BYDAY=") && schedule.rrule.includes("FREQ=WEEKLY")) {
+        schedule.isHidden = true;
+      }
+      
+      await classDoc.save();
+    }
+
+    // Physically delete future sessions on that day
+    const now = TemporalService.getNowInstant();
+    const sessions = await AttendanceSession.find({
+      scheduleId,
+      status: "scheduled",
+      startInstant: { $gt: now }
+    });
+
+    const sessionsToDelete = sessions.filter(s => {
+      // Get day of week using Temporal
+      const day = TemporalService.PlainDate.from(s.dateString).dayOfWeek;
+      return day === dayInt;
+    }).map(s => s._id);
+
+    if (sessionsToDelete.length > 0) {
+      await AttendanceSession.deleteMany({ _id: { $in: sessionsToDelete } });
+    }
+
+    return res.status(200).json({ message: "Future sessions for the day deleted." });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createClass,
   getMyClasses,
@@ -532,4 +626,6 @@ module.exports = {
   createLabel,
   deleteLabel,
   getAvailability,
+  deleteSingleSession,
+  deleteAllForDay,
 };

@@ -28,14 +28,6 @@ const createHoliday = async (req, res) => {
     if (sessionsToPurge.length > 0) {
       const sessionIds = sessionsToPurge.map(s => s._id);
       
-      // Update parent schedules with exdates
-      for (const session of sessionsToPurge) {
-        await Class.updateOne(
-          { _id: session.classId, "schedules._id": session.scheduleId },
-          { $addToSet: { "schedules.$.exdates": session.dateString } }
-        );
-      }
-
       // Bulk delete the sessions
       await AttendanceSession.deleteMany({ _id: { $in: sessionIds } });
     }
@@ -61,16 +53,28 @@ const getHolidays = async (req, res) => {
   }
 };
 
+const sessionManager = require("../services/sessionManager");
+
 /**
  * DELETE /api/holidays/:id
- * Deletes a holiday. (Note: Does not restore purged sessions automatically)
+ * Deletes a holiday and regenerates affected sessions automatically.
  */
 const deleteHoliday = async (req, res) => {
   try {
     const holiday = await Holiday.findOneAndDelete({ _id: req.params.id, teacherId: req.user.userId });
     if (!holiday) return res.status(404).json({ message: "Holiday not found" });
 
-    return res.status(200).json({ message: "Holiday deleted successfully." });
+    // Regenerate sessions for all active classes belonging to this teacher
+    const activeClasses = await Class.find({ teacherId: req.user.userId, status: "active", deletedAt: null });
+    
+    for (const classDoc of activeClasses) {
+      for (const schedule of classDoc.schedules) {
+        // generateSessionsForSchedule handles collision checks and safely ignores existing duplicates
+        await sessionManager.generateSessionsForSchedule(classDoc, schedule);
+      }
+    }
+
+    return res.status(200).json({ message: "Holiday deleted and affected sessions restored." });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
