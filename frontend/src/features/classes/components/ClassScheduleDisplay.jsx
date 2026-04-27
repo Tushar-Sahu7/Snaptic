@@ -1,24 +1,30 @@
 import React from "react";
 import { Clock } from "lucide-react";
-import { formatDays, format12Hour, formatRoom } from "@/lib/utils";
+import { formatDays, format12Hour } from "@/lib/utils";
 
-export default function ScheduleDisplay({ schedule }) {
-  if (!schedule || (!schedule.days?.length && !schedule.day)) return null;
+export default function ClassScheduleDisplay({ schedules }) {
+  if (!schedules || schedules.length === 0) return null;
 
-  const daysStr = schedule.days?.length > 0
-    ? formatDays(schedule.days)
-    : schedule.day
-      ? schedule.day.substring(0, 3)
-      : "";
+  // Summarize schedules: if only one, show detail. 
+  // If multiple, show "X Sessions/week" or a list.
+  if (schedules.length === 1) {
+    const s = schedules[0];
+    return (
+      <span className="flex items-center gap-1.5 truncate">
+        <Clock size={12} className="text-muted-foreground shrink-0" />
+        {formatDays(s.days)} · {format12Hour(s.startTime)}
+      </span>
+    );
+  }
+
+  // Count total days
+  const allDays = new Set();
+  schedules.forEach(s => s.days.forEach(d => allDays.add(d)));
 
   return (
-    <span>
-      <Clock data-icon="inline-start" />
-      {daysStr}
-      {schedule.startTime && ` · ${format12Hour(schedule.startTime)}`}
-      {schedule.endTime && ` – ${format12Hour(schedule.endTime)}`}
-      {schedule.room && ` · ${formatRoom(schedule.room)}`}
+    <span className="flex items-center gap-1.5 truncate">
+      <Clock size={12} className="text-muted-foreground shrink-0" />
+      {allDays.size} days/week · {schedules.length} patterns
     </span>
-
   );
 }

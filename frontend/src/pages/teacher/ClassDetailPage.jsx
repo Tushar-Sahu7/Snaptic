@@ -46,14 +46,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ClassIcon } from "@/components/shared/ClassIcon";
+import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import ClassFormModal from "@/features/classes/components/ClassFormModal";
 import ClassDeleteDialog from "@/features/classes/components/ClassDeleteDialog";
 import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDisplay";
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
 import ClassImportStudentsModal from "@/features/classes/components/ClassImportStudentsModal";
 import { useDebounce } from "@/hooks/useDebounce";
-import { isWithinSchedule } from "@/lib/utils";
+import { isClassInSession } from "@/lib/utils";
 
 export default function ClassDetailPage() {
   const { id } = useParams();
@@ -323,7 +323,7 @@ export default function ClassDetailPage() {
             <div>
               <div>
                 <span>
-                  <ClassIcon name={classData.icon} />
+                  <LucideIcon name={classData.icon} size={28} />
                 </span>
                 <h1>
                   {classData.name}
@@ -380,10 +380,9 @@ export default function ClassDetailPage() {
               </div>
             </div>
 
-            {(classData.schedule?.days?.length > 0 ||
-              classData.schedule?.day) && (
+            {classData.schedules?.length > 0 && (
               <p>
-                <ClassScheduleDisplay schedule={classData.schedule} />
+                <ClassScheduleDisplay schedules={classData.schedules} />
               </p>
             )}
 
@@ -394,7 +393,7 @@ export default function ClassDetailPage() {
           {classData.students?.length > 0 &&
             classData.status !== "archived" &&
             (() => {
-              const { onTime, message } = isWithinSchedule(classData.schedule);
+              const { onTime, message } = isClassInSession(classData);
 
               // PRIORITY 1: Existing Session Today
               if (activeSession) {

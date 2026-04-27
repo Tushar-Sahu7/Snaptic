@@ -6,11 +6,15 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const classRoutes = require("./routes/class.routes");
 const attendanceRoutes = require("./routes/attendance.routes");
+const reportRoutes = require("./routes/report.routes");
+const holidayRoutes = require("./routes/holiday.routes");
 const { protect, restrictTo } = require("./middlewares/auth.middleware");
 const { searchStudents } = require("./controllers/class.controller");
+const { initCron } = require("./services/cronService");
 
 dotenv.config();
 connectDB();
+initCron();
 
 const app = express();
 
@@ -21,6 +25,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/holidays", holidayRoutes);
 app.get("/api/students/search", protect, restrictTo("teacher"), searchStudents);
 app.get("/", (req, res) => res.json({ message: "NeoTrek API running" }));
 

@@ -5,19 +5,12 @@ const protect = (req, res, next) => {
     const roleHeader = req.headers["x-role"];
     const teacherToken = req.cookies?.token_teacher;
     const studentToken = req.cookies?.token_student;
-    const legacyToken = req.cookies?.token;
-
     let token = null;
 
     if (roleHeader === "teacher") {
       token = teacherToken;
     } else if (roleHeader === "student") {
       token = studentToken;
-    }
-
-    // Fallback logic
-    if (!token) {
-      token = legacyToken || teacherToken || studentToken;
     }
 
     if (!token) {

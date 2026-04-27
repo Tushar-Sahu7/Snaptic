@@ -6,7 +6,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { isWithinSchedule } from "@/lib/utils";
+import { isClassInSession } from "@/lib/utils";
 import {
   ScanFace,
   Play,
@@ -87,7 +87,7 @@ function resolveState(cls, session) {
   }
 
   // No session yet — check schedule
-  const { onTime, message } = isWithinSchedule(cls.schedule);
+  const { onTime, message } = isClassInSession(cls);
 
   if (onTime) {
     return {
@@ -101,7 +101,7 @@ function resolveState(cls, session) {
   }
 
   // Off-schedule (before start, after end, or not scheduled today)
-  // isWithinSchedule returns messages like "Starts at 9:00 AM", "Ended at 10:00 AM", or "Next scheduled for Monday"
+  // isClassInSession returns messages like "Starts at 9:00 AM", "Ended at 10:00 AM", or "Not in session"
   const isAfterEnd = message?.startsWith("Ended at");
   
   let finalLabel = message; // Defaults to "Starts at..." or "Next scheduled for..."

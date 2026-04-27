@@ -1,5 +1,9 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { createClass, updateClass } from "@/features/classes/api/classes.api";
+import {
+  createClass,
+  updateClass,
+  fetchLabels,
+} from "@/features/classes/api/classes.api";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -13,593 +17,448 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
-  InputGroup,
-  InputGroupAddon,
-} from "@/components/ui/input-group";
-import { Clock, Navigation, X, AlertCircle } from "lucide-react";
-import { cn, WEEKDAYS, format12Hour, formatRoom } from "@/lib/utils";
+  Clock,
+  Navigation,
+  X,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Calendar as CalendarIcon,
+  Globe,
+} from "lucide-react";
+import { cn, WEEKDAYS, format12Hour } from "@/lib/utils";
+import { TimezonePicker } from "@/components/shared/TimezonePicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { IconPicker, Icon as LucideIcon } from "@/components/ui/icon-picker";
 
-import { ClassIcon, AVAILABLE_ICONS } from "@/components/shared/ClassIcon";
-
-// Helper to get nearest 15-min interval for current time
-function getRoundedTimeOffset(addHours = 0) {
-  const d = new Date();
-  let hrs = d.getHours();
-  let mins = d.getMinutes();
-
-  if (mins > 45) {
-    mins = 0;
-    hrs = (hrs + 1) % 24;
-  } else if (mins > 30) {
-    mins = 45;
-  } else if (mins > 15) {
-    mins = 30;
-  } else {
-    mins = 15;
-  }
-
-  hrs = hrs + addHours;
-  // Cap at 23:45 to prevent wrapping into the next day and failing validation
-  if (hrs >= 24) {
-    return "23:45";
-  }
-
-  return `${hrs.toString().padStart(2, "0")}:${mins
-    .toString()
-    .padStart(2, "0")}`;
-}
-
-// Custom Time Combobox to replace native browser time pickers
-function TimeInput({ value, onChange, placeholder, intervals, id, formatTimeOption }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = React.useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Scroll to active or closest element on open
-  useEffect(() => {
-    if (open && containerRef.current) {
-      // Find the exact match, or if none, find the closest one
-      let targetValue = value;
-      if (!intervals.includes(value) && value) {
-        targetValue = intervals.find(t => t >= value) || intervals[intervals.length - 1];
-      }
-      
-      if (targetValue) {
-        const activeEl = containerRef.current.querySelector(
-          `[data-value="${targetValue}"]`
-        );
-        if (activeEl) {
-          activeEl.scrollIntoView({ block: "center" });
-        }
-      }
-    }
-  }, [open, value, intervals]);
+function ScheduleItem({
+  schedule,
+  index,
+  labels,
+  onChange,
+  onRemove,
+  timeIntervals,
+}) {
+  const toggleDay = (dayInt) => {
+    const currentDays = schedule.days || [];
+    const newDays = currentDays.includes(dayInt)
+      ? currentDays.filter((d) => d !== dayInt)
+      : [...currentDays, dayInt].sort();
+    onChange(index, { days: newDays });
+  };
 
   return (
-    <div
-      ref={containerRef}
-    >
+    <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-4 relative group">
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        className="absolute -top-2 -right-2 p-1.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+      >
+        <Trash2 size={14} />
+      </button>
 
-      <input
-        id={id}
-        type="time"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setOpen(true)}
-        onClick={() => setOpen(true)}
-        placeholder={placeholder}
-        autoComplete="off"
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field>
+          <FieldLabel>Session Label</FieldLabel>
+          <Select
+            value={schedule.labelId}
+            onValueChange={(val) => onChange(index, { labelId: val })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Label (e.g. Lecture)" />
+            </SelectTrigger>
+            <SelectContent>
+              {labels.map((l) => (
+                <SelectItem key={l._id} value={l._id}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: l.color }}
+                    />
+                    {l.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-      {open && (
-        <div>
-          {intervals.map((t) => (
-            <div
-              key={t}
-              data-value={t}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange(t);
-                setOpen(false);
-              }}
-            >
+        <Field>
+          <FieldLabel>Location / Room</FieldLabel>
+          <div className="relative">
+            <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="e.g. Room 101, Lab B"
+              value={schedule.location || ""}
+              onChange={(e) => onChange(index, { location: e.target.value })}
+            />
+          </div>
+        </Field>
+      </div>
 
-              {formatTimeOption ? formatTimeOption(t) : <span>{format12Hour(t)}</span>}
-            </div>
-          ))}
-          {intervals.length === 0 && (
-            <div>
-              No times available
-            </div>
-          )}
-
+      <Field>
+        <FieldLabel>Days of Week</FieldLabel>
+        <div className="flex flex-wrap gap-2">
+          {WEEKDAYS.map((day, i) => {
+            const dayInt = i + 1; // 1 = Monday
+            const isSelected = schedule.days?.includes(dayInt);
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => toggleDay(dayInt)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-sm font-medium border transition-all",
+                  isSelected
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-background border-border text-muted-foreground hover:border-primary/50",
+                )}
+              >
+                {day.slice(0, 3)}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </Field>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field>
+          <FieldLabel>Start Time</FieldLabel>
+          <div className="relative">
+            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <select
+              className="w-full h-10 pl-9 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
+              value={schedule.startTime}
+              onChange={(e) => onChange(index, { startTime: e.target.value })}
+            >
+              {timeIntervals.map((t) => (
+                <option key={t} value={t}>
+                  {format12Hour(t)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </Field>
+
+        <Field>
+          <FieldLabel>Duration (min)</FieldLabel>
+          <Input
+            type="number"
+            min="15"
+            step="15"
+            value={schedule.duration}
+            onChange={(e) =>
+              onChange(index, { duration: parseInt(e.target.value) || 0 })
+            }
+          />
+        </Field>
+      </div>
     </div>
   );
 }
 
-export default function ClassFormModal({ open, onOpenChange, onSuccess, classData }) {
+export default function ClassFormModal({
+  open,
+  onOpenChange,
+  onSuccess,
+  classData,
+}) {
   const isEdit = !!classData;
 
+  // Global State
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("BookOpen");
-  const [days, setDays] = useState([]);
-  const [startTime, setStartTime] = useState(getRoundedTimeOffset(0));
-  const [endTime, setEndTime] = useState(getRoundedTimeOffset(1));
-  const [room, setRoom] = useState("");
+  const [color, setColor] = useState("oklch(0.6 0.2 250)");
+  const [timezone, setTimezone] = useState("Asia/Kolkata");
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState("");
+  const [schedules, setSchedules] = useState([]);
+  const [labels, setLabels] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [showIconPicker, setShowIconPicker] = useState(false);
-  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const iconPickerRef = React.useRef(null);
-  const initialDataRef = React.useRef(null);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (iconPickerRef.current && !iconPickerRef.current.contains(event.target)) {
-        setShowIconPicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Generate 15-minute intervals
+  // Time intervals for select
   const timeIntervals = useMemo(() => {
     const times = [];
     for (let i = 0; i < 24; i++) {
       for (let j = 0; j < 60; j += 15) {
         times.push(
-          `${i.toString().padStart(2, "0")}:${j.toString().padStart(2, "0")}`
+          `${i.toString().padStart(2, "0")}:${j.toString().padStart(2, "0")}`,
         );
       }
     }
     return times;
   }, []);
 
-  function resetForm() {
-    setName("");
-    setIcon("BookOpen");
-    setDays([]);
-    setStartTime(getRoundedTimeOffset(0));
-    setEndTime(getRoundedTimeOffset(1));
-    setRoom("");
-    setFormError(null);
-  }
-
   useEffect(() => {
     if (open) {
+      loadLabels();
       if (isEdit && classData) {
         setName(classData.name || "");
+        setDescription(classData.description || "");
         setIcon(classData.icon || "BookOpen");
-        
-        const initialDays = classData.schedule?.days || [];
-        if (classData.schedule?.day && initialDays.length === 0) {
-          initialDays.push(classData.schedule.day);
-        }
-        setDays(initialDays);
-        
-        setStartTime(classData.schedule?.startTime || getRoundedTimeOffset(0));
-        setEndTime(classData.schedule?.endTime || getRoundedTimeOffset(1));
-        setRoom(classData.schedule?.room || "");
-        setFormError(null);
-
-        // Capture initial data for dirty check
-        initialDataRef.current = {
-          name: classData.name || "",
-          icon: classData.icon || "BookOpen",
-          days: initialDays,
-          startTime: classData.schedule?.startTime || getRoundedTimeOffset(0),
-          endTime: classData.schedule?.endTime || getRoundedTimeOffset(1),
-          room: classData.schedule?.room || "",
-        };
+        setColor(classData.color || "oklch(0.6 0.2 250)");
+        setTimezone(classData.timezone || "Asia/Kolkata");
+        setStartDate(new Date(classData.startDate).toISOString().split("T")[0]);
+        setEndDate(new Date(classData.endDate).toISOString().split("T")[0]);
+        setSchedules(classData.schedules || []);
       } else {
-        resetForm();
-        initialDataRef.current = {
-          name: "",
-          icon: "BookOpen",
-          days: [],
-          startTime: getRoundedTimeOffset(0),
-          endTime: getRoundedTimeOffset(1),
-          room: "",
-        };
+        // Defaults for new class
+        setName("");
+        setDescription("");
+        setIcon("BookOpen");
+        setStartDate(new Date().toISOString().split("T")[0]);
+        // Set end date to 3 months from now
+        const d = new Date();
+        d.setMonth(d.getMonth() + 3);
+        setEndDate(d.toISOString().split("T")[0]);
+        setSchedules([
+          {
+            labelId: "",
+            days: [],
+            startTime: "09:00",
+            duration: 60,
+            location: "",
+          },
+        ]);
       }
     }
   }, [open, isEdit, classData]);
 
-  const isDirty = useMemo(() => {
-    if (!initialDataRef.current) return false;
-    
-    const d1 = [...days].sort().join(",");
-    const d2 = [...initialDataRef.current.days].sort().join(",");
-
-    return (
-      name !== initialDataRef.current.name ||
-      icon !== initialDataRef.current.icon ||
-      d1 !== d2 ||
-      startTime !== initialDataRef.current.startTime ||
-      endTime !== initialDataRef.current.endTime ||
-      room !== initialDataRef.current.room
-    );
-  }, [name, icon, days, startTime, endTime, room]);
-
-  const handleCloseAttempt = (force = false) => {
-    if (force || !isDirty) {
-      onOpenChange(false);
-      setShowDiscardConfirm(false);
-    } else {
-      setShowDiscardConfirm(true);
+  const loadLabels = async () => {
+    try {
+      const { data } = await fetchLabels();
+      setLabels(data.labels);
+    } catch (err) {
+      console.error("Failed to load labels");
     }
   };
 
-  function handleStartTimeChange(val) {
-    let durationMins = 60; // Default to 1 hour
-    
-    // Calculate current duration so we can shift and maintain it
-    if (startTime && endTime) {
-      const [sh, sm] = startTime.split(":").map(Number);
-      const [eh, em] = endTime.split(":").map(Number);
-      const diff = (eh * 60 + em) - (sh * 60 + sm);
-      if (diff > 0) {
-        durationMins = diff;
-      }
-    }
+  const addSchedule = () => {
+    setSchedules([
+      ...schedules,
+      { labelId: "", days: [], startTime: "09:00", duration: 60, location: "" },
+    ]);
+  };
 
-    setStartTime(val);
+  const removeSchedule = (index) => {
+    setSchedules(schedules.filter((_, i) => i !== index));
+  };
 
-    if (val) {
-      const [nh, nm] = val.split(":").map(Number);
-      let newEndMins = nh * 60 + nm + durationMins;
-      
-      // Cap at 23:45 safely
-      if (newEndMins > 23 * 60 + 45) {
-        newEndMins = 23 * 60 + 45;
-      }
-      
-      const newEh = Math.floor(newEndMins / 60);
-      const newEm = newEndMins % 60;
-      setEndTime(`${newEh.toString().padStart(2, "0")}:${newEm.toString().padStart(2, "0")}`);
-    }
-  }
-
-  function handleEndTimeChange(val) {
-    setEndTime(val);
-  }
-
-  const formatEndTimeOption = (t) => {
-    const formatted = format12Hour(t);
-    if (!startTime) return <span>{formatted}</span>;
-    
-    const [sh, sm] = startTime.split(":").map(Number);
-    const [eh, em] = t.split(":").map(Number);
-    let diffMins = (eh * 60 + em) - (sh * 60 + sm);
-    
-    if (diffMins <= 0) return <span>{formatted}</span>;
-    
-    const hrs = Math.floor(diffMins / 60);
-    const mins = diffMins % 60;
-    
-    let durationStr = "";
-    if (hrs > 0 && mins > 0) durationStr = `${hrs} hr ${mins} min`;
-    else if (hrs > 0) durationStr = `${hrs} hr`;
-    else durationStr = `${mins} min`;
-    
-    return (
-      <>
-        <span>{formatted}</span>
-        <span>({durationStr})</span>
-      </>
-    );
-
+  const updateSchedule = (index, updates) => {
+    const newSchedules = [...schedules];
+    newSchedules[index] = { ...newSchedules[index], ...updates };
+    setSchedules(newSchedules);
   };
 
   async function handleSubmit(e) {
     e.preventDefault();
     setFormError(null);
 
-    if (!name.trim()) {
-      setFormError("Class name is required.");
-      return;
-    }
+    if (!name.trim()) return setFormError("Class name is required.");
+    if (!endDate) return setFormError("End date is required.");
+    if (schedules.length === 0)
+      return setFormError("At least one schedule is required.");
 
-    if (startTime && endTime && startTime >= endTime) {
-      setFormError("End time must be strictly after the start time.");
-      return;
-    }
+    const invalidSchedule = schedules.find(
+      (s) => !s.labelId || s.days.length === 0,
+    );
+    if (invalidSchedule)
+      return setFormError(
+        "Each schedule must have a label and at least one day selected.",
+      );
 
     setSubmitting(true);
     try {
-      const schedule = {};
-      if (days.length > 0) schedule.days = days;
-      if (startTime) schedule.startTime = startTime;
-      if (endTime) schedule.endTime = endTime;
-      if (room.trim()) schedule.room = formatRoom(room);
-
       const payload = {
         name: name.trim(),
+        description,
         icon,
-        schedule: Object.keys(schedule).length > 0 ? schedule : undefined,
+        color,
+        timezone,
+        startDate,
+        endDate,
+        schedules,
       };
 
       if (isEdit) {
         await updateClass(classData._id, payload);
-        toast.success(`Class "${payload.name}" updated successfully`);
+        toast.success("Class updated successfully");
       } else {
         await createClass(payload);
-        toast.success(`Class "${payload.name}" created successfully`);
+        toast.success("Class created successfully");
       }
-
-      const closeDialog = () => onOpenChange(false);
-      closeDialog();
-      
+      onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      setFormError(err.response?.data?.message || `Failed to ${isEdit ? "update" : "create"} class`);
+      setFormError(err.response?.data?.message || "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   }
 
-  function handleOpenChange(value) {
-    if (value === false) {
-      handleCloseAttempt();
-    } else {
-      onOpenChange(true);
-    }
-  }
-
-  const MON_TO_SAT = WEEKDAYS.filter(d => d !== "Sunday");
-  const monToSatSelected = MON_TO_SAT.every(d => days.includes(d)) && days.length === MON_TO_SAT.length;
-  const toggleMonToSat = () => {
-    setDays(monToSatSelected ? [] : [...MON_TO_SAT]);
-  };
-  const toggleDay = (day) => {
-    setDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={false}>
-        <div>
-          <Button
-            variant="secondary"
-            size="icon-sm"
-            onClick={() => handleCloseAttempt()}
-          >
-            <X />
-            <span>Close</span>
-          </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? "Edit Class" : "Create New Class"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Modify class details and schedules."
+              : "Set up your class, schedule, and timezone."}
+          </DialogDescription>
+        </DialogHeader>
 
-
-          <div>
-            <DialogHeader>
-              <DialogTitle>
-                {isEdit ? "Edit Class" : "Create Class"}
-              </DialogTitle>
-              <DialogDescription>
-                {isEdit ? "Update class details and schedule." : "Create a new class and schedule."}
-              </DialogDescription>
-            </DialogHeader>
-
-
-            <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-8 py-4">
+          {/* General Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <Field>
-                <FieldLabel
-                  htmlFor="class-name"
-                >
-                  Class Name
-                </FieldLabel>
-
-                <div>
-                  <div ref={iconPickerRef}>
-                    <button
+                <FieldLabel>Class Identity</FieldLabel>
+                <div className="flex gap-3">
+                  <IconPicker value={icon} onValueChange={setIcon}>
+                    <Button
                       type="button"
-                      onClick={() => setShowIconPicker(!showIconPicker)}
+                      variant="outline"
+                      className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors border border-border"
                     >
-                      <ClassIcon name={icon} />
-                    </button>
-
-                    {showIconPicker && (
-                      <div>
-                        {AVAILABLE_ICONS.map(iName => (
-                          <button
-                            key={iName}
-                            type="button"
-                            onClick={() => {
-                              setIcon(iName);
-                              setShowIconPicker(false);
-                            }}
-                          >
-                            <ClassIcon name={iName} />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                      <LucideIcon name={icon} size={24} />
+                    </Button>
+                  </IconPicker>
                   <Input
-                    id="class-name"
-                    placeholder="e.g. CS101 - Intro to Programming"
+                    placeholder="e.g. CS101 - Web Development"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    autoFocus
+                    className="flex-1"
                   />
                 </div>
               </Field>
 
-
-              <div>
-                <Field>
-                  <div>
-                    <FieldLabel>
-                      Days
-                    </FieldLabel>
-                    <button
-                      type="button"
-                      onClick={toggleMonToSat}
-                    >
-                      {monToSatSelected ? "Clear Mon-Sat" : "Select Mon-Sat"}
-                    </button>
-                  </div>
-
-                  <div>
-                    {WEEKDAYS.map((d) => {
-                      const isSelected = days.includes(d);
-                      return (
-                        <label
-                          key={d}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleDay(d)}
-                          />
-                          <div>
-                            {d.slice(0, 3)}
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </Field>
-
-
-                <div>
-                  <Field>
-                    <FieldLabel>
-                      Start Time
-                    </FieldLabel>
-                    <InputGroup>
-                      <InputGroupAddon>
-                        <Clock />
-                      </InputGroupAddon>
-                      <div>
-                        <TimeInput
-                          id="class-start"
-                          value={startTime}
-                          onChange={handleStartTimeChange}
-                          placeholder="Select"
-                          intervals={timeIntervals.filter((t) => t <= "23:30")}
-                        />
-                      </div>
-                    </InputGroup>
-                  </Field>
-
-
-                  <Field>
-                    <FieldLabel>
-                      End Time
-                    </FieldLabel>
-                    <InputGroup>
-                      <InputGroupAddon>
-                        <Clock />
-                      </InputGroupAddon>
-                      <div>
-                        <TimeInput
-                          id="class-end"
-                          value={endTime}
-                          onChange={handleEndTimeChange}
-                          placeholder="Select"
-                          intervals={timeIntervals.filter((t) => !startTime || t > startTime)}
-                          formatTimeOption={formatEndTimeOption}
-                        />
-                      </div>
-                    </InputGroup>
-                  </Field>
-                </div>
-
-
-                <Field>
-                  <FieldLabel
-                    htmlFor="class-room"
-                  >
-                    Room No.
-                  </FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon>
-                      <Navigation />
-                    </InputGroupAddon>
-                    <input
-                      id="class-room"
-                      type="text"
-                      placeholder="e.g. 101, 202-A"
-                      value={room}
-                      onChange={(e) => setRoom(e.target.value)}
-                    />
-                  </InputGroup>
-                </Field>
-              </div>
-
-
-              <div aria-hidden="true" /> {/* Dropdown buffer for mobile */}
-
-              {formError && (
-                <div>
-                  <span />
-                  {formError}
-                </div>
-              )}
-
-
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  size="lg"
-                >
-                  {submitting ? "Processing..." : isEdit ? "Save Changes" : "Create Class"}
-                </Button>
-              </DialogFooter>
-
-            </form>
-          </div>
-        </div>
-      </DialogContent>
-
-      {/* Discard Confirmation Dialog */}
-      <Dialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <div>
-              <AlertCircle />
+              <Field>
+                <FieldLabel>Description (Optional)</FieldLabel>
+                <textarea
+                  className="w-full min-h-[100px] p-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Course overview, syllabus links, etc."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </Field>
             </div>
-            <DialogTitle>Discard changes?</DialogTitle>
-            <DialogDescription>
-              You have unsaved changes. Are you sure you want to close this form?
-            </DialogDescription>
-          </DialogHeader>
 
-          <DialogFooter>
+            <div className="space-y-6">
+              <Field>
+                <FieldLabel>Timezone & Schedule Range</FieldLabel>
+                <div className="space-y-4 p-4 rounded-xl border border-border bg-muted/20">
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-4 h-4 text-muted-foreground" />
+                    <TimezonePicker
+                      value={timezone}
+                      onChange={setTimezone}
+                      disabled={isEdit}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                        <CalendarIcon size={10} /> Start Date
+                      </span>
+                      <Input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        disabled={isEdit && new Date(startDate) < new Date()}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                        <CalendarIcon size={10} /> End Date
+                      </span>
+                      <Input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Field>
+            </div>
+          </div>
+
+          {/* Schedules Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Schedules
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addSchedule}
+                className="gap-2"
+              >
+                <Plus size={14} /> Add Pattern
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {schedules.map((s, i) => (
+                <ScheduleItem
+                  key={i}
+                  index={i}
+                  schedule={s}
+                  labels={labels}
+                  onChange={updateSchedule}
+                  onRemove={removeSchedule}
+                  timeIntervals={timeIntervals}
+                />
+              ))}
+            </div>
+          </div>
+
+          {formError && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-3">
+              <AlertCircle size={18} />
+              {formError}
+            </div>
+          )}
+
+          <DialogFooter className="sticky bottom-0 bg-background/80 backdrop-blur-sm pt-4 border-t border-border">
             <Button
-              variant="destructive"
-              onClick={() => handleCloseAttempt(true)}
+              variant="ghost"
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
             >
-              Discard Changes
+              Cancel
             </Button>
             <Button
-              variant="outline"
-              onClick={() => setShowDiscardConfirm(false)}
+              type="submit"
+              disabled={submitting}
+              className="min-w-[140px]"
             >
-              Keep Editing
+              {submitting
+                ? "Processing..."
+                : isEdit
+                  ? "Save Changes"
+                  : "Create Class"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }

@@ -1,5 +1,5 @@
 import { ButtonGroup } from "@/components/ui/button-group";
-import { isWithinSchedule } from "@/lib/utils";
+import { isClassInSession } from "@/lib/utils";
 import { PrimaryAttendanceAction } from "./PrimaryAttendanceAction";
 import { ManualEntryButton } from "./ManualEntryButton";
 import { ViewRecordButton } from "./ViewRecordButton";
@@ -111,7 +111,7 @@ export const AttendanceActionGroup = ({
   }
 
   // No session yet — check schedule
-  const { onTime } = isWithinSchedule(cls.schedule);
+  const { onTime } = isClassInSession(cls);
 
   // Off-schedule: just show the disabled primary alone
   if (!onTime) {

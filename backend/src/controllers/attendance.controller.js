@@ -3,45 +3,27 @@ const AttendanceRecord = require("../models/AttendanceRecord");
 const Class = require("../models/Class");
 const StudentProfile = require("../models/StudentProfile");
 
+const TemporalService = require("../services/temporalService");
+
 // --- HELPERS ---
 
-const getDateString = (date = new Date()) => {
-  // Use YYYY-MM-DD in local time
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const getWeekDay = (date = new Date()) => {
-  const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  return weekdays[date.getDay()];
-};
-
-const checkScheduleState = (classDoc) => {
-  if (!classDoc.schedule || !classDoc.schedule.days || classDoc.schedule.days.length === 0) {
-    return { ok: false, message: "Class has no schedule set." };
+/**
+ * Checks if a session is currently within its attendance window.
+ */
+const checkSessionWindow = (session) => {
+  if (!session.attendanceWindow || !session.attendanceWindow.opensAt) {
+    return { ok: true }; // Fallback for legacy data or manual sessions
   }
 
-  const now = new Date();
-  const currentDay = getWeekDay(now);
+  const isStarted = TemporalService.isPast(session.attendanceWindow.opensAt);
+  const isEnded = TemporalService.isPast(session.attendanceWindow.closesAt);
 
-  if (!classDoc.schedule.days.includes(currentDay)) {
-    return { ok: false, message: `Attendance only allowed on: ${classDoc.schedule.days.join(", ")}` };
+  if (!isStarted) {
+    return { ok: false, message: "Attendance window hasn't opened yet." };
   }
 
-  if (classDoc.schedule.startTime && classDoc.schedule.endTime) {
-    const [sh, sm] = classDoc.schedule.startTime.split(":").map(Number);
-    const [eh, em] = classDoc.schedule.endTime.split(":").map(Number);
-    const [ch, cm] = [now.getHours(), now.getMinutes()];
-
-    const startTotal = sh * 60 + sm;
-    const endTotal = eh * 60 + em;
-    const currentTotal = ch * 60 + cm;
-
-    if (currentTotal < startTotal) return { ok: false, message: `Starts at ${classDoc.schedule.startTime}` };
-    if (currentTotal > endTotal) return { ok: false, message: `Ended at ${classDoc.schedule.endTime}` };
+  if (isEnded) {
+    return { ok: false, message: "Attendance window has closed." };
   }
 
   return { ok: true };
@@ -54,55 +36,60 @@ const startSession = async (req, res) => {
   try {
     const { classId } = req.params;
     const teacherId = req.user.userId;
+    const now = TemporalService.getNowInstant();
 
-    const classDoc = await Class.findById(classId).populate("studentIds").lean();
-    if (!classDoc || classDoc.teacherId.toString() !== teacherId.toString()) {
-      return res.status(404).json({ message: "Class not found" });
+    // 1. Find the session that covers "now"
+    // Our collision detection ensures only one session exists per time block
+    const session = await AttendanceSession.findOne({
+      classId,
+      teacherId,
+      startInstant: { $lte: now },
+      endInstant: { $gte: now },
+      status: { $in: ["scheduled", "inprogress", "submitted"] }
+    });
+
+    if (!session) {
+      return res.status(404).json({ message: "No active session found for this time." });
     }
 
-    const schedule = checkScheduleState(classDoc);
-    const dateStr = getDateString();
+    // 2. Transition to inprogress if it was scheduled
+    if (session.status === "scheduled") {
+      session.status = "inprogress";
+      await session.save();
+    }
 
-    // Find today's session
-    let session = await AttendanceSession.findOne({ classId, dateString: dateStr });
+    // 3. Pre-create absent records if they don't exist
+    // Get all enrolled students for this class
+    const Enrollment = require("../models/Enrollment");
+    const enrollments = await Enrollment.find({ classId, status: "active" }).lean();
+    const enrolledStudentIds = enrollments.map(e => e.studentId);
 
-    // if it exists, check for Lazy Lock
-    if (session) {
-      if (session.status !== "finalized" && !schedule.ok && schedule.message.includes("Ended")) {
-        session.status = "finalized";
-        await session.save();
-      }
-    } else {
-      // Create new session - only if within schedule
-      if (!schedule.ok) {
-        return res.status(400).json({ message: schedule.message });
-      }
-
-      session = await AttendanceSession.create({
+    const existingRecordsCount = await AttendanceRecord.countDocuments({ sessionId: session._id });
+    
+    if (existingRecordsCount === 0 && enrolledStudentIds.length > 0) {
+      const records = enrolledStudentIds.map(studentId => ({
+        sessionId: session._id,
+        studentId,
         classId,
         teacherId,
-        date: new Date(),
-        dateString: dateStr,
-        status: "inProgress"
-      });
+        status: "absent",
+        method: "manual",
+        createdAt: now
+      }));
+      await AttendanceRecord.insertMany(records);
     }
 
-    // Return session data with students and profiles
-    const studentProfiles = await StudentProfile.find({
-      userId: { $in: classDoc.studentIds.map(s => (s._id || s)) }
+    // 4. Return session + profiles for scanner
+    const profiles = await StudentProfile.find({
+      userId: { $in: enrolledStudentIds }
     }).select("userId name avatar embedding faceEnrolled").lean();
 
-    const existingRecords = await AttendanceRecord.find({ sessionId: session._id }).lean();
-
-    if (!session.populated("classId")) {
-      await session.populate("classId");
-    }
+    const records = await AttendanceRecord.find({ sessionId: session._id }).lean();
 
     return res.status(200).json({
       session,
-      students: classDoc.studentIds,
-      profiles: studentProfiles,
-      records: existingRecords
+      profiles,
+      records
     });
 
   } catch (err) {
@@ -113,77 +100,41 @@ const startSession = async (req, res) => {
 // PUT /api/attendance/mark
 const markAttendance = async (req, res) => {
   try {
-    const { sessionId, studentId, classId, status, method } = req.body;
+    const { sessionId, studentId, status, method } = req.body;
 
     const session = await AttendanceSession.findById(sessionId);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    // 1. Status Check
-    if (session.status === "finalized") {
+    // 1. Lifecycle Check
+    if (session.status === "finalized" || session.status === "missed") {
       return res.status(403).json({ message: `Session is ${session.status} and cannot be modified.` });
     }
 
-    // 2. Schedule Check (Server-as-King)
-    const classDoc = await Class.findById(classId);
-    const schedule = checkScheduleState(classDoc);
-    if (!schedule.ok) {
-      if (schedule.message.includes("Ended")) {
-        session.status = "finalized";
-        await session.save();
-      }
-      return res.status(403).json({ message: `Session Finalized: ${schedule.message}` });
+    // 2. Window Check
+    const window = checkSessionWindow(session);
+    if (!window.ok) {
+      return res.status(403).json({ message: window.message });
     }
 
     // 3. Mark logic
+    const updateData = { status, method };
+    
+    // If marking as present, set markedAt
+    if (status === "present") {
+      updateData.markedAt = TemporalService.getNowInstant();
+    } else {
+      updateData.markedAt = null;
+    }
+
     const record = await AttendanceRecord.findOneAndUpdate(
       { sessionId, studentId },
-      { classId, status, method, date: new Date() },
-      { upsert: true, new: true }
+      updateData,
+      { new: true }
     );
 
+    if (!record) return res.status(404).json({ message: "Record not found for this student." });
+
     return res.status(200).json({ record });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-// POST /api/attendance/end/:sessionId
-const endSession = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const session = await AttendanceSession.findById(sessionId);
-
-    if (!session || ["finalized", "submitted"].includes(session.status)) {
-      return res.status(400).json({ message: "Session is not in a modifiable state." });
-    }
-
-    const classDoc = await Class.findById(session.classId);
-    const schedule = checkScheduleState(classDoc);
-    if (!schedule.ok && schedule.message.includes("Ended")) {
-      session.status = "finalized";
-      await session.save();
-      return res.status(403).json({ message: "Session Finalized: Class time has ended." });
-    }
-
-    // record absences for missing students
-    const existingRecords = await AttendanceRecord.find({ sessionId });
-    const recordedIds = existingRecords.map(r => r.studentId.toString());
-    const unrecordedIds = classDoc.studentIds.filter(id => !recordedIds.includes(id.toString()));
-
-    if (unrecordedIds.length > 0) {
-      const absences = unrecordedIds.map(id => ({
-        sessionId: session._id,
-        studentId: id,
-        classId: session.classId,
-        date: new Date(),
-        status: "absent",
-        method: "manual"
-      }));
-      await AttendanceRecord.insertMany(absences);
-    }
-
-    await session.populate("classId");
-    return res.status(200).json({ message: "Absences recorded. Ready for review.", session });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -196,19 +147,14 @@ const submitSession = async (req, res) => {
     const session = await AttendanceSession.findById(sessionId);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    const classDoc = await Class.findById(session.classId);
-    const schedule = checkScheduleState(classDoc);
-
-    if (!schedule.ok && schedule.message.includes("Ended")) {
-      session.status = "finalized";
-      await session.save();
-      return res.status(403).json({ message: "Session Finalized: Cannot submit after class ends." });
+    // Can only submit if inprogress
+    if (session.status !== "inprogress") {
+      return res.status(400).json({ message: "Only sessions in progress can be submitted." });
     }
 
     session.status = "submitted";
     await session.save();
 
-    await session.populate("classId");
     return res.status(200).json({ message: "Attendance submitted successfully.", session });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -222,24 +168,13 @@ const reopenSession = async (req, res) => {
     const session = await AttendanceSession.findById(sessionId);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    // Only allow reopening if submitted
+    // Only allow reopening if submitted and not finalized
     if (session.status !== "submitted") {
       return res.status(400).json({ message: "Only submitted sessions can be reopened." });
     }
 
-    const classDoc = await Class.findById(session.classId);
-    const schedule = checkScheduleState(classDoc);
-    if (!schedule.ok) {
-      if (schedule.message.includes("Ended")) {
-        session.status = "finalized";
-        await session.save();
-      }
-      return res.status(403).json({ message: "Cannot reopen: Class time has ended." });
-    }
-
-    session.status = "inProgress";
+    session.status = "inprogress";
     await session.save();
-    await session.populate("classId");
 
     return res.status(200).json({ message: "Session reopened for editing.", session });
   } catch (err) {
@@ -247,8 +182,8 @@ const reopenSession = async (req, res) => {
   }
 };
 
-// DELETE /api/attendance/session/:sessionId
-const discardSession = async (req, res) => {
+// DELETE /api/attendance/session/:sessionId/reset
+const resetSession = async (req, res) => {
   try {
     const { sessionId } = req.params;
     const session = await AttendanceSession.findById(sessionId);
@@ -258,16 +193,17 @@ const discardSession = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // Only allow discarding sessions that are not finalized
-    if (session.status === "finalized") {
-      return res.status(400).json({ message: "Finalized sessions cannot be terminated." });
-    }
-
-    // HARD DELETE: Remove session and cascading records
-    await AttendanceSession.findByIdAndDelete(sessionId);
+    // Reset logic: Hard delete records and move back to scheduled
+    // This allows a fresh start if the scan was corrupted or accidental
     await AttendanceRecord.deleteMany({ sessionId });
+    
+    session.status = "scheduled";
+    await session.save();
 
-    return res.status(200).json({ message: "Session terminated and all records deleted." });
+    return res.status(200).json({ 
+      message: "Session reset. All records deleted.",
+      status: "scheduled"
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -331,10 +267,9 @@ const getSessionRecords = async (req, res) => {
 module.exports = {
   startSession,
   markAttendance,
-  endSession,
   getSessionRecords,
   submitSession,
   reopenSession,
-  discardSession,
+  resetSession,
   getTodaySession
 };

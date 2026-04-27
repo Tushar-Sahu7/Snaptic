@@ -45,7 +45,7 @@ const register = async (req, res) => {
         return res.status(403).json({ message: "Invalid invite link" });
       }
 
-      if (inviter.invite.expiry < new Date())
+      if (TemporalService.isPast(inviter.invite.expiry))
         return res.status(403).json({ message: "Invite link has expired" });
 
       await TeacherProfile.findByIdAndUpdate(inviter._id, {
@@ -125,6 +125,10 @@ const login = async (req, res) => {
   }
 };
 
+const Enrollment = require("../models/Enrollment");
+const Class = require("../models/Class");
+const TemporalService = require("../services/temporalService");
+
 // GET /api/auth/me
 const me = async (req, res) => {
   try {
@@ -135,16 +139,14 @@ const me = async (req, res) => {
 
     let profile = null;
     let stats = {};
+    
     if (user.role === "teacher") {
       profile = await TeacherProfile.findOne({ userId: user._id });
-
-      const Class = require("../models/Class");
-      // Aggregate stats
-      const classes = await Class.find({ teacherId: user._id });
-      const studentIds = new Set();
-      classes.forEach(cls => {
-        cls.studentIds.forEach(id => studentIds.add(id.toString()));
-      });
+      
+      // Teacher stats: count of classes they own and unique students enrolled
+      const classes = await Class.find({ teacherId: user._id, deletedAt: null });
+      const enrollments = await Enrollment.find({ teacherId: user._id, status: "active" });
+      const studentIds = new Set(enrollments.map(e => e.studentId.toString()));
 
       stats = {
         classCount: classes.length,
@@ -153,14 +155,15 @@ const me = async (req, res) => {
       };
     } else {
       profile = await StudentProfile.findOne({ userId: user._id });
-      const Class = require("../models/Class");
-      const activeClasses = await Class.countDocuments({ 
-        studentIds: user._id, 
-        status: "active", 
-        deletedAt: null 
+      
+      // Student stats: count of active enrollments
+      const enrollmentCount = await Enrollment.countDocuments({
+        studentId: user._id,
+        status: "active"
       });
+
       stats = {
-        classCount: activeClasses,
+        classCount: enrollmentCount,
         faceEnrolled: profile?.faceEnrolled || false,
       };
     }
@@ -239,10 +242,12 @@ const changePassword = async (req, res) => {
 const generateInvite = async (req, res) => {
   try {
     const token = crypto.randomUUID();
+    const { Temporal } = require("@js-temporal/polyfill");
+    const expiry = Temporal.Now.instant().add({ hours: 1 }).toString();
 
     await TeacherProfile.findOneAndUpdate(
       { userId: req.user.userId },
-      { invite: { token, expiry: new Date(Date.now() + 60 * 60 * 1000) } },
+      { invite: { token, expiry } },
     );
 
     const inviteLink = `${process.env.CLIENT_URL}/register?invite=${token}`;
@@ -265,9 +270,7 @@ const logout = async (req, res) => {
       res.clearCookie("token_teacher");
       res.clearCookie("token_student");
     }
-    // Also clear legacy token
-    res.clearCookie("token");
-
+    
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     return res.status(500).json({ message: err.message });

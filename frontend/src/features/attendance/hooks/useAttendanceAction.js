@@ -1,4 +1,4 @@
-import { isWithinSchedule } from "@/lib/utils";
+import { isClassInSession } from "@/lib/utils";
 import {
   ScanFace,
   SquarePen,
@@ -16,8 +16,8 @@ import {
 export const useAttendanceAction = (cls, session) => {
   if (!cls) return { isSplit: false, primary: null, secondary: null };
 
-  const { onTime, message } = isWithinSchedule(cls.schedule);
-  const studentCount = cls.studentCount || cls.studentIds?.length || 0;
+  const { onTime, message } = isClassInSession(cls, session);
+  const studentCount = cls.studentCount || 0;
 
   // Split logic: Only when On Schedule, No Session exists yet today, and there are students.
   const isSplit = onTime && !session && studentCount > 0;
@@ -55,7 +55,7 @@ export const useAttendanceAction = (cls, session) => {
     };
   }
   // 3. Active Session Logic
-  else if (session?.status === "inProgress") {
+  else if (session?.status === "inprogress") {
     primary = {
       label: "Resume Session",
       mode: "manual",

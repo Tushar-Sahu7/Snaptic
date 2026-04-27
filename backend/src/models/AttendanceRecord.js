@@ -11,42 +11,41 @@ const attendanceRecordSchema = new mongoose.Schema(
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "studentId is required"]
-    },
-
-    date: {
-      type: Date,
-      required: [true, "Date is required"]
+      required: [true, "studentId is required"],
     },
 
     classId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Class",
-      required: [true, "classId is required"]
+      required: [true, "classId is required"],
+    },
+
+    teacherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "teacherId is required"],
     },
 
     status: {
       type: String,
       required: [true, "Status is required"],
-      enum: {
-        values: ["present", "absent", "late"],
-        message: "Status must be present, absent or late"
-      }
+      enum: ["present", "absent"],
+      default: "absent",
     },
-
     method: {
       type: String,
-      required: [true, "Method is required"],
-      enum: {
-        values: ["face", "manual"],
-        message: "Method must be face or manual"
-      }
-    }
+      enum: ["face", "manual"],
+      default: "manual",
+    },
+    markedAt: {
+      type: String, // Temporal.Instant (UTC)
+      default: null,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
-)
+);
 
 attendanceRecordSchema.index(
   { sessionId: 1, studentId: 1 },

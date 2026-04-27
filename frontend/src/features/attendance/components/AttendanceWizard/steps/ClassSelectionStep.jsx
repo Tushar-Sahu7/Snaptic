@@ -3,7 +3,7 @@ import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import { PrimaryAttendanceAction } from "@/features/attendance/components/PrimaryAttendanceAction";
 import { Badge } from "@/components/ui/badge";
-import { isWithinSchedule } from "@/lib/utils";
+import { isClassInSession } from "@/lib/utils";
 
 
 export const ClassSelectionStep = ({
@@ -48,8 +48,8 @@ export const ClassSelectionStep = ({
   }
 
   const sortedClasses = [...classes].sort((a, b) => {
-    const { onTime: onTimeA } = isWithinSchedule(a.schedule);
-    const { onTime: onTimeB } = isWithinSchedule(b.schedule);
+    const { onTime: onTimeA } = isClassInSession(a);
+    const { onTime: onTimeB } = isClassInSession(b);
     const tSessionA = todaySessions[a._id];
     const tSessionB = todaySessions[b._id];
 
@@ -107,7 +107,7 @@ export const ClassSelectionStep = ({
         <div>
 
           {sortedClasses.map((c) => {
-            const { onTime } = isWithinSchedule(c.schedule);
+            const { onTime } = isClassInSession(c);
             const tSession = todaySessions[c._id];
             const sCount = c.studentIds?.length || 0;
             const hasActiveSession = tSession?.status === "inProgress";

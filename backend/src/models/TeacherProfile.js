@@ -19,16 +19,6 @@ const teacherProfileSchema = new mongoose.Schema(
       default: null,
     },
 
-    faceEnrolled: {
-      type: Boolean,
-      default: false,
-    },
-
-    embedding: {
-      type: [Number],
-      default: null,
-    },
-
     invite: {
       token: { type: String, default: null },
       expiry: { type: Date, default: null },

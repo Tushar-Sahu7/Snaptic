@@ -57,6 +57,7 @@ const teacherNavItems = [
     icon: UserCheck,
   },
   { title: "Face ID", url: "/teacher/face-enrollment", icon: ScanFace },
+  { title: "Manage Labels", url: "/teacher/labels", icon: Palette },
 ];
 
 const studentNavItems = [

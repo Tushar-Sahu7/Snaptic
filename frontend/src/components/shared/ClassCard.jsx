@@ -2,40 +2,12 @@ import { memo } from "react";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, CalendarDays, MapPin, Clock } from "lucide-react";
-import { ClassIcon } from "./ClassIcon";
-import { formatDays, format12Hour, formatRoom } from "@/lib/utils";
+import { Users, CalendarDays, MapPin, Clock, ChevronRight } from "lucide-react";
+import { Icon as LucideIcon } from "@/components/ui/icon-picker";
+import { formatDays, format12Hour, formatRoom, isClassInSession, cn } from "@/lib/utils";
 
-
-const calculateDuration = (start, end) => {
-  if (!start || !end) return "";
-  try {
-    const [sh, sm] = start.split(":").map(Number);
-    const [eh, em] = end.split(":").map(Number);
-    const totalMinutes = eh * 60 + em - (sh * 60 + sm);
-    if (totalMinutes <= 0) return "";
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
-    return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m` : ""}`.trim();
-  } catch (e) {
-    return "";
-  }
-};
-
-/**
- * Shared ClassCard component using a slot-based composition pattern.
- * Supports Teacher, Student, and Attendance Selection views.
- *
- * Slots:
- * - badge: React node for status badges (top-right)
- * - actions: React node for management tools (top-right)
- * - footer: React node for bottom content/buttons
- */
 const ClassCard = memo(
   ({
     cls,
@@ -43,115 +15,110 @@ const ClassCard = memo(
     badge,
     actions,
     footer,
-    variant = "default",
     className,
   }) => {
-    const duration = calculateDuration(
-      cls.schedule?.startTime,
-      cls.schedule?.endTime,
-    );
+    const { onTime, activeSchedule } = isClassInSession(cls);
     const isArchived = cls.status === "archived";
+
+    // Primary schedule to show in the main slot
+    const primarySchedule = activeSchedule || cls.schedules?.[0];
 
     return (
       <Card
-        className={className}
+        className={cn(
+          "group relative overflow-hidden transition-all hover:shadow-md cursor-pointer",
+          onTime && "border-primary ring-1 ring-primary/20 bg-primary/5",
+          className
+        )}
         onClick={() => onClick?.(cls._id)}
       >
+        <CardContent className="p-0">
+          <div className="p-5 space-y-6">
+            {/* Header Section */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-border bg-background shadow-sm transition-transform group-hover:scale-105"
+                  style={{ color: cls.color || "inherit" }}
+                >
+                  <LucideIcon name={cls.icon} />
+                </div>
 
-        <CardContent>
-
-          {/* Header Section */}
-          <div>
-            <div>
-              <div>
-
-                <ClassIcon name={cls.icon} />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg leading-none truncate">
+                      {cls.name}
+                    </h3>
+                    {isArchived && <Badge variant="secondary" className="h-5 text-[10px]">Archived</Badge>}
+                    {onTime && <Badge className="h-5 text-[10px] bg-primary animate-pulse">In Session</Badge>}
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-sm mt-1">
+                    <MapPin size={12} />
+                    <span className="truncate">
+                      {primarySchedule?.location ? formatRoom(primarySchedule.location) : "No location set"}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <div>
-                  <h3>
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                {badge}
+                {actions}
+              </div>
+            </div>
 
-                    {cls.name}
-                  </h3>
-                  {isArchived && (
-                    <Badge variant="outline">
-                      Archived
-                    </Badge>
+            {/* Schedule Summary Section */}
+            <div className="grid grid-cols-2 gap-4 py-1">
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                  <Clock size={10} /> Timing
+                </span>
+                <div className="text-sm font-medium">
+                  {primarySchedule ? (
+                    <>
+                      {format12Hour(primarySchedule.startTime)}
+                      <span className="text-muted-foreground mx-1">·</span>
+                      {primarySchedule.duration}m
+                    </>
+                  ) : "--"}
+                </div>
+              </div>
 
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                  <CalendarDays size={10} /> Recurrence
+                </span>
+                <div className="text-sm font-medium">
+                  {primarySchedule ? formatDays(primarySchedule.days) : "No days"}
+                  {cls.schedules?.length > 1 && (
+                    <span className="text-[10px] text-primary ml-1.5 font-bold">
+                      +{cls.schedules.length - 1} more
+                    </span>
                   )}
                 </div>
-                <div>
-                  <MapPin />
-
-                  <span className="truncate">
-                    {cls.schedule?.room
-                      ? formatRoom(cls.schedule.room)
-                      : "No Room Set"}
-                  </span>
-                </div>
               </div>
             </div>
 
-            <div
-              onClick={(e) => e.stopPropagation()}
-            >
-
-              {badge}
-              {actions}
-            </div>
-          </div>
-
-          {/* Schedule & Stats Section */}
-          <div>
-            <div>
-              <Clock />
-              <div>
-                <span>
-
-                  {cls.schedule?.startTime
-                    ? format12Hour(cls.schedule.startTime)
-                    : "--"}{" "}
-                  -{" "}
-                  {cls.schedule?.endTime
-                    ? format12Hour(cls.schedule.endTime)
-                    : "--"}
-                </span>
-                {duration && (
-                  <span>
-                    ({duration})
-                  </span>
-                )}
+            {/* Stats Bar */}
+            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Users size={12} />
+                <span>{cls.studentCount || 0} Students</span>
               </div>
-            </div>
-
-            <div>
-              <CalendarDays />
-              <span>
-
-                {cls.schedule?.days?.length > 0
-                  ? formatDays(cls.schedule.days)
-                  : "No days set"}
-              </span>
-            </div>
-
-            <div>
-              <Users />
-              <span>
-                {cls.studentCount || cls.studentIds?.length || 0} Students
-                Enrolled
-              </span>
+              
+              <ChevronRight size={14} className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </div>
           </div>
 
           {footer && (
-            <div
+            <div 
+              className="bg-muted/30 p-3 border-t border-border"
               onClick={(e) => e.stopPropagation()}
             >
               {footer}
             </div>
           )}
-
         </CardContent>
       </Card>
     );

@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -15,94 +15,41 @@ export const WEEKDAYS = [
   "Sunday",
 ];
 
-export function formatDays(daysArray) {
-  if (!daysArray || daysArray.length === 0) return "";
-  if (daysArray.length === 1) return daysArray[0].slice(0, 3);
-  
-  // Sort based on WEEKDAYS order
-  const sorted = [...daysArray].sort(
-    (a, b) => WEEKDAYS.indexOf(a) - WEEKDAYS.indexOf(b)
-  );
-  
-  // Check if consecutive
-  let consecutive = true;
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (WEEKDAYS.indexOf(sorted[i + 1]) - WEEKDAYS.indexOf(sorted[i]) !== 1) {
-      consecutive = false;
-      break;
+import { Temporal } from "@js-temporal/polyfill";
+
+/**
+ * Checks if a class is currently in session or within its attendance window.
+ * @param {Object} classDoc 
+ * @param {Object} currentSession - The active session for today if any
+ */
+export function isClassInSession(classDoc, currentSession) {
+  if (!classDoc) return { onTime: false, message: "No class selected" };
+
+  const now = Temporal.Now.instant();
+
+  // 1. If there's an active session, check its status
+  if (currentSession) {
+    const start = Temporal.Instant.from(currentSession.startInstant);
+    const end = Temporal.Instant.from(currentSession.endInstant);
+    
+    const isWithin = Temporal.Instant.compare(now, start) >= 0 && Temporal.Instant.compare(now, end) <= 0;
+    
+    if (isWithin) {
+      return { 
+        onTime: true, 
+        message: "Session is active", 
+        session: currentSession 
+      };
+    }
+    
+    if (Temporal.Instant.compare(now, start) < 0) {
+      return { 
+        onTime: false, 
+        message: "Upcoming session", 
+        session: currentSession 
+      };
     }
   }
 
-  if (consecutive && sorted.length >= 3) {
-    return `${sorted[0].slice(0, 3)} - ${sorted[sorted.length - 1].slice(0, 3)}`;
-  }
-  
-  return sorted.map(d => d.slice(0, 3)).join(", ");
-}
-
-export function format12Hour(timeStr) {
-  if (!timeStr) return "";
-  const [h, m] = timeStr.split(":");
-  if (!h || !m) return timeStr;
-  let hours = parseInt(h, 10);
-  const suffix = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-  return `${hours}:${m} ${suffix}`;
-}
-
-export function formatRoom(room) {
-  if (!room) return "";
-  const t = room.trim();
-  if (!t) return "";
-
-  // Regex to detect "Room" or "Rm" prefixes (case insensitive, optional dot)
-  const prefixRegex = /^(room|rm)\.?\s*(.+)$/i;
-  const match = t.match(prefixRegex);
-
-  if (match) {
-    return `Room ${match[2]}`;
-  }
-
-  // Prepend "Room " if no prefix found
-  return `Room ${t}`;
-}
-
-export function isWithinSchedule(schedule) {
-  if (!schedule || !schedule.days || schedule.days.length === 0 || !schedule.startTime || !schedule.endTime) {
-    return { onTime: false, message: "No schedule set" };
-  }
-
-  const now = new Date();
-  const currentDay = WEEKDAYS[now.getDay() === 0 ? 6 : now.getDay() - 1]; // Convert 0=Sunday to match our WEEKDAYS array index
-  
-  if (!schedule.days.includes(currentDay)) {
-    return { 
-      onTime: false, 
-      message: `Next scheduled for ${schedule.days.includes("Monday") ? "Monday" : schedule.days[0]}` 
-    };
-  }
-
-  const [sh, sm] = schedule.startTime.split(":").map(Number);
-  const [eh, em] = schedule.endTime.split(":").map(Number);
-  const [ch, cm] = [now.getHours(), now.getMinutes()];
-
-  const startTotal = sh * 60 + sm;
-  const endTotal = eh * 60 + em;
-  const currentTotal = ch * 60 + cm;
-
-  if (currentTotal < startTotal) {
-    return { 
-      onTime: false, 
-      message: `Starts at ${format12Hour(schedule.startTime)}` 
-    };
-  }
-
-  if (currentTotal > endTotal) {
-    return { 
-      onTime: false, 
-      message: `Ended at ${format12Hour(schedule.endTime)}` 
-    };
-  }
-
-  return { onTime: true, message: "Class in session" };
+  return { onTime: false, message: "Not in session" };
 }

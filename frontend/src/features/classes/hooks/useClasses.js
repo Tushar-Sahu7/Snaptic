@@ -29,10 +29,10 @@ export function useClasses() {
     return () => window.removeEventListener("classes-updated", loadClasses);
   }, [loadClasses]);
 
-  const toggleArchive = useCallback(async (cls) => {
+  const toggleArchive = useCallback(async (cls, endDate) => {
     const newStatus = cls.status === "archived" ? "active" : "archived";
     try {
-      await updateClass(cls._id, { status: newStatus });
+      await updateClass(cls._id, { status: newStatus, endDate });
       
       const successMsg = `Class "${cls.name}" ${newStatus === "archived" ? "archived" : "unarchived"} successfully`;
       
@@ -57,10 +57,10 @@ export function useClasses() {
     }
   }, [loadClasses]);
 
-  const bulkUnarchiveAll = useCallback(async (ids) => {
+  const bulkUnarchiveAll = useCallback(async (ids, endDate) => {
     if (ids.length === 0) return;
     try {
-      await bulkUpdateClassStatus(ids, "active");
+      await bulkUpdateClassStatus(ids, "active", endDate);
       toast.success(`${ids.length} classes moved to active`, {
         action: {
           label: "Undo",

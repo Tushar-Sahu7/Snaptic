@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import * as authApi from "@/features/auth/api/auth.api";
 
 const AuthContext = createContext(null);
@@ -8,7 +8,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const initialized = useRef(false);
+  
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     checkAuth();
   }, []);
 

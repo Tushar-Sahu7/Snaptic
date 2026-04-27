@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useClasses } from "@/features/classes/hooks/useClasses";
+import { toast } from "sonner";
 
 // UI Components
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,7 @@ import {
   EmptyContent,
 } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   BookOpen,
   Plus,
@@ -31,6 +33,7 @@ import {
   ArchiveRestore,
   Archive,
   Trash2,
+  Calendar,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,7 +46,7 @@ import {
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
-import { isWithinSchedule, WEEKDAYS } from "@/lib/utils";
+import { isClassInSession, WEEKDAYS } from "@/lib/utils";
 import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
 
 // Decomposed Page Components
@@ -72,7 +75,9 @@ export default function ClassListPage() {
   const [deleteClassState, setDeleteClassState] = useState(null);
   const [bulkUnarchiveConfirm, setBulkUnarchiveConfirm] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [unarchiveClass, setUnarchiveClass] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [bulkEndDate, setBulkEndDate] = useState("");
 
   // Memoized Filtering & Sorting
   const filteredClasses = useMemo(() => {
@@ -89,28 +94,19 @@ export default function ClassListPage() {
     });
 
     return filtered.sort((a, b) => {
-      const { onTime: onTimeA } = isWithinSchedule(a.schedule);
-      const { onTime: onTimeB } = isWithinSchedule(b.schedule);
+      const { onTime: onTimeA } = isClassInSession(a);
+      const { onTime: onTimeB } = isClassInSession(b);
 
       const getPriority = (c, onTime) => {
         if (onTime) return 3;
 
-        // Check if scheduled for today but hasn't started
-        if (c.schedule?.days && c.schedule.startTime) {
-          const now = new Date();
-          const currentDay =
-            WEEKDAYS[now.getDay() === 0 ? 6 : now.getDay() - 1];
-          if (c.schedule.days.includes(currentDay)) {
-            const [sh, sm] = c.schedule.startTime.split(":").map(Number);
-            const [ch, cm] = [now.getHours(), now.getMinutes()];
-            const startTotal = sh * 60 + sm;
-            const currentTotal = ch * 60 + cm;
-
-            if (currentTotal < startTotal) return 2;
-          }
-          return 1; // Future scheduled
-        }
-        return 0; // No schedule
+        // Check if scheduled for today
+        const now = new Date();
+        const currentDayInt = now.getDay() === 0 ? 7 : now.getDay();
+        const hasToday = c.schedules?.some(s => s.days.includes(currentDayInt));
+        
+        if (hasToday) return 2;
+        return 1;
       };
 
       const prioA = getPriority(a, onTimeA);
@@ -118,24 +114,22 @@ export default function ClassListPage() {
 
       if (prioA !== prioB) return prioB - prioA;
 
-      // Tie-break 1: Start Time (if same priority)
-      if (a.schedule?.startTime && b.schedule?.startTime) {
-        if (a.schedule.startTime !== b.schedule.startTime) {
-          return a.schedule.startTime.localeCompare(b.schedule.startTime);
-        }
-      }
-
-      // Tie-break 2: Name
+      // Tie-break: Name
       return a.name.localeCompare(b.name);
     });
   }, [classes, tab, search]);
 
   // Bulk Handlers
   const handleBulkUnarchive = async () => {
+    if (!bulkEndDate) {
+      toast.error("Please select an end date for these classes");
+      return;
+    }
     setProcessing(true);
-    await bulkUnarchiveAll(filteredClasses.map((c) => c._id));
+    await bulkUnarchiveAll(filteredClasses.map((c) => c._id), bulkEndDate);
     setProcessing(false);
     setBulkUnarchiveConfirm(false);
+    setBulkEndDate("");
   };
 
   const handleBulkDelete = async () => {
@@ -236,7 +230,13 @@ export default function ClassListPage() {
                         </DropdownMenuItem>
 
                       )}
-                      <DropdownMenuItem onClick={() => toggleArchive(cls)}>
+                      <DropdownMenuItem onClick={() => {
+                        if (cls.status === "archived") {
+                          setUnarchiveClass(cls);
+                        } else {
+                          toggleArchive(cls);
+                        }
+                      }}>
                         {cls.status === "archived" ? (
                           <>
                             <ArchiveRestore />
@@ -345,9 +345,21 @@ export default function ClassListPage() {
               Unarchive {filteredClasses.length} classes?
             </DialogTitle>
             <DialogDescription>
-              These classes will be moved back to your Active tab for everyone
-              to see.
+              These classes will be moved back to your Active tab. Since they
+              were archived, you must set a new end date for all of them to
+              resume attendance tracking.
             </DialogDescription>
+            <div className="pt-4 space-y-2">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                <Calendar size={10} /> New End Date
+              </span>
+              <Input
+                type="date"
+                value={bulkEndDate}
+                onChange={(e) => setBulkEndDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
           </DialogHeader>
           <DialogFooter>
 
@@ -365,6 +377,43 @@ export default function ClassListPage() {
               {processing ? "Unarchiving..." : "Unarchive All"}
             </Button>
 
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!unarchiveClass} onOpenChange={(open) => !open && setUnarchiveClass(null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Unarchive Class</DialogTitle>
+            <DialogDescription>
+              To unarchive <b>{unarchiveClass?.name}</b>, please set a new end date to resume session tracking.
+            </DialogDescription>
+            <div className="pt-4 space-y-2">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                <Calendar size={10} /> New End Date
+              </span>
+              <Input
+                type="date"
+                value={bulkEndDate}
+                onChange={(e) => setBulkEndDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+              />
+            </div>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnarchiveClass(null)} disabled={processing}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (!bulkEndDate) return toast.error("Please select an end date");
+              setProcessing(true);
+              await toggleArchive(unarchiveClass, bulkEndDate);
+              setProcessing(false);
+              setUnarchiveClass(null);
+              setBulkEndDate("");
+            }} disabled={processing}>
+              {processing ? "Unarchiving..." : "Confirm"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

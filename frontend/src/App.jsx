@@ -10,6 +10,7 @@ import AttendanceSessionPage from "@/pages/teacher/AttendanceSessionPage";
 import AttendanceSelectionPage from "@/pages/teacher/AttendanceSelectionPage";
 import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
 import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
+import LabelsPage from "@/pages/teacher/LabelsPage";
 import ProfilePage from "@/pages/teacher/ProfilePage";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentClassListPage from "@/pages/student/StudentClassListPage";
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="classes/:id/attendance" element={<AttendanceSessionPage />} />
               <Route path="attendance/:id/summary" element={<AttendanceSummaryPage />} />
               <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+              <Route path="labels" element={<LabelsPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
 

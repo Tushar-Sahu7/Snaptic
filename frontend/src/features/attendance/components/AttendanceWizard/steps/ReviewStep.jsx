@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ClassIcon } from "@/components/shared/ClassIcon";
+import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import { useState, useEffect } from "react";
 import { format12Hour, formatRoom } from "@/lib/utils";
 
@@ -331,8 +331,9 @@ export const ReviewStep = ({
                 <div>
                   <div>
                     <div>
-                      <ClassIcon
+                      <LucideIcon
                         name={session.classId.icon}
+                        size={24}
                       />
                     </div>
                     <span>
