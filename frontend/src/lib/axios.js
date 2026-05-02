@@ -5,14 +5,4 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const path = window.location.pathname;
-  if (path.startsWith("/teacher")) {
-    config.headers["X-Role"] = "teacher";
-  } else if (path.startsWith("/student")) {
-    config.headers["X-Role"] = "student";
-  }
-  return config;
-});
-
-export default api
+export default api;

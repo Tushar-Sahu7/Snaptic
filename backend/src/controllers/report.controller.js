@@ -73,7 +73,7 @@ const getStudentHistory = async (req, res) => {
     const studentId = req.user.userId;
 
     const records = await AttendanceRecord.find({ studentId })
-      .populate("sessionId", "dateString startInstant status")
+      .populate("sessionId", "date startTime status")
       .populate("classId", "name icon color")
       .sort({ createdAt: -1 });
 
@@ -86,8 +86,8 @@ const getStudentHistory = async (req, res) => {
         color: r.classId.color
       },
       session: {
-        dateString: r.sessionId.dateString,
-        startInstant: r.sessionId.startInstant,
+        date: r.sessionId.date,
+        startTime: r.sessionId.startTime,
         status: r.sessionId.status
       },
       status: r.status,

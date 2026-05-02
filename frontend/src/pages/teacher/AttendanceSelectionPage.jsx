@@ -1,5 +1,5 @@
 import { useClasses } from "@/features/classes/hooks/useClasses";
-import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
+import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
 import { useNavigate } from "react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import AttendanceWizard from "@/features/attendance/components/AttendanceWizard";

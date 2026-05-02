@@ -1,19 +1,15 @@
 const Class = require("../models/Class");
 const User = require("../models/User");
 const Enrollment = require("../models/Enrollment");
-const Label = require("../models/Label");
 const TeacherProfile = require("../models/TeacherProfile");
 const StudentProfile = require("../models/StudentProfile");
 const sessionManager = require("../services/sessionManager");
-const { Temporal } = require("@js-temporal/polyfill");
-
-const TemporalService = require("../services/temporalService");
 
 // Helper: Just-In-Time Archiving
 const ensureArchivedIfExpired = async (classDoc) => {
   if (classDoc.status === "archived") return classDoc;
   
-  const today = TemporalService.getNowDate();
+  const today = new Date().toISOString().split("T")[0];
   if (classDoc.endDate < today) {
     classDoc.status = "archived";
     await Class.findByIdAndUpdate(classDoc._id, { status: "archived" });
@@ -24,37 +20,29 @@ const ensureArchivedIfExpired = async (classDoc) => {
 // POST /api/classes
 const createClass = async (req, res) => {
   try {
-    const { name, description, icon, color, timezone, startDate, endDate, schedules } = req.body;
+    const { name, description, icon, color, startDate, endDate, startTime, duration, daysOfWeek, location } = req.body;
     const teacherId = req.user.userId;
 
-    if (!name || !startDate || !endDate || !timezone) {
-      return res.status(400).json({ message: "Name, Start Date, End Date, and Timezone are required" });
+    if (!name || !startDate || !endDate || !startTime || !daysOfWeek) {
+      return res.status(400).json({ message: "Required fields missing" });
     }
 
-    // 1. Create the Class document
     const newClass = await Class.create({
       name,
       description,
       icon: icon || "BookOpen",
-      color: color || "oklch(0.6 0.1 200)",
-      timezone,
+      color: color || "oklch(0.6 0.2 250)",
       startDate,
       endDate,
+      startTime,
+      duration: duration || 60,
+      daysOfWeek: daysOfWeek || [],
+      location,
       teacherId,
-      schedules: schedules || [],
     });
 
-    // 2. Generate sessions
-    try {
-      if (newClass.schedules.length > 0) {
-        for (const schedule of newClass.schedules) {
-          await sessionManager.generateSessionsForSchedule(newClass, schedule);
-        }
-      }
-    } catch (sessionErr) {
-      await Class.findByIdAndDelete(newClass._id);
-      return res.status(400).json({ message: sessionErr.message });
-    }
+    // Generate sessions
+    await sessionManager.syncClassSessions(newClass);
 
     return res.status(201).json({ class: newClass });
   } catch (err) {
@@ -70,7 +58,6 @@ const getMyClasses = async (req, res) => {
 
     let classes;
     if (isStudent) {
-      // Find classes through Enrollments
       const enrollments = await Enrollment.find({ studentId: req.user.userId, status: "active" })
         .populate({
           path: "classId",
@@ -79,32 +66,24 @@ const getMyClasses = async (req, res) => {
         .lean();
       
       classes = enrollments
-        .filter(e => e.classId) // Filter out deleted classes
+        .filter(e => e.classId)
         .map(e => e.classId);
     } else {
-      // Teacher owns classes
       classes = await Class.find({ teacherId, deletedAt: null })
         .sort({ createdAt: -1 })
         .lean();
     }
 
-    // Add student counts and teacher info, and run JIT archiving
     const result = await Promise.all(classes.map(async (c) => {
-      // Run JIT check
       await ensureArchivedIfExpired(c);
-
-      const studentCount = await Enrollment.countDocuments({ classId: c._id, status: "active" });
+      const studentCount = c.denormalized?.studentCount || 0;
       
       let teacherInfo = null;
       if (isStudent) {
         teacherInfo = await TeacherProfile.findOne({ userId: c.teacherId }).select("name avatar").lean();
       }
 
-      return {
-        ...c,
-        studentCount,
-        teacher: teacherInfo
-      };
+      return { ...c, studentCount, teacher: teacherInfo };
     }));
 
     return res.status(200).json({ classes: result });
@@ -119,16 +98,13 @@ const getClassById = async (req, res) => {
     const classDoc = await Class.findOne({ _id: req.params.id, deletedAt: null }).lean();
     if (!classDoc) return res.status(404).json({ message: "Class not found" });
 
-    // Run JIT check
     await ensureArchivedIfExpired(classDoc);
 
-    // Authorization check
     if (classDoc.teacherId.toString() !== req.user.userId) {
       const isEnrolled = await Enrollment.exists({ classId: classDoc._id, studentId: req.user.userId, status: "active" });
       if (!isEnrolled) return res.status(403).json({ message: "Access denied" });
     }
 
-    // Fetch enrolled students
     const enrollments = await Enrollment.find({ classId: classDoc._id })
       .populate("studentId", "name email avatar")
       .lean();
@@ -144,7 +120,7 @@ const getClassById = async (req, res) => {
       class: {
         ...classDoc,
         students,
-        studentCount: students.filter(s => s.status === "active").length
+        studentCount: classDoc.denormalized?.studentCount || 0
       } 
     });
   } catch (err) {
@@ -155,59 +131,28 @@ const getClassById = async (req, res) => {
 // PUT /api/classes/:id
 const updateClass = async (req, res) => {
   try {
-    const { name, description, icon, color, endDate, schedules, status } = req.body;
+    const { name, description, icon, color, startDate, endDate, startTime, duration, daysOfWeek, location, status } = req.body;
     const classDoc = await Class.findById(req.params.id);
 
     if (!classDoc || classDoc.deletedAt) return res.status(404).json({ message: "Class not found" });
     if (classDoc.teacherId.toString() !== req.user.userId) return res.status(403).json({ message: "Unauthorized" });
 
-    // 1. Handle Unarchiving
-    if (endDate) {
-      const today = TemporalService.getNowDate();
-      if (endDate > today && classDoc.status === "archived") {
-        classDoc.status = "active";
-      }
-      classDoc.endDate = endDate;
-    }
-
-    // 2. Simple updates
     if (name) classDoc.name = name;
     if (description !== undefined) classDoc.description = description;
     if (icon) classDoc.icon = icon;
     if (color) classDoc.color = color;
     if (status) classDoc.status = status;
-
-    // Timezone lock check
-    if (req.body.timezone && req.body.timezone !== classDoc.timezone) {
-      const today = TemporalService.getNowDate();
-      if (classDoc.startDate <= today) {
-        return res.status(400).json({ message: "Timezone is locked once the class has started" });
-      }
-      classDoc.timezone = req.body.timezone;
-    }
-
-    // 3. Handle Schedule Updates
-    if (schedules) {
-      // Rule: Purge future sessions for removed schedules
-      const oldScheduleIds = classDoc.schedules.map(s => s._id.toString());
-      const newScheduleIds = (schedules || []).map(s => s._id?.toString()).filter(Boolean);
-
-      const toDelete = oldScheduleIds.filter(id => !newScheduleIds.includes(id));
-      for (const sid of toDelete) {
-        await sessionManager.purgeFutureSessions(sid);
-      }
-
-      classDoc.schedules = schedules;
-    }
+    if (startDate) classDoc.startDate = startDate;
+    if (endDate) classDoc.endDate = endDate;
+    if (startTime) classDoc.startTime = startTime;
+    if (duration) classDoc.duration = duration;
+    if (daysOfWeek) classDoc.daysOfWeek = daysOfWeek;
+    if (location !== undefined) classDoc.location = location;
 
     await classDoc.save();
 
-    // 4. Regenerate future sessions
-    if (schedules) {
-      for (const schedule of classDoc.schedules) {
-        await sessionManager.regenerateSessions(classDoc, schedule);
-      }
-    }
+    // Regenerate future sessions
+    await sessionManager.syncClassSessions(classDoc);
 
     return res.status(200).json({ class: classDoc });
   } catch (err) {
@@ -225,10 +170,7 @@ const deleteClass = async (req, res) => {
     classDoc.deletedAt = new Date();
     await classDoc.save();
 
-    // Purge future sessions for all schedules in this class
-    for (const schedule of classDoc.schedules) {
-      await sessionManager.purgeFutureSessions(schedule._id);
-    }
+    await sessionManager.purgeFutureSessions(classDoc._id);
 
     return res.status(200).json({ message: "Class deleted successfully" });
   } catch (err) {
@@ -247,9 +189,7 @@ const bulkUpdateStatus = async (req, res) => {
     }
 
     const updateData = { status };
-    if (endDate) {
-      updateData.endDate = endDate;
-    }
+    if (endDate) updateData.endDate = endDate;
 
     await Class.updateMany(
       { _id: { $in: classIds }, teacherId: req.user.userId },
@@ -272,8 +212,12 @@ const bulkDeleteClasses = async (req, res) => {
 
     await Class.updateMany(
       { _id: { $in: classIds }, teacherId: req.user.userId },
-      { deletedAt: Temporal.Now.instant().toString() }
+      { deletedAt: new Date() }
     );
+
+    for (const classId of classIds) {
+      await sessionManager.purgeFutureSessions(classId);
+    }
 
     return res.status(200).json({ message: `Deleted ${classIds.length} classes` });
   } catch (err) {
@@ -281,24 +225,6 @@ const bulkDeleteClasses = async (req, res) => {
   }
 };
 
-// PUT /api/classes/bulk/restore
-const restoreClasses = async (req, res) => {
-  try {
-    const { classIds } = req.body;
-    if (!classIds || !Array.isArray(classIds)) {
-      return res.status(400).json({ message: "classIds must be an array" });
-    }
-
-    await Class.updateMany(
-      { _id: { $in: classIds }, teacherId: req.user.userId },
-      { deletedAt: null }
-    );
-
-    return res.status(200).json({ message: `Restored ${classIds.length} classes` });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
 
 // POST /api/classes/:id/students
 const addStudent = async (req, res) => {
@@ -310,16 +236,18 @@ const addStudent = async (req, res) => {
     if (!classDoc) return res.status(404).json({ message: "Class not found" });
     if (classDoc.teacherId.toString() !== req.user.userId) return res.status(403).json({ message: "Unauthorized" });
 
-    // Check if student exists
     const student = await User.findOne({ _id: studentId, role: "student" });
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    // Create enrollment
-    await Enrollment.findOneAndUpdate(
+    const enrollment = await Enrollment.findOneAndUpdate(
       { classId, studentId },
       { teacherId: req.user.userId, status: "active" },
-      { upsert: true, new: true }
+      { upsert: true, new: false }
     );
+
+    if (!enrollment || enrollment.status === "inactive") {
+      await Class.findByIdAndUpdate(classId, { $inc: { "denormalized.studentCount": 1 } });
+    }
 
     return res.status(200).json({ message: "Student enrolled successfully" });
   } catch (err) {
@@ -335,9 +263,11 @@ const removeStudent = async (req, res) => {
     const enrollment = await Enrollment.findOne({ classId, studentId });
     if (!enrollment) return res.status(404).json({ message: "Enrollment not found" });
 
-    // Soft remove
-    enrollment.status = "inactive";
-    await enrollment.save();
+    if (enrollment.status === "active") {
+      enrollment.status = "inactive";
+      await enrollment.save();
+      await Class.findByIdAndUpdate(classId, { $inc: { "denormalized.studentCount": -1 } });
+    }
 
     return res.status(200).json({ message: "Student removed from class" });
   } catch (err) {
@@ -358,23 +288,23 @@ const importStudents = async (req, res) => {
 
     const sourceEnrollments = await Enrollment.find({ classId: fromClassId, status: "active" });
     
-    const newEnrollments = sourceEnrollments.map(e => ({
-      studentId: e.studentId,
-      classId: toClassId,
-      teacherId: req.user.userId,
-      status: "active"
-    }));
-
-    // Use bulkWrite or simple loop with upsert to avoid duplicates
-    for (const enr of newEnrollments) {
-      await Enrollment.findOneAndUpdate(
-        { classId: toClassId, studentId: enr.studentId },
-        enr,
-        { upsert: true }
+    let addedCount = 0;
+    for (const e of sourceEnrollments) {
+      const existing = await Enrollment.findOneAndUpdate(
+        { classId: toClassId, studentId: e.studentId },
+        { studentId: e.studentId, classId: toClassId, teacherId: req.user.userId, status: "active" },
+        { upsert: true, new: false }
       );
+      if (!existing || existing.status === "inactive") {
+        addedCount++;
+      }
     }
 
-    return res.status(200).json({ message: `Imported ${newEnrollments.length} students` });
+    if (addedCount > 0) {
+      await Class.findByIdAndUpdate(toClassId, { $inc: { "denormalized.studentCount": addedCount } });
+    }
+
+    return res.status(200).json({ message: `Imported ${sourceEnrollments.length} students` });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -386,18 +316,15 @@ const searchStudents = async (req, res) => {
     const { q } = req.query;
     if (!q) return res.status(200).json({ students: [] });
 
-    // 1. Search Users by email
     const usersByEmail = await User.find({
       email: { $regex: q, $options: "i" },
       role: "student"
     }).select("_id email").limit(10).lean();
 
-    // 2. Search Profiles by name
     const profilesByName = await StudentProfile.find({
       name: { $regex: q, $options: "i" }
     }).select("userId name avatar").limit(10).lean();
 
-    // 3. Combine results
     const studentMap = new Map();
 
     usersByEmail.forEach(u => {
@@ -410,13 +337,11 @@ const searchStudents = async (req, res) => {
         studentMap.get(idStr).name = p.name;
         studentMap.get(idStr).avatar = p.avatar;
       } else {
-        // Find the user email for this profile
         const user = await User.findById(p.userId).select("email").lean();
         studentMap.set(idStr, { id: p.userId, email: user?.email, name: p.name, avatar: p.avatar });
       }
     }
 
-    // 4. Ensure all have names (fetch if missing from email-only results)
     const results = await Promise.all(Array.from(studentMap.values()).map(async (s) => {
       if (!s.name) {
         const p = await StudentProfile.findOne({ userId: s.id }).select("name avatar").lean();
@@ -432,183 +357,6 @@ const searchStudents = async (req, res) => {
   }
 };
 
-// --- LABEL LOGIC ---
-
-// GET /api/labels
-const getLabels = async (req, res) => {
-  try {
-    const labels = await Label.find({ teacherId: req.user.userId, isActive: true });
-    return res.status(200).json({ labels });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-// POST /api/labels
-const createLabel = async (req, res) => {
-  try {
-    const { name, color } = req.body;
-    const label = await Label.create({ name, color, teacherId: req.user.userId });
-    return res.status(201).json({ label });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-// DELETE /api/labels/:id
-const deleteLabel = async (req, res) => {
-  try {
-    const { replacementLabelId } = req.body;
-    const labelId = req.params.id;
-
-    // 1. Check if in use
-    const classesUsing = await Class.find({ "schedules.labelId": labelId });
-    
-    if (classesUsing.length > 0) {
-      if (!replacementLabelId) {
-        return res.status(400).json({ 
-          message: "Label is in use. Please provide a replacement label ID.",
-          affectedClasses: classesUsing.map(c => ({ id: c._id, name: c.name }))
-        });
-      }
-
-      // 2. Global Migration
-      for (const classDoc of classesUsing) {
-        classDoc.schedules.forEach(s => {
-          if (s.labelId.toString() === labelId) {
-            s.labelId = replacementLabelId;
-          }
-        });
-        await classDoc.save();
-      }
-    }
-
-    // 3. Soft Delete the label
-    await Label.findByIdAndUpdate(labelId, { isActive: false });
-    
-    return res.status(200).json({ message: "Label deleted and schedules migrated." });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-const AvailabilityService = require("../services/availabilityService");
-
-// GET /api/classes/availability
-const getAvailability = async (req, res) => {
-  try {
-    const { date, duration, timezone } = req.query;
-    if (!date || !duration || !timezone) {
-      return res.status(400).json({ message: "Date, duration, and timezone are required" });
-    }
-
-    const slots = await AvailabilityService.getAvailableSlots(
-      req.user.userId,
-      date,
-      parseInt(duration),
-      timezone
-    );
-
-    return res.status(200).json({ slots });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-const AttendanceSession = require("../models/AttendanceSession");
-const TemporalService = require("../services/temporalService");
-
-// DELETE /api/classes/sessions/:sessionId
-const deleteSingleSession = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    
-    const session = await AttendanceSession.findById(sessionId);
-    if (!session) return res.status(404).json({ message: "Session not found" });
-
-    // Validate future start datetime
-    if (TemporalService.isPast(session.startInstant)) {
-      return res.status(400).json({ message: "Cannot delete a session that has already started or passed." });
-    }
-
-    // Add exdate to parent schedule
-    await Class.updateOne(
-      { _id: session.classId, "schedules._id": session.scheduleId },
-      { $addToSet: { "schedules.$.exdates": session.dateString } }
-    );
-
-    // Physically delete session
-    await AttendanceSession.findByIdAndDelete(sessionId);
-
-    return res.status(200).json({ message: "Session deleted successfully" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-// DELETE /api/classes/:classId/schedules/:scheduleId/day/:dayOfWeek
-const deleteAllForDay = async (req, res) => {
-  try {
-    const { classId, scheduleId, dayOfWeek } = req.params;
-    const dayInt = parseInt(dayOfWeek); // 1 (Mon) to 7 (Sun)
-
-    const classDoc = await Class.findById(classId);
-    if (!classDoc || classDoc.teacherId.toString() !== req.user.userId) {
-      return res.status(404).json({ message: "Class not found" });
-    }
-
-    const schedule = classDoc.schedules.id(scheduleId);
-    if (!schedule) return res.status(404).json({ message: "Schedule not found" });
-
-    // Identify the rrule BYDAY mapping
-    const rruleDays = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
-    const targetDayStr = rruleDays[dayInt - 1];
-
-    if (schedule.rrule.includes(targetDayStr)) {
-      // Rebuild the rrule without that day
-      const parts = schedule.rrule.split(";");
-      const newParts = parts.map(part => {
-        if (part.startsWith("BYDAY=")) {
-          const days = part.split("=")[1].split(",").filter(d => d !== targetDayStr);
-          return days.length > 0 ? `BYDAY=${days.join(",")}` : null;
-        }
-        return part;
-      }).filter(Boolean);
-
-      schedule.rrule = newParts.join(";");
-
-      // If no BYDAY left and it was a weekly rule, hide it
-      if (!schedule.rrule.includes("BYDAY=") && schedule.rrule.includes("FREQ=WEEKLY")) {
-        schedule.isHidden = true;
-      }
-      
-      await classDoc.save();
-    }
-
-    // Physically delete future sessions on that day
-    const now = TemporalService.getNowInstant();
-    const sessions = await AttendanceSession.find({
-      scheduleId,
-      status: "scheduled",
-      startInstant: { $gt: now }
-    });
-
-    const sessionsToDelete = sessions.filter(s => {
-      // Get day of week using Temporal
-      const day = TemporalService.PlainDate.from(s.dateString).dayOfWeek;
-      return day === dayInt;
-    }).map(s => s._id);
-
-    if (sessionsToDelete.length > 0) {
-      await AttendanceSession.deleteMany({ _id: { $in: sessionsToDelete } });
-    }
-
-    return res.status(200).json({ message: "Future sessions for the day deleted." });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
 module.exports = {
   createClass,
   getMyClasses,
@@ -617,15 +365,9 @@ module.exports = {
   deleteClass,
   bulkUpdateStatus,
   bulkDeleteClasses,
-  restoreClasses,
   addStudent,
   removeStudent,
   importStudents,
   searchStudents,
-  getLabels,
-  createLabel,
-  deleteLabel,
-  getAvailability,
-  deleteSingleSession,
-  deleteAllForDay,
 };
+

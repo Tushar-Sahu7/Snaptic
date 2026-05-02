@@ -51,8 +51,8 @@ import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendan
 
 // Decomposed Page Components
 import ClassListHeader from "@/features/classes/components/ClassListHeader";
-import ClassFormModal from "@/features/classes/components/ClassFormModal";
 import ClassDeleteDialog from "@/features/classes/components/ClassDeleteDialog";
+import ClassFormSheet from "@/features/classes/components/ClassFormSheet";
 
 export default function ClassListPage() {
   const navigate = useNavigate();
@@ -70,18 +70,20 @@ export default function ClassListPage() {
   // Local State
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editClass, setEditClass] = useState(null);
   const [deleteClassState, setDeleteClassState] = useState(null);
   const [bulkUnarchiveConfirm, setBulkUnarchiveConfirm] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [unarchiveClass, setUnarchiveClass] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [bulkEndDate, setBulkEndDate] = useState("");
+  
+  // Sheet state
+  const [formSheetOpen, setFormSheetOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState(null);
 
   // Memoized Filtering & Sorting
   const filteredClasses = useMemo(() => {
-    const filtered = classes.filter((cls) => {
+    const filtered = (classes || []).filter((cls) => {
       const isCorrectTab =
         tab === "active" ? cls.status === "active" : cls.status === "archived";
       if (!isCorrectTab) return false;
@@ -100,10 +102,8 @@ export default function ClassListPage() {
       const getPriority = (c, onTime) => {
         if (onTime) return 3;
 
-        // Check if scheduled for today
-        const now = new Date();
-        const currentDayInt = now.getDay() === 0 ? 7 : now.getDay();
-        const hasToday = c.schedules?.some(s => s.days.includes(currentDayInt));
+        const currentDay = new Date().getDay(); // 0-6 (Sun-Sat)
+        const hasToday = c.daysOfWeek?.includes(currentDay);
         
         if (hasToday) return 2;
         return 1;
@@ -126,35 +126,35 @@ export default function ClassListPage() {
       return;
     }
     setProcessing(true);
-    await bulkUnarchiveAll(filteredClasses.map((c) => c._id), bulkEndDate);
-    setProcessing(false);
-    setBulkUnarchiveConfirm(false);
-    setBulkEndDate("");
+    try {
+      await bulkUnarchiveAll(filteredClasses.map((c) => c._id), bulkEndDate);
+      setBulkUnarchiveConfirm(false);
+      setBulkEndDate("");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleBulkDelete = async () => {
     setProcessing(true);
-    await bulkDeleteAll(filteredClasses.map((c) => c._id));
-    setProcessing(false);
-    setBulkDeleteConfirm(false);
+    try {
+      await bulkDeleteAll(filteredClasses.map((c) => c._id));
+      setBulkDeleteConfirm(false);
+    } finally {
+      setProcessing(false);
+    }
   };
-
-
 
   if (loading) {
     return (
-      <div>
-        <div>
-          <Skeleton />
-          <Skeleton />
+      <div className="p-8 space-y-8">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-32" />
         </div>
-        <div>
-          <Skeleton />
-          <Skeleton />
-        </div>
-        <div>
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
           ))}
         </div>
       </div>
@@ -162,14 +162,16 @@ export default function ClassListPage() {
   }
 
   return (
-    <div>
-
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <ClassListHeader
         tab={tab}
         onTabChange={setTab}
         search={search}
         onSearchChange={setSearch}
-        onCreateClick={() => setCreateOpen(true)}
+        onCreateClick={() => {
+          setEditingClass(null);
+          setFormSheetOpen(true);
+        }}
         onUnarchiveAll={() => setBulkUnarchiveConfirm(true)}
         onDeleteAll={() => setBulkDeleteConfirm(true)}
         canBulkAction={filteredClasses.length > 0}
@@ -177,90 +179,56 @@ export default function ClassListPage() {
       />
 
       {filteredClasses.length > 0 ? (
-        <div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {filteredClasses.map((cls) => (
             <ClassCard
               key={cls._id}
               cls={cls}
               onClick={(id) => navigate(`/teacher/classes/${id}`)}
               actions={
-                <div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                      >
-                        <MoreVertical />
-                      </Button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent
-                      align="end"
-                    >
-
-                      <DropdownMenuItem
-                        onClick={() =>
-                          navigate(`/teacher/classes/${cls._id}?tab=history`)
-                        }
-                      >
-                        <History />
-                        View History
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?tab=history`)}>
+                      <History className="mr-2 w-4 h-4" /> View History
+                    </DropdownMenuItem>
+                    {cls.status !== "archived" && (
+                      <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?action=add-student`)}>
+                        <UserPlus className="mr-2 w-4 h-4" /> Add Student
                       </DropdownMenuItem>
-
-                      {cls.status !== "archived" && (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            navigate(
-                              `/teacher/classes/${cls._id}?action=add-student`,
-                            )
-                          }
-                        >
-                          <UserPlus />
-                          Add Student
-                        </DropdownMenuItem>
-
-                      )}
-                      <DropdownMenuSeparator />
-                      {cls.status !== "archived" && (
-                        <DropdownMenuItem onClick={() => setEditClass(cls)}>
-                          <Pencil />
-                          Edit Class
-                        </DropdownMenuItem>
-
-                      )}
+                    )}
+                    <DropdownMenuSeparator />
+                    {cls.status !== "archived" && (
                       <DropdownMenuItem onClick={() => {
-                        if (cls.status === "archived") {
-                          setUnarchiveClass(cls);
-                        } else {
-                          toggleArchive(cls);
-                        }
+                        setEditingClass(cls);
+                        setFormSheetOpen(true);
                       }}>
-                        {cls.status === "archived" ? (
-                          <>
-                            <ArchiveRestore />
-                            Unarchive
-                          </>
-                        ) : (
-                          <>
-                            <Archive />
-                            Archive
-                          </>
-                        )}
+                        <Pencil className="mr-2 w-4 h-4" /> Edit Class
                       </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setDeleteClassState(cls)}
-                      >
-                        <Trash2 />
-                        Delete
-                      </DropdownMenuItem>
-
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                    )}
+                    <DropdownMenuItem onClick={() => {
+                      if (cls.status === "archived") {
+                        setUnarchiveClass(cls);
+                      } else {
+                        toggleArchive(cls);
+                      }
+                    }}>
+                      {cls.status === "archived" ? (
+                        <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive</>
+                      ) : (
+                        <><Archive className="mr-2 w-4 h-4" /> Archive</>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setDeleteClassState(cls)} className="text-destructive focus:text-destructive">
+                      <Trash2 className="mr-2 w-4 h-4" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               }
               footer={
                 cls.status !== "archived" && (
@@ -275,11 +243,10 @@ export default function ClassListPage() {
           ))}
         </div>
       ) : (
-        <Empty>
-
+        <Empty className="mt-20">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <BookOpen />
+              <BookOpen className="w-12 h-12 text-muted-foreground" />
             </EmptyMedia>
             <EmptyTitle>
               {classes.length === 0
@@ -302,29 +269,15 @@ export default function ClassListPage() {
           </EmptyHeader>
           <EmptyContent>
             {tab !== "archived" && (
-              <Button onClick={() => setCreateOpen(true)}>
-                <Plus />
-                Create Class
+              <Button onClick={() => navigate("/teacher/classes/create")} className="rounded-full px-6">
+                <Plus className="mr-2 w-4 h-4" /> Create Class
               </Button>
-
             )}
           </EmptyContent>
         </Empty>
       )}
 
-      {/* Modals & Dialogs */}
-      <ClassFormModal
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSuccess={refresh}
-      />
 
-      <ClassFormModal
-        open={!!editClass}
-        onOpenChange={(open) => !open && setEditClass(null)}
-        classData={editClass}
-        onSuccess={refresh}
-      />
 
       <ClassDeleteDialog
         open={!!deleteClassState}
@@ -333,25 +286,24 @@ export default function ClassListPage() {
         onDeleted={refresh}
       />
 
-      {/* Bulk Action Dialogs */}
-      <Dialog
-        open={bulkUnarchiveConfirm}
-        onOpenChange={setBulkUnarchiveConfirm}
-      >
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
+      <ClassFormSheet
+        open={formSheetOpen}
+        onOpenChange={setFormSheetOpen}
+        classData={editingClass}
+        onSuccess={refresh}
+      />
 
-            <DialogTitle>
-              Unarchive {filteredClasses.length} classes?
-            </DialogTitle>
+      {/* Bulk Action Dialogs */}
+      <Dialog open={bulkUnarchiveConfirm} onOpenChange={setBulkUnarchiveConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unarchive {filteredClasses.length} classes?</DialogTitle>
             <DialogDescription>
-              These classes will be moved back to your Active tab. Since they
-              were archived, you must set a new end date for all of them to
-              resume attendance tracking.
+              These classes will be moved back to your Active tab. You must set a new end date to resume tracking.
             </DialogDescription>
             <div className="pt-4 space-y-2">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
-                <Calendar size={10} /> New End Date
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-2">
+                <Calendar className="w-3 h-3" /> NEW END DATE
               </span>
               <Input
                 type="date"
@@ -362,35 +314,26 @@ export default function ClassListPage() {
             </div>
           </DialogHeader>
           <DialogFooter>
-
-            <Button
-              variant="outline"
-              onClick={() => setBulkUnarchiveConfirm(false)}
-              disabled={processing}
-            >
+            <Button variant="outline" onClick={() => setBulkUnarchiveConfirm(false)} disabled={processing}>
               Cancel
             </Button>
-            <Button
-              onClick={handleBulkUnarchive}
-              disabled={processing}
-            >
+            <Button onClick={handleBulkUnarchive} disabled={processing}>
               {processing ? "Unarchiving..." : "Unarchive All"}
             </Button>
-
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!unarchiveClass} onOpenChange={(open) => !open && setUnarchiveClass(null)}>
-        <DialogContent showCloseButton={false}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Unarchive Class</DialogTitle>
             <DialogDescription>
-              To unarchive <b>{unarchiveClass?.name}</b>, please set a new end date to resume session tracking.
+              Set a new end date for <b>{unarchiveClass?.name}</b> to resume session tracking.
             </DialogDescription>
             <div className="pt-4 space-y-2">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
-                <Calendar size={10} /> New End Date
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-2">
+                <Calendar className="w-3 h-3" /> NEW END DATE
               </span>
               <Input
                 type="date"
@@ -407,10 +350,13 @@ export default function ClassListPage() {
             <Button onClick={async () => {
               if (!bulkEndDate) return toast.error("Please select an end date");
               setProcessing(true);
-              await toggleArchive(unarchiveClass, bulkEndDate);
-              setProcessing(false);
-              setUnarchiveClass(null);
-              setBulkEndDate("");
+              try {
+                await toggleArchive(unarchiveClass, bulkEndDate);
+                setUnarchiveClass(null);
+                setBulkEndDate("");
+              } finally {
+                setProcessing(false);
+              }
             }} disabled={processing}>
               {processing ? "Unarchiving..." : "Confirm"}
             </Button>
@@ -419,35 +365,20 @@ export default function ClassListPage() {
       </Dialog>
 
       <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
-        <DialogContent showCloseButton={false}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-
-              Delete {filteredClasses.length} archived classes?
-            </DialogTitle>
+            <DialogTitle>Delete {filteredClasses.length} archived classes?</DialogTitle>
             <DialogDescription>
-              This will permanently delete these classes and their student
-              rosters. This action cannot be undone (except via the temporary
-              Undo button).
+              This will permanently delete these classes and their student rosters. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-
-            <Button
-              variant="outline"
-              onClick={() => setBulkDeleteConfirm(false)}
-              disabled={processing}
-            >
+            <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)} disabled={processing}>
               Cancel
             </Button>
-            <Button
-              onClick={handleBulkDelete}
-              disabled={processing}
-              variant="destructive"
-            >
+            <Button onClick={handleBulkDelete} disabled={processing} variant="destructive">
               {processing ? "Deleting..." : "Delete Permanently"}
             </Button>
-
           </DialogFooter>
         </DialogContent>
       </Dialog>

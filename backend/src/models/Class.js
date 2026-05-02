@@ -1,41 +1,5 @@
 const mongoose = require("mongoose");
 
-const scheduleSchema = new mongoose.Schema({
-  labelId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Label",
-    required: [true, "Schedule must have a label"],
-  },
-  rrule: {
-    type: String, // e.g. "FREQ=WEEKLY;BYDAY=MO,WE"
-    required: [true, "RRULE is required"],
-  },
-  startTime: {
-    type: String, // Wall clock time "HH:mm"
-    required: true,
-  },
-  duration: {
-    type: Number, // in minutes
-    required: true,
-  },
-  location: {
-    type: String,
-    trim: true,
-  },
-  startDate: {
-    type: String, // ISO Date string, used for one-off (COUNT=1) or overriding class start
-    default: null,
-  },
-  exdates: {
-    type: [String], // Array of ISO Datetime strings in class timezone
-    default: [],
-  },
-  isHidden: {
-    type: Boolean,
-    default: false,
-  },
-});
-
 const classSchema = new mongoose.Schema(
   {
     name: {
@@ -60,18 +24,31 @@ const classSchema = new mongoose.Schema(
       enum: ["active", "archived"],
       default: "active",
     },
-    timezone: {
-      type: String,
-      required: [true, "Timezone is required"],
-      default: "Asia/Kolkata",
-    },
     startDate: {
-      type: String, // Temporal ISO string
+      type: String, // ISO Date string (YYYY-MM-DD)
       required: [true, "Start date is required"],
     },
     endDate: {
-      type: String, // Temporal ISO string
+      type: String, // ISO Date string (YYYY-MM-DD)
       required: [true, "End date is required"],
+    },
+    startTime: {
+      type: String, // "HH:mm"
+      required: [true, "Start time is required"],
+    },
+    duration: {
+      type: Number, // minutes
+      required: [true, "Duration is required"],
+      default: 60,
+    },
+    daysOfWeek: {
+      type: [Number], // 0-6
+      required: [true, "Days of week are required"],
+      default: [],
+    },
+    location: {
+      type: String,
+      trim: true,
     },
     teacherId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -79,7 +56,6 @@ const classSchema = new mongoose.Schema(
       required: [true, "Teacher is required"],
       index: true,
     },
-    schedules: [scheduleSchema],
     deletedAt: {
       type: Date,
       default: null,

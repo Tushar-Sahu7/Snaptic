@@ -1,22 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  useParams,
-  useNavigate,
-  useLocation,
-  useOutletContext,
-} from "react-router";
-import {
-  fetchClassById,
-  addStudent,
-  removeStudent,
-  removeStudents,
-  searchStudents,
-  updateClass,
-} from "@/features/classes/api/classes.api";
-import {
-  fetchTodaySession,
-  startAttendanceSession,
-} from "@/features/attendance/api/attendance.api";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useParams, useNavigate, useLocation, useOutletContext } from "react-router";
+import { 
+  useClassDetail, 
+  useUpdateClass, 
+  useAddStudent, 
+  useRemoveStudent, 
+  useSearchStudents 
+} from "@/features/classes/hooks/useClasses";
+import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +29,7 @@ import {
   Play,
   Eye,
   Loader2,
+  AlertCircle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,686 +39,279 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Icon as LucideIcon } from "@/components/ui/icon-picker";
-import ClassFormModal from "@/features/classes/components/ClassFormModal";
+import ClassFormSheet from "@/features/classes/components/ClassFormSheet";
 import ClassDeleteDialog from "@/features/classes/components/ClassDeleteDialog";
 import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDisplay";
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
 import ClassImportStudentsModal from "@/features/classes/components/ClassImportStudentsModal";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { isClassInSession } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export default function ClassDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { setDynamicLabel } = useOutletContext();
-
   const searchInputRef = useRef(null);
 
-  const [classData, setClassData] = useState(null);
-  const [activeSession, setActiveSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [startingSession, setStartingSession] = useState(false);
+  // TanStack Queries & Mutations
+  const { data: classData, isLoading, error } = useClassDetail(id);
+  const updateClassMutation = useUpdateClass();
+  const addStudentMutation = useAddStudent(id);
+  const removeStudentMutation = useRemoveStudent(id);
+  const { todaySessions } = useTodayAttendance();
+  
+  const activeSession = useMemo(() => todaySessions[id], [todaySessions, id]);
 
-  // Edit / Delete modals
+  // UI State
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-
-  // Student search
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-
-  // Bulk Remove state
+  const { data: searchResults = [], isLoading: searching } = useSearchStudents(debouncedQuery);
   const [selectedStudents, setSelectedStudents] = useState([]);
-  const [removingBulk, setRemovingBulk] = useState(false);
-
-  // Load class detail and today's session
-  const loadClass = useCallback(async () => {
-    try {
-      const { data } = await fetchClassById(id);
-      setClassData(data.class);
-
-      // Check for today's session status (GET only, no side effects)
-      if (data.class.status !== "archived") {
-        try {
-          const { data: sessionData } = await fetchTodaySession(id);
-          setActiveSession(sessionData.session);
-        } catch (err) {
-          console.debug("No session found for today yet");
-        }
-      }
-    } catch {
-      toast.error("Failed to load class");
-      navigate("/teacher/classes", { replace: true });
-    } finally {
-      setLoading(false);
-    }
-  }, [id, navigate]);
-
-  const handleStartAttendance = async (origin = "detail") => {
-    try {
-      setStartingSession(true);
-      await startAttendanceSession(id);
-      navigate(`/teacher/classes/${id}/attendance?origin=${origin}`);
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to start attendance session",
-      );
-    } finally {
-      setStartingSession(false);
-    }
-  };
 
   useEffect(() => {
-    loadClass();
-  }, [loadClass]);
-
-  useEffect(() => {
-    if (classData?.name) {
-      setDynamicLabel(classData.name);
-    }
+    if (classData?.name) setDynamicLabel(classData.name);
     return () => setDynamicLabel("");
   }, [classData?.name, setDynamicLabel]);
 
   useEffect(() => {
     if (location.search.includes("action=add-student")) {
-      // Small timeout to ensure input is fully mounted if this is first load
-      setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
-      }, 100);
+      setTimeout(() => searchInputRef.current?.focus(), 100);
     }
   }, [location.search]);
 
-  // Debounced student search with AbortController for cancellation
-  useEffect(() => {
-    if (debouncedQuery.trim().length < 1) {
-      setSearchResults([]);
-      return;
-    }
 
-    const controller = new AbortController();
 
-    async function doSearch() {
-      setSearching(true);
-      try {
-        const { data } = await searchStudents(
-          debouncedQuery.trim(),
-          controller.signal,
-        );
-        setSearchResults(data.students);
-      } catch (err) {
-        if (err.name !== "CanceledError" && err.name !== "AbortError") {
-          setSearchResults([]);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setSearching(false);
-        }
-      }
-    }
-
-    doSearch();
-
-    return () => controller.abort();
-  }, [debouncedQuery]);
-
-  // Add student
-  async function handleAddStudent(student) {
+  const handleToggleArchive = async () => {
+    const newStatus = classData.status === "archived" ? "active" : "archived";
     try {
-      await addStudent(id, student._id);
-      toast.success(`${student.name} has been added`);
-      loadClass();
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || `Failed to add ${student.name}`,
-      );
-    }
-  }
-
-  // Restore student (Undo action)
-  async function handleRestoreStudent(student) {
-    try {
-      await addStudent(id, student._id);
-      loadClass();
-    } catch (err) {
-      toast.error(`Failed to restore ${student.name}`);
-    }
-  }
-
-  // Remove student with Undo
-  async function handleRemoveStudent(student) {
-    try {
-      await removeStudent(id, student._id);
-      loadClass();
-
-      toast(`Student removed from class`, {
-        description: `${student.name} has been removed.`,
-        action: {
-          label: "Undo",
-          onClick: () => handleRestoreStudent(student),
-        },
-      });
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || `Failed to remove ${student.name}`,
-      );
-    }
-  }
-
-  // Bulk remove students with Undo
-  async function handleBulkRemove() {
-    if (!selectedStudents.length) return;
-    const studentsToRestore = [...selectedStudents];
-    setRemovingBulk(true);
-    try {
-      await removeStudents(
-        id,
-        selectedStudents.map((s) => s._id),
-      );
-      setSelectedStudents([]);
-      loadClass();
-
-      toast(`${studentsToRestore.length} students removed`, {
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            try {
-              for (const s of studentsToRestore) {
-                await addStudent(id, s._id);
-              }
-              loadClass();
-              toast.success("Students restored");
-            } catch {
-              toast.error("Failed to restore some students");
-            }
-          },
-        },
-      });
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to remove students");
-    } finally {
-      setRemovingBulk(false);
-    }
-  }
-
-  // Toggle Archive
-  async function handleToggleArchive() {
-    const currentStatus = classData.status;
-    const newStatus = currentStatus === "archived" ? "active" : "archived";
-    try {
-      await updateClass(id, { status: newStatus });
-      loadClass();
-
-      toast.success(
-        `Class "${classData.name}" ${newStatus === "archived" ? "archived" : "unarchived"} successfully`,
-        {
-          action: {
-            label: "Undo",
-            onClick: async () => {
-              try {
-                await updateClass(id, { status: currentStatus });
-                loadClass();
-                toast.success(`Action undone`);
-              } catch {
-                toast.error("Failed to undo action");
-              }
-            },
-          },
-        },
-      );
+      await updateClassMutation.mutateAsync({ classId: id, payload: { status: newStatus } });
+      toast.success(`Class ${newStatus === "archived" ? "archived" : "unarchived"}`);
     } catch (err) {
       toast.error("Failed to update class status");
     }
-  }
+  };
 
-  function isStudentInClass(studentId) {
-    return classData?.students?.some(
-      (s) => s._id.toString() === studentId.toString(),
-    );
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div>
-        <div>
-          <div>
-            <Skeleton />
-            <div>
-              <Skeleton />
-              <Skeleton />
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="flex justify-between items-start">
+          <div className="flex gap-4">
+            <Skeleton className="h-14 w-14 rounded-2xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-96" />
             </div>
           </div>
-          <div>
-            <Skeleton />
-          </div>
+          <Skeleton className="h-10 w-32 rounded-xl" />
         </div>
-        <Skeleton />
-        <ClassStudentDataTable data={[]} loading={true} />
+        <Skeleton className="h-[400px] rounded-3xl" />
       </div>
     );
   }
 
-  if (!classData) return null;
+  if (error || !classData) {
+    return (
+      <div className="container mx-auto px-4 py-24 text-center space-y-6">
+        <AlertCircle className="w-16 h-16 text-destructive mx-auto" />
+        <h2 className="text-2xl font-bold">Class not found</h2>
+        <Button onClick={() => navigate("/teacher/classes")}>Back to Classes</Button>
+      </div>
+    );
+  }
 
   return (
-    <div>
-
-      {/* Header */}
-      <div>
-        <div>
-          <div>
-            <div>
-              <div>
-                <span>
-                  <LucideIcon name={classData.icon} size={28} />
-                </span>
-                <h1>
-                  {classData.name}
-                </h1>
-                {classData.status === "archived" && (
-                  <Badge variant="secondary">
-                    Archived
-                  </Badge>
-                )}
-              </div>
-
-
-              <div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                    >
-                      <MoreVertical />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end">
-                    {classData.status !== "archived" && (
-                      <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                        <Pencil />
-                        Edit Class
-                      </DropdownMenuItem>
-                    )}
-
-                    <DropdownMenuItem onClick={handleToggleArchive}>
-                      {classData.status === "archived" ? (
-                        <>
-                          <ArchiveRestore />
-                          Unarchive Class
-                        </>
-                      ) : (
-                        <>
-                          <Archive />
-                          Archive Class
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setDeleteOpen(true)}
-                    >
-                      <Trash2 />
-                      Delete Class
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+    <div className="container mx-auto px-4 py-8 max-w-7xl space-y-10">
+      {/* Hero Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-start gap-5">
+          <div className="p-4 rounded-2xl bg-muted/50 border shadow-sm">
+            <LucideIcon name={classData.icon} size={32} className="text-primary" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-black tracking-tight">{classData.name}</h1>
+              {classData.status === "archived" && (
+                <Badge variant="secondary" className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700">
+                  Archived
+                </Badge>
+              )}
             </div>
-
-            {classData.schedules?.length > 0 && (
-              <p>
-                <ClassScheduleDisplay schedules={classData.schedules} />
-              </p>
-            )}
-
+            <div className="flex items-center gap-4 text-muted-foreground font-medium">
+              <ClassScheduleDisplay 
+                daysOfWeek={classData.daysOfWeek} 
+                startTime={classData.startTime} 
+              />
+            </div>
           </div>
         </div>
-        <div>
 
-          {classData.students?.length > 0 &&
-            classData.status !== "archived" &&
-            (() => {
-              const { onTime, message } = isClassInSession(classData);
-
-              // PRIORITY 1: Existing Session Today
-              if (activeSession) {
-                const isFinalized = activeSession.status === "finalized";
-                const isSubmitted = activeSession.status === "submitted";
-
-                // Case 1: Session is locked (Finalized or Submitted & Time Lapsed)
-                if (isFinalized || (isSubmitted && !onTime)) {
-                  return (
-                    <div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() =>
-                          navigate(
-                            `/teacher/attendance/${activeSession._id}/summary`,
-                          )
-                        }
-                      >
-                        <Eye />
-                        View Summary
-                      </Button>
-                      <span>
-                        Attendance {isFinalized ? "Finalized" : "Closed"}
-                      </span>
-                    </div>
-                  );
-                }
-
-
-                // Case 2: Session is Submitted but still On-Time (Allow Updates)
-                if (isSubmitted && onTime) {
-                  return (
-                    <div>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          navigate(
-                            `/teacher/classes/${id}/attendance?manual=true&origin=detail`,
-                          )
-                        }
-                      >
-                        <Pencil />
-                        Update Attendance
-                      </Button>
-                      <span>
-                        Live Submission
-                      </span>
-                    </div>
-                  );
-                }
-
-
-                // Case 3: In-Progress Session
-                if (activeSession.status === "inProgress") {
-                  return (
-                    <div>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          navigate(
-                            `/teacher/classes/${id}/attendance?origin=detail`,
-                          )
-                        }
-                      >
-                        <Play />
-                        Resume Session
-                      </Button>
-                      <span>
-                        Session in Progress
-                      </span>
-                    </div>
-                  );
-                }
-
-              }
-
-              // PRIORITY 2: On-Time (New Session)
-              if (onTime) {
-                return (
-                  <div>
-                    <Button
-                      size="sm"
-                      disabled={startingSession}
-                      onClick={() => handleStartAttendance("detail")}
-                    >
-                      {startingSession ? (
-                        <Loader2 />
-                      ) : (
-                        <UserCheck />
-                      )}
-                      {startingSession ? "Starting..." : "Take Attendance"}
-                    </Button>
-                    <span>
-                      Live Now
-                    </span>
-                  </div>
-                );
-              }
-
-
-              // PRIORITY 3: Off-Schedule
-              return (
-                <div>
-                  <Button
-                    size="sm"
-                    disabled
-                  >
-                    <UserCheck />
-                    Take Attendance
-                  </Button>
-                  <span>
-                    {message}
-                  </span>
-                </div>
-              );
-            })()}
-
-          <div>
-            {classData.status !== "archived" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditOpen(true)}
-              >
-                <Pencil />
-                Edit
-              </Button>
-            )}
-            <Button variant="secondary" size="sm" onClick={handleToggleArchive}>
-              {classData.status === "archived" ? (
-                <>
-                  <ArchiveRestore /> Unarchive
-                </>
-              ) : (
-                <>
-                  <Archive /> Archive
-                </>
-              )}
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 />
-              Delete
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        {/* Add Student Section */}
-        {classData.status !== "archived" && (
-          <div>
-            <h2>
-              <UserPlus />
-              Add Student
-            </h2>
-
-            <div>
-              <div>
-                <Search />
-                <Input
-                  ref={searchInputRef}
-                  placeholder="Search by name…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-                {query.length > 0 && (
-                  <button
-                    onClick={() => setQuery("")}
-                  >
-                    <X />
-                  </button>
-                )}
-              </div>
-              <Button variant="secondary" onClick={() => setImportOpen(true)}>
-                Import Students
-              </Button>
-            </div>
-
-            {/* Search Results */}
-            {debouncedQuery.trim().length > 0 && (
-              <div>
-                {searchResults.length > 0 ? (
-                  <ClassStudentDataTable
-                    data={searchResults}
-                    loading={searching}
-                    hideToolbar={true}
-                    syncUrl={false}
-                    actionsRender={(student) => {
-                      const alreadyAdded = isStudentInClass(student._id);
-                      if (alreadyAdded) {
-                        return (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleRemoveStudent(student)}
-                          >
-                            Remove
-                          </Button>
-                        );
-                      }
-                      return (
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddStudent(student)}
-                        >
-                          Add
-                        </Button>
-                      );
-                    }}
-                  />
-                ) : (
-                  <div>
-                    <p>
-                      No students found
-                    </p>
-                    <p>
-                      No matching records for "{debouncedQuery}". Ensure the
-                      student has registered for a Snaptic account to appear in
-                      the directory.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {classData.status !== "archived" && <Separator />}
-
-        {/* Enrolled Students */}
-        <div>
-          <div>
-            <h2>
-              Enrolled Students ({classData.students?.length || 0})
-            </h2>
-          </div>
-
-          {classData.students?.length === 0 ? (
-            <p>
-              No students in this class yet. Use the search above to add
-              students.
-            </p>
-          ) : (
-            <ClassStudentDataTable
-              data={classData.students}
-              loading={loading}
-              selectable
-              onSelectionChange={setSelectedStudents}
-              toolbarActions={
-                selectedStudents.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleBulkRemove}
-                    disabled={removingBulk}
-                  >
-                    <Trash2 />
-                    Remove Selected ({selectedStudents.length})
-                  </Button>
-                )
-              }
-              actionsRender={(student) => (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                    >
-                      <MoreVertical />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => toast.info("View Profile: Coming soon")}
-                    >
-                      <User />
-                      View Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => toast.info("View Attendance: Coming soon")}
-                    >
-                      <CalendarDays />
-                      View Attendance
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleRemoveStudent(student)}
-                    >
-                      <Trash2 />
-                      Remove from Class
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+        <div className="flex flex-wrap items-center gap-3">
+          {classData.status !== "archived" && (
+            <PrimaryAttendanceAction 
+              cls={classData} 
+              session={activeSession} 
+              className="rounded-xl font-bold"
             />
           )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 rounded-xl">
+              {classData.status !== "archived" && (
+                <DropdownMenuItem onClick={() => setEditOpen(true)} className="rounded-lg">
+                  <Pencil className="mr-2 w-4 h-4" /> Edit Class Details
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={handleToggleArchive} className="rounded-lg">
+                {classData.status === "archived" ? (
+                  <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive Class</>
+                ) : (
+                  <><Archive className="mr-2 w-4 h-4" /> Archive Class</>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive focus:text-destructive rounded-lg">
+                <Trash2 className="mr-2 w-4 h-4" /> Delete Permanently
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-12">
+        {/* Student Management Section */}
+        <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-card/50">
+          <CardHeader className="p-8 pb-0 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-black">Enrolled Students</CardTitle>
+              <CardDescription className="text-base font-medium">Manage your roster and import student records.</CardDescription>
+            </div>
+            
+            {classData.status !== "archived" && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative group w-full sm:w-64">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Search directory..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="pl-10 h-11 rounded-xl bg-background border-muted-foreground/10 focus:ring-primary/20 font-medium"
+                  />
+                  {query && (
+                    <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <Button variant="secondary" className="h-11 rounded-xl font-bold gap-2 px-6" onClick={() => setImportOpen(true)}>
+                  <UserPlus className="w-4 h-4" /> Import
+                </Button>
+              </div>
+            )}
+          </CardHeader>
+          
+          <CardContent className="p-8">
+            {/* Search Overlay */}
+            {debouncedQuery && (
+              <div className="mb-10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Search className="w-3 h-3" /> Search Results
+                  </h3>
+                  <Badge variant="outline" className="text-[10px]">{searchResults.length} found</Badge>
+                </div>
+                <ClassStudentDataTable
+                  data={searchResults}
+                  loading={searching}
+                  hideToolbar
+                  syncUrl={false}
+                  actionsRender={(student) => {
+                    const alreadyIn = classData.students?.some(s => s._id === student._id);
+                    return alreadyIn ? (
+                      <Button size="sm" variant="ghost" className="text-muted-foreground pointer-events-none gap-2 font-bold">
+                        <Check className="w-3 h-3" /> Added
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="secondary" className="font-bold gap-2 rounded-lg" onClick={() => addStudentMutation.mutate(student._id)}>
+                        <Plus className="w-3 h-3" /> Add to Class
+                      </Button>
+                    );
+                  }}
+                />
+                <Separator className="my-8" />
+              </div>
+            )}
 
-      {/* Edit Modal */}
-      <ClassFormModal
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        classData={classData}
-        onSuccess={() => {
-          setEditOpen(false);
-          loadClass();
-        }}
-      />
+            {classData.students?.length === 0 ? (
+              <div className="py-20 text-center space-y-6">
+                <div className="p-6 rounded-full bg-muted/30 w-fit mx-auto">
+                  <Users className="w-12 h-12 text-muted-foreground opacity-30" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xl font-black">No students enrolled</p>
+                  <p className="text-muted-foreground font-medium max-w-sm mx-auto">
+                    Start by searching for students in the global directory or import an existing roster.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ClassStudentDataTable
+                data={classData.students}
+                loading={isLoading}
+                selectable={classData.status !== "archived"}
+                onSelectionChange={setSelectedStudents}
+                toolbarActions={
+                  selectedStudents.length > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="rounded-xl font-bold gap-2"
+                      onClick={() => removeStudentMutation.mutate(selectedStudents.map(s => s._id))}
+                    >
+                      <Trash2 className="w-4 h-4" /> Remove Selected ({selectedStudents.length})
+                    </Button>
+                  )
+                }
+                actionsRender={(student) => (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-lg h-8 w-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-xl">
+                      <DropdownMenuItem onClick={() => navigate(`/teacher/profile?id=${student._id}`)}>
+                        <User className="mr-2 w-4 h-4" /> View Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${id}?student=${student._id}&tab=history`)}>
+                        <CalendarDays className="mr-2 w-4 h-4" /> View History
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => removeStudentMutation.mutate([student._id])} className="text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 w-4 h-4" /> Remove from Class
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Delete Dialog */}
-      <ClassDeleteDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        classData={classData}
-        onDeleted={() => navigate("/teacher/classes", { replace: true })}
-      />
-
-      {/* Import Students Modal */}
-      <ClassImportStudentsModal
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        currentClassId={classData._id}
-        existingStudents={classData.students}
-        onSuccess={loadClass}
-      />
-
-      {/* Remove Student Confirmation - Removed in favor of Undo toast */}
+      <ClassFormSheet open={editOpen} onOpenChange={setEditOpen} classData={classData} />
+      <ClassDeleteDialog open={deleteOpen} onOpenChange={setDeleteOpen} classData={classData} onDeleted={() => navigate("/teacher/classes")} />
+      <ClassImportStudentsModal open={importOpen} onOpenChange={setImportOpen} currentClassId={id} existingStudents={classData.students} />
     </div>
   );
 }

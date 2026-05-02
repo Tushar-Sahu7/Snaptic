@@ -2,16 +2,7 @@ const jwt = require("jsonwebtoken")
 
 const protect = (req, res, next) => {
   try {
-    const roleHeader = req.headers["x-role"];
-    const teacherToken = req.cookies?.token_teacher;
-    const studentToken = req.cookies?.token_student;
-    let token = null;
-
-    if (roleHeader === "teacher") {
-      token = teacherToken;
-    } else if (roleHeader === "student") {
-      token = studentToken;
-    }
+    const token = req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({ message: "Not authorized, no token" });

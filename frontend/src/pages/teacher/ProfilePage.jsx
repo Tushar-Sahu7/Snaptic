@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useState, useMemo, useEffect } from "react";
+import { useAuth, useUpdateProfile, useChangePassword } from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 import validator from "validator";
 import {
@@ -15,38 +15,33 @@ import {
   Field,
   FieldGroup,
   FieldLabel,
-  FieldDescription,
 } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Link } from "react-router";
 import { 
   User, Lock, Save, KeyRound, BookOpen, 
   Users, Calendar, Fingerprint, Copy, 
   Check, ShieldCheck, Mail, Verified,
-  Eye, EyeOff
+  Eye, EyeOff, AlertCircle
 } from "lucide-react";
 import AuthFaceEnrollmentCard from "@/features/auth/components/AuthFaceEnrollmentCard";
-
 export default function ProfilePage() {
-  const { user, updateProfile, changePassword } = useAuth();
+  const { data: user } = useAuth();
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
 
   // Profile State
-  const [profileName, setProfileName] = useState(user?.name || "");
-  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+
+  // Sync profile name when user data loads
+  useEffect(() => {
+    if (user?.name && !profileName) setProfileName(user.name);
+  }, [user?.name]);
 
   // Password State
   const [passwords, setPasswords] = useState({
@@ -59,7 +54,6 @@ export default function ProfilePage() {
     new: false,
     confirm: false,
   });
-  const [changingPassword, setChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -75,14 +69,11 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!profileName.trim()) return;
 
-    setUpdatingProfile(true);
     try {
-      await updateProfile(profileName.trim());
+      await updateProfileMutation.mutateAsync({ name: profileName.trim() });
       toast.success("Profile updated successfully");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update profile");
-    } finally {
-      setUpdatingProfile(false);
     }
   }
 
@@ -100,9 +91,11 @@ export default function ProfilePage() {
       return;
     }
 
-    setChangingPassword(true);
     try {
-      await changePassword(passwords.currentPassword, passwords.newPassword);
+      await changePasswordMutation.mutateAsync({
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+      });
       toast.success("Password changed successfully");
       setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPasswordError("");
@@ -110,8 +103,6 @@ export default function ProfilePage() {
       const msg = err.response?.data?.message || "Failed to change password";
       setPasswordError(msg);
       toast.error(msg);
-    } finally {
-      setChangingPassword(false);
     }
   }
 
@@ -119,119 +110,127 @@ export default function ProfilePage() {
     ? user.name.split(" ").map(n => n[0]).join("").toUpperCase()
     : user?.email?.slice(0, 2).toUpperCase() || "U";
 
-  return (
-    <div>
+  const joinedDate = useMemo(() => {
+    if (!user?.joinedAt) return "N/A";
+    try {
+      const date = new Date(user.joinedAt);
+      if (isNaN(date.getTime())) return "N/A";
+      return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    } catch (e) {
+      return "N/A";
+    }
+  }, [user?.joinedAt]);
 
+  return (
+    <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
       {/* Teacher Identity Hero Card */}
-      <Card>
-        <CardContent>
-          <div>
-            <div>
-              <Avatar>
-                {user?.avatar && <AvatarImage src={user.avatar} />}
-                <AvatarFallback>
+      <Card className="rounded-3xl overflow-hidden border-none shadow-xl bg-gradient-to-br from-card to-muted/20">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div className="relative group">
+              <Avatar className="w-32 h-32 border-4 border-background shadow-2xl transition-transform group-hover:scale-105">
+                {user?.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
+                <AvatarFallback className="text-4xl font-black bg-primary text-primary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               {user?.faceEnrolled && (
-                <div>
-                  <Check />
+                <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-2 rounded-full shadow-lg border-2 border-background">
+                  <Check className="w-4 h-4 stroke-[3px]" />
                 </div>
               )}
             </div>
-            <div>
-              <div>
-                <h1>{user?.name}</h1>
-                {user?.faceEnrolled && (
-                  <Badge variant="secondary">
-                    <Verified />
-                    Verified {user?.role === "teacher" ? "Teacher" : "Student"}
-                  </Badge>
-                )}
-              </div>
-              <div>
-                <span>
-                  <Mail />
-                  {user?.email}
-                </span>
-                <span>
-                  <Calendar />
-                  Joined {user?.joinedAt ? new Date(user.joinedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'N/A'}
-                </span>
-                <button 
-                  onClick={handleCopyId}
-                >
-                  <Fingerprint />
-                  ID: {user?._id?.slice(-8)}...
-                  {copied ? <Check /> : <Copy />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-
-          {/* Activity Metrics Grouped */}
-          <div>
-            <div>
-              <p>
-                {user?.role === "teacher" ? "Total Classes" : "Enrolled Classes"}
-              </p>
-              <div>
-                < BookOpen />
-                {user?.classCount || 0}
-              </div>
-            </div>
-            {user?.role === "teacher" && (
-              <div>
-                <p>Students Managed</p>
-                <div>
-                  <Users />
-                  {user?.studentCount || 0}
+            
+            <div className="flex-1 text-center md:text-left space-y-4">
+              <div className="space-y-1">
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                  <h1 className="text-4xl font-black tracking-tight">{user?.name}</h1>
+                  {user?.faceEnrolled && (
+                    <Badge variant="secondary" className="px-3 py-1 rounded-full gap-1.5 font-bold uppercase text-[10px] tracking-widest bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none">
+                      <Verified className="w-3 h-3" />
+                      Verified {user?.role}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 pt-1 text-muted-foreground font-medium">
+                  <span className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    {user?.email}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Joined {joinedDate}
+                  </span>
+                  <button 
+                    onClick={handleCopyId}
+                    className="flex items-center gap-2 hover:text-primary transition-colors group"
+                  >
+                    <Fingerprint className="w-4 h-4" />
+                    <span className="font-mono text-xs opacity-70 group-hover:opacity-100">
+                      ID: {user?._id?.slice(-8).toUpperCase()}...
+                    </span>
+                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  </button>
                 </div>
               </div>
-            )}
+
+              <div className="flex gap-4 pt-2">
+                <div className="px-5 py-3 rounded-2xl bg-background/50 backdrop-blur shadow-sm border flex flex-col items-center md:items-start min-w-[120px]">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    {user?.role === "teacher" ? "Total Classes" : "Enrollments"}
+                  </p>
+                  <div className="flex items-center gap-2 text-2xl font-black">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    {user?.classCount || 0}
+                  </div>
+                </div>
+                {user?.role === "teacher" && (
+                  <div className="px-5 py-3 rounded-2xl bg-background/50 backdrop-blur shadow-sm border flex flex-col items-center md:items-start min-w-[120px]">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Students</p>
+                    <div className="flex items-center gap-2 text-2xl font-black">
+                      <Users className="w-5 h-5 text-primary" />
+                      {user?.studentCount || 0}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-
-      {/* Operational Forms */}
-      <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Personal Details Card */}
-        <Card>
-          <CardHeader>
-            <div>
-              <User />
+        <Card className="rounded-3xl border-none shadow-lg overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-8">
+            <div className="p-3 bg-primary/10 rounded-2xl w-fit mb-4">
+              <User className="w-6 h-6 text-primary" />
             </div>
             <CardTitle>Personal Details</CardTitle>
-            <CardDescription>Update your display name and contact information.</CardDescription>
+            <CardDescription>Update your professional identity and public profile.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Separator />
-            <FieldGroup>
-              <form onSubmit={handleProfileUpdate}>
-
+          <CardContent className="p-8">
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
+              <FieldGroup className="space-y-6">
                 <Field>
-                  <FieldLabel>Register Email (Static)</FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">
-                      <Mail />
+                  <FieldLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Registration Email</FieldLabel>
+                  <InputGroup className="bg-muted/50 border-none rounded-2xl overflow-hidden">
+                    <InputGroupAddon align="inline-start" className="pl-4">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
                     </InputGroupAddon>
                     <InputGroupInput
                       value={user?.email || ""}
                       disabled
+                      className="bg-transparent border-none h-14 font-medium"
                     />
                   </InputGroup>
                 </Field>
 
-
                 <Field>
-                  <FieldLabel htmlFor="name">Full Display Name</FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">
-                      <User />
+                  <FieldLabel htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Display Name</FieldLabel>
+                  <InputGroup className="bg-muted/20 hover:bg-muted/30 focus-within:bg-background focus-within:ring-2 focus-within:ring-primary/20 transition-all rounded-2xl overflow-hidden border">
+                    <InputGroupAddon align="inline-start" className="pl-4">
+                      <User className="w-4 h-4 text-muted-foreground" />
                     </InputGroupAddon>
                     <InputGroupInput
                       id="name"
@@ -239,45 +238,45 @@ export default function ProfilePage() {
                       onChange={(e) => setProfileName(e.target.value)}
                       placeholder="Enter your professional name"
                       required
+                      className="bg-transparent border-none h-14 font-bold"
                     />
                   </InputGroup>
                 </Field>
 
-
-                <div>
-                  <Button type="submit" disabled={updatingProfile || profileName === user?.name}>
-                    <Save />
-                    {updatingProfile ? "Saving..." : "Update Details"}
+                <div className="pt-4">
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest gap-2 shadow-lg shadow-primary/20"
+                    disabled={updateProfileMutation.isPending || profileName === user?.name}
+                  >
+                    {updateProfileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Update Identity
                   </Button>
                 </div>
-
-              </form>
-            </FieldGroup>
+              </FieldGroup>
+            </form>
           </CardContent>
         </Card>
 
         {/* Account Security Card */}
-        {/* Account Security Card */}
-        <Card>
-          <CardHeader>
-            <div>
-              <ShieldCheck />
+        <Card className="rounded-3xl border-none shadow-lg overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-8">
+            <div className="p-3 bg-amber-500/10 rounded-2xl w-fit mb-4">
+              <ShieldCheck className="w-6 h-6 text-amber-600" />
             </div>
             <CardTitle>Account Security</CardTitle>
             <CardDescription>
-              Protect your {user?.role === "teacher" ? "teacher" : "student"} portal with a regular password rotation.
+              Regular password rotation is recommended for biometric systems.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-             <Separator />
-            <form onSubmit={handlePasswordChange}>
-
-              <FieldGroup>
+          <CardContent className="p-8">
+            <form onSubmit={handlePasswordChange} className="space-y-6">
+              <FieldGroup className="space-y-6">
                 <Field>
-                  <FieldLabel htmlFor="currentPassword">Current Security Password</FieldLabel>
-                  <InputGroup>
-                    <InputGroupAddon align="inline-start">
-                      <Lock />
+                  <FieldLabel htmlFor="currentPassword" className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Current Password</FieldLabel>
+                  <InputGroup className="bg-muted/20 rounded-2xl overflow-hidden border">
+                    <InputGroupAddon align="inline-start" className="pl-4">
+                      <Lock className="w-4 h-4 text-muted-foreground" />
                     </InputGroupAddon>
                     <InputGroupInput
                       id="currentPassword"
@@ -285,91 +284,102 @@ export default function ProfilePage() {
                       value={passwords.currentPassword}
                       onChange={(e) => setPasswords({...passwords, currentPassword: e.target.value})}
                       required
+                      className="bg-transparent border-none h-14"
                     />
-                    <InputGroupAddon align="inline-end">
+                    <InputGroupAddon align="inline-end" className="pr-2">
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
+                        className="rounded-xl hover:bg-background"
                         onClick={() => setShowPasswords(p => ({...p, current: !p.current}))}
                       >
-                        {showPasswords.current ? <EyeOff /> : <Eye />}
+                        {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
                     </InputGroupAddon>
                   </InputGroup>
                 </Field>
 
-
-                <div>
+                <div className="grid grid-cols-1 gap-6">
                   <Field>
-                    <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
-                    <InputGroup>
+                    <FieldLabel htmlFor="newPassword" className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">New Password</FieldLabel>
+                    <InputGroup className="bg-muted/20 rounded-2xl overflow-hidden border">
                       <InputGroupInput
                         id="newPassword"
                         type={showPasswords.new ? "text" : "password"}
                         value={passwords.newPassword}
                         onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})}
                         required
+                        className="bg-transparent border-none h-14 pl-6"
+                        placeholder="••••••••"
                       />
-                      <InputGroupAddon align="inline-end">
+                      <InputGroupAddon align="inline-end" className="pr-2">
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
+                          className="rounded-xl hover:bg-background"
                           onClick={() => setShowPasswords(p => ({...p, new: !p.new}))}
                         >
-                          {showPasswords.new ? <EyeOff /> : <Eye />}
+                          {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </Button>
                       </InputGroupAddon>
                     </InputGroup>
                   </Field>
 
-
                   <Field>
-                    <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
-                    <InputGroup>
+                    <FieldLabel htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Confirm New Password</FieldLabel>
+                    <InputGroup className="bg-muted/20 rounded-2xl overflow-hidden border">
                       <InputGroupInput
                         id="confirmPassword"
                         type={showPasswords.confirm ? "text" : "password"}
                         value={passwords.confirmPassword}
                         onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})}
                         required
+                        className="bg-transparent border-none h-14 pl-6"
+                        placeholder="••••••••"
                       />
-                      <InputGroupAddon align="inline-end">
+                      <InputGroupAddon align="inline-end" className="pr-2">
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
+                          className="rounded-xl hover:bg-background"
                           onClick={() => setShowPasswords(p => ({...p, confirm: !p.confirm}))}
                         >
-                          {showPasswords.confirm ? <EyeOff /> : <Eye />}
+                          {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </Button>
                       </InputGroupAddon>
                     </InputGroup>
                   </Field>
                 </div>
-              </FieldGroup>
 
-
-                <div>
+                <div className="space-y-4 pt-2">
                   {passwordError && (
-                    <div>
-                       <ShieldCheck />
-                       {passwordError}
+                    <div className="p-4 rounded-2xl bg-destructive/10 text-destructive text-xs font-bold flex items-center gap-3 border border-destructive/20 animate-in fade-in zoom-in-95 duration-200">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {passwordError}
                     </div>
                   )}
                   <Button 
                     type="submit" 
                     variant="secondary"
-                    disabled={changingPassword || !passwords.currentPassword || !passwords.newPassword}
+                    className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest gap-2 bg-muted hover:bg-muted/80 text-foreground border shadow-sm"
+                    disabled={changePasswordMutation.isPending || !passwords.currentPassword || !passwords.newPassword}
                   >
-                    <KeyRound />
-                    {changingPassword ? "Processing..." : "Secure Update"}
+                    {changePasswordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                    Update Security Key
                   </Button>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+              </FieldGroup>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
 
+      <div className="pt-4">
         <AuthFaceEnrollmentCard />
-        </div>
+      </div>
     </div>
   );
 }

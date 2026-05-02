@@ -1,26 +1,35 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { 
-  markAttendance, 
-  endAttendanceSession,
-  submitAttendanceSession,
-  reopenAttendanceSession,
-  terminateAttendanceSession
-} from "@/features/attendance/api/attendance.api";
+  useMarkAttendance,
+  useSubmitSession,
+  useReopenSession,
+  useResetSession
+} from "../../hooks/useAttendance";
+import { endAttendanceSession, terminateAttendanceSession } from "../../api/attendance.api";
 
+/**
+ * Hook to manage attendance wizard state and logic.
+ * Aligns with the 5-status lifecycle: scheduled, inprogress, submitted, finalized, missed.
+ */
 export const useAttendanceSession = ({
   initialSession,
-  students,
-  records,
+  students = [],
+  records = [],
   onSessionReopened
 }) => {
   const navigate = useNavigate();
   const [session, setSession] = useState(initialSession);
-  const [loading, setLoading] = useState(false);
-  const [absencesProcessed, setAbsencesProcessed] = useState(initialSession?.status !== "inProgress");
+  const [absencesProcessed, setAbsencesProcessed] = useState(initialSession?.status !== "inprogress");
   
+  const markMutation = useMarkAttendance();
+  const submitMutation = useSubmitSession();
+  const reopenMutation = useReopenSession();
+  const resetMutation = useResetSession();
+
   // 1. Attendance State (Single Source of Truth)
+  // Maps studentId -> { status, method }
   const [attendanceState, setAttendanceState] = useState(() => {
     const state = {};
     if (records && Array.isArray(records)) {
@@ -34,110 +43,111 @@ export const useAttendanceSession = ({
     return state;
   });
 
-  // Track if session is submitted locally for faster UX
-  const [isSubmitted, setIsSubmitted] = useState(initialSession?.status === "submitted" || initialSession?.status === "finalized");
+  // Keep attendanceState in sync with initial records if they change
+  useEffect(() => {
+    if (records && Array.isArray(records)) {
+      const state = {};
+      records.forEach((r) => {
+        const sId = typeof r.studentId === "object" ? r.studentId._id?.toString() : r.studentId?.toString();
+        if (sId) {
+          state[sId] = { status: r.status || "absent", method: r.method || "manual" };
+        }
+      });
+      setAttendanceState(state);
+    }
+  }, [records]);
 
-  // Ref to always have latest state in callbacks
-  const attendanceStateRef = useRef(attendanceState);
-  useEffect(() => { attendanceStateRef.current = attendanceState; }, [attendanceState]);
+  const isSubmitted = useMemo(() => 
+    session?.status === "submitted" || session?.status === "finalized"
+  , [session?.status]);
 
   const handleMarkManual = useCallback(async (studentId, status, method = "manual") => {
-    if (session?.status === "finalized") return;
+    if (session?.status === "finalized" || session?.status === "missed") return;
+    
     const sId = studentId.toString();
-
-    // Optimistic Update
-    const prev = attendanceState[sId];
-    setAttendanceState((s) => ({ ...s, [sId]: { status, method } }));
+    // Update local state immediately for snappy UI
+    setAttendanceState(prev => ({ ...prev, [sId]: { status, method } }));
 
     try {
-      await markAttendance({
+      await markMutation.mutateAsync({
         sessionId: session._id,
         studentId,
-        classId: session.classId._id,
         status,
         method,
       });
     } catch (err) {
-      setAttendanceState((s) => ({ ...s, [sId]: prev }));
-      if (err.response?.status === 403) {
-        setSession(prev => ({ ...prev, status: "finalized" }));
-      }
-      throw err;
+      toast.error("Failed to update attendance");
+      // Revert local state on error
+      const originalRecord = records.find(r => (r.studentId?._id || r.studentId)?.toString() === sId);
+      setAttendanceState(prev => ({ 
+        ...prev, 
+        [sId]: originalRecord ? { status: originalRecord.status, method: originalRecord.method } : { status: "absent", method: "manual" }
+      }));
     }
-  }, [session]);
+  }, [session, markMutation, records]);
 
   const handleFinishScan = useCallback(async () => {
-    if (!session || session.status !== "inProgress") return;
-    setLoading(true);
+    if (!session || session.status !== "inprogress") return;
+    
     try {
       await endAttendanceSession(session._id);
-
-      // Fill in absences for all unrecorded students
-      const newState = { ...attendanceStateRef.current };
-      students.forEach((s) => {
-        const id = s._id.toString();
-        if (!newState[id]) {
-          newState[id] = { status: "absent", method: "manual" };
-        }
+      
+      // Ensure all students have a record in the local state
+      setAttendanceState(prev => {
+        const newState = { ...prev };
+        students.forEach((s) => {
+          const id = s._id.toString();
+          if (!newState[id]) {
+            newState[id] = { status: "absent", method: "manual" };
+          }
+        });
+        return newState;
       });
-      setAttendanceState(newState);
+      
       setAbsencesProcessed(true);
-      setSession(prev => ({ ...prev, status: "ended" })); // Transition to ended locally
+      // We don't change session status to 'ended' because it's not a valid backend status.
+      // We stay in 'inprogress' until 'submitted'.
     } catch (err) {
       if (err.response?.status === 403) {
         setSession(prev => ({ ...prev, status: "finalized" }));
         toast.error("Class time has ended. Session finalized.");
       } else {
-        toast.error("Failed to process absences");
+        toast.error("Failed to end scanning");
       }
-      throw err;
-    } finally {
-      setLoading(false);
     }
   }, [session, students]);
 
   const handleSubmit = useCallback(async () => {
     if (!session) return;
-    setLoading(true);
     try {
-      await submitAttendanceSession(session._id);
-      setIsSubmitted(true);
-      setSession(prev => ({ ...prev, status: "submitted" }));
+      const { data } = await submitMutation.mutateAsync(session._id);
+      setSession(data.session);
       toast.success("Attendance submitted!");
     } catch (err) {
       toast.error("Failed to submit session");
-      throw err;
-    } finally {
-      setLoading(false);
     }
-  }, [session]);
+  }, [session, submitMutation]);
 
   const handleReopen = useCallback(async () => {
     if (!session) return;
-    setLoading(true);
     try {
-      const { data } = await reopenAttendanceSession(session._id);
+      const { data } = await reopenMutation.mutateAsync(session._id);
       setSession(data.session);
-      setIsSubmitted(false);
       onSessionReopened?.(data.session);
       return data.session;
     } catch (err) {
       toast.error("Failed to reopen session");
-      throw err;
-    } finally {
-      setLoading(false);
     }
-  }, [session, onSessionReopened]);
+  }, [session, reopenMutation, onSessionReopened]);
 
   const handleTerminate = useCallback(async () => {
     if (!session) return;
     try {
       await terminateAttendanceSession(session._id);
-      toast.success("Session terminated");
+      toast.success("Session reset");
       navigate(`/teacher/dashboard`, { replace: true });
     } catch (err) {
-      toast.error("Failed to terminate session");
-      throw err;
+      toast.error("Failed to reset session");
     }
   }, [session, navigate]);
 
@@ -145,12 +155,9 @@ export const useAttendanceSession = ({
     session,
     setSession,
     attendanceState,
-    setAttendanceState,
-    loading,
+    loading: markMutation.isPending || submitMutation.isPending || reopenMutation.isPending || resetMutation.isPending,
     isSubmitted,
-    setIsSubmitted,
     absencesProcessed,
-    setAbsencesProcessed,
     handleMarkManual,
     handleFinishScan,
     handleSubmit,

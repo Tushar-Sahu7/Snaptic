@@ -2,49 +2,45 @@ const cron = require("node-cron");
 const AttendanceSession = require("../models/AttendanceSession");
 const AttendanceRecord = require("../models/AttendanceRecord");
 const Class = require("../models/Class");
-const TemporalService = require("../services/temporalService");
-const { Temporal } = require("@js-temporal/polyfill");
 
 /**
  * Finalization Job: Runs every 5 minutes to lock sessions and handle misses.
  */
 async function runFinalizationJob() {
   console.log("Running Attendance Finalization Job...");
-  const now = Temporal.Now.instant();
-  const gracePeriod = { minutes: 5 };
+  const now = new Date();
+  const gracePeriodMs = 5 * 60 * 1000; // 5 minutes
 
   try {
     // 1. Finalize 'submitted' sessions
+    // Sessions stay 'submitted' for a few minutes for review before being locked as 'finalized'
     const submittedSessions = await AttendanceSession.find({ status: "submitted" });
     for (const session of submittedSessions) {
-      if (!session.attendanceWindow || !session.attendanceWindow.closesAt) continue;
+      const lockTime = new Date(session.endTime.getTime() + gracePeriodMs);
 
-      const closesAt = Temporal.Instant.from(session.attendanceWindow.closesAt);
-      const lockTime = closesAt.add(gracePeriod);
-
-      if (Temporal.Instant.compare(now, lockTime) >= 0) {
+      if (now >= lockTime) {
         session.status = "finalized";
         await session.save();
         console.log(`Finalized session ${session._id}`);
       }
     }
 
-    // 2. Mark 'missed' and cleanup partials
+    // 2. Mark 'missed' for sessions that never started
+    // If a session's endTime + grace period has passed and it's still 'scheduled' or 'inprogress'
+    // (Note: 'inprogress' sessions that weren't submitted are also considered missed/abandoned)
     const activeSessions = await AttendanceSession.find({ 
       status: { $in: ["scheduled", "inprogress"] } 
     });
     
     for (const session of activeSessions) {
-      if (!session.attendanceWindow || !session.attendanceWindow.closesAt) continue;
+      const missTime = new Date(session.endTime.getTime() + gracePeriodMs);
 
-      const closesAt = Temporal.Instant.from(session.attendanceWindow.closesAt);
-      const missTime = closesAt.add(gracePeriod);
-
-      if (Temporal.Instant.compare(now, missTime) >= 0) {
+      if (now >= missTime) {
         session.status = "missed";
         await session.save();
         
         // Physical delete of any partial records to ensure data integrity
+        // If it was inprogress, some records might have been created
         await AttendanceRecord.deleteMany({ sessionId: session._id });
         console.log(`Marked session ${session._id} as missed and cleared partials.`);
       }
@@ -59,12 +55,12 @@ async function runFinalizationJob() {
  */
 async function runArchivingJob() {
   console.log("Running Class Archiving Job...");
-  const today = TemporalService.getNowDate();
+  const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
   try {
     const expiredClasses = await Class.find({
       status: "active",
-      endDate: { $lt: today }
+      endDate: { $lt: todayStr }
     });
 
     for (const classDoc of expiredClasses) {
@@ -88,3 +84,4 @@ function initCron() {
 }
 
 module.exports = { initCron };
+

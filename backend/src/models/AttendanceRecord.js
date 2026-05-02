@@ -38,7 +38,7 @@ const attendanceRecordSchema = new mongoose.Schema(
       default: "manual",
     },
     markedAt: {
-      type: String, // Temporal.Instant (UTC)
+      type: Date,
       default: null,
     },
   },

@@ -1,5 +1,4 @@
 import { cva } from "class-variance-authority";
-
 import { cn } from "@/lib/utils"
 
 function Empty({
@@ -10,7 +9,8 @@ function Empty({
     <div
       data-slot="empty"
       className={cn(
-        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-xl border-dashed p-6 text-center text-balance",
+        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-6 p-12 text-center",
+        "animate-in fade-in slide-in-from-bottom-4 duration-1000 ease-out",
         className
       )}
       {...props} />
@@ -24,18 +24,24 @@ function EmptyHeader({
   return (
     <div
       data-slot="empty-header"
-      className={cn("flex max-w-sm flex-col items-center gap-2", className)}
+      className={cn("flex max-w-md flex-col items-center gap-4", className)}
       {...props} />
   );
 }
 
 const emptyMediaVariants = cva(
-  "mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "mb-4 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-700",
   {
     variants: {
       variant: {
         default: "bg-transparent",
-        icon: "flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground [&_svg:not([class*='size-'])]:size-4",
+        icon: [
+          "size-24 rounded-[32px] bg-zinc-50 dark:bg-zinc-900/50",
+          "border border-zinc-100 dark:border-zinc-800/50 shadow-sm",
+          "text-zinc-400 dark:text-zinc-500",
+          "relative overflow-hidden group-hover:scale-105 group-hover:rotate-3",
+          "[&_svg]:size-10"
+        ].join(" "),
       },
     },
     defaultVariants: {
@@ -51,10 +57,18 @@ function EmptyMedia({
 }) {
   return (
     <div
-      data-slot="empty-icon"
+      data-slot="empty-media"
       data-variant={variant}
       className={cn(emptyMediaVariants({ variant, className }))}
-      {...props} />
+    >
+      {/* Decorative background element for tactile feel */}
+      {variant === "icon" && (
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 pointer-events-none" />
+      )}
+      <div className="relative z-10 flex items-center justify-center w-full h-full">
+        {props.children}
+      </div>
+    </div>
   );
 }
 
@@ -63,9 +77,12 @@ function EmptyTitle({
   ...props
 }) {
   return (
-    <div
+    <h2
       data-slot="empty-title"
-      className={cn("font-heading text-sm font-medium tracking-tight", className)}
+      className={cn(
+        "text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50",
+        className
+      )}
       {...props} />
   );
 }
@@ -75,10 +92,11 @@ function EmptyDescription({
   ...props
 }) {
   return (
-    <div
+    <p
       data-slot="empty-description"
       className={cn(
-        "text-sm/relaxed text-muted-foreground [&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+        "text-base text-zinc-500 dark:text-zinc-400 font-medium max-w-[320px] leading-relaxed",
+        "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
         className
       )}
       {...props} />
@@ -93,7 +111,7 @@ function EmptyContent({
     <div
       data-slot="empty-content"
       className={cn(
-        "flex w-full max-w-sm min-w-0 flex-col items-center gap-2.5 text-sm text-balance",
+        "flex w-full max-w-sm min-w-0 flex-col items-center gap-4 mt-2",
         className
       )}
       {...props} />

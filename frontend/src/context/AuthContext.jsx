@@ -1,136 +1,56 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext } from "react";
+import { useAuthUser, useLogin, useRegister, useLogout } from "@/features/auth/hooks/useAuth";
 import * as authApi from "@/features/auth/api/auth.api";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const initialized = useRef(false);
+  const queryClient = useQueryClient();
+  const { data: user, isLoading: loading, error: authError } = useAuthUser();
   
-  useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-    checkAuth();
-  }, []);
-
-  async function checkAuth() {
-    try {
-      const userData = await authApi.checkAuth();
-      setUser(userData);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function login(email, password) {
-    setError(null);
-    try {
-      const userData = await authApi.login(email, password);
-      setUser(userData);
-      return userData;
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message;
-      setError(msg);
-      throw err;
-    }
-  }
-
-  async function register(name, email, password, inviteToken) {
-    setError(null);
-    try {
-      const userData = await authApi.register(name, email, password, inviteToken);
-      setUser(userData);
-      return userData;
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message;
-      setError(msg);
-      throw err;
-    }
-  }
-
-  async function logout() {
-    try {
-      await authApi.logout();
-    } finally {
-      setUser(null);
-    }
-  }
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+  const logoutMutation = useLogout();
 
   async function updateProfile(name, avatar) {
-    try {
-      const profileData = await authApi.updateProfile(name, avatar);
-      setUser(prev => ({ ...prev, name: profileData.name, avatar: profileData.avatar }));
-      return profileData;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async function changePassword(currentPassword, newPassword) {
-    try {
-      await authApi.changePassword(currentPassword, newPassword);
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async function generateInviteLink() {
-    try {
-      return await authApi.generateInviteLink();
-    } catch (err) {
-      throw err;
-    }
+    const profileData = await authApi.updateProfile(name, avatar);
+    queryClient.setQueryData(["auth-user"], prev => ({ ...prev, name: profileData.name, avatar: profileData.avatar }));
+    return profileData;
   }
 
   async function enrollFace(imageData, descriptorData) {
-    try {
-      const data = await authApi.enrollFace(imageData, descriptorData);
-      setUser(prev => ({ ...prev, faceEnrolled: true, avatar: imageData }));
-      return data;
-    } catch (err) {
-      throw err;
-    }
+    const data = await authApi.enrollFace(imageData, descriptorData);
+    queryClient.setQueryData(["auth-user"], prev => ({ ...prev, faceEnrolled: true, avatar: imageData }));
+    return data;
   }
 
   async function deleteFace() {
-    try {
-      const data = await authApi.deleteFace();
-      setUser(prev => ({ ...prev, faceEnrolled: false, avatar: null }));
-      return data;
-    } catch (err) {
-      throw err;
-    }
+    const data = await authApi.deleteFace();
+    queryClient.setQueryData(["auth-user"], prev => ({ ...prev, faceEnrolled: false, avatar: null }));
+    return data;
   }
 
-  const isAuthenticated = !!user;
-  const isTeacher = user?.role === "teacher";
-  const isStudent = user?.role === "student";
+  const value = {
+    user,
+    loading,
+    error: loginMutation.error?.response?.data?.message || authError?.message || null,
+    isAuthenticated: !!user,
+    isTeacher: user?.role === "teacher",
+    isStudent: user?.role === "student",
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
+    logout: logoutMutation.mutateAsync,
+    updateProfile,
+    enrollFace,
+    deleteFace,
+    // Add other functions if needed, mapping them to mutations/api calls
+    changePassword: authApi.changePassword,
+    generateInviteLink: authApi.generateInviteLink,
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        error,
-        isAuthenticated,
-        isTeacher,
-        isStudent,
-        login,
-        register,
-        logout,
-        checkAuth,
-        updateProfile,
-        changePassword,
-        generateInviteLink,
-        enrollFace,
-        deleteFace,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

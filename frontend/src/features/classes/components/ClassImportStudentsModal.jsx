@@ -1,22 +1,57 @@
 import React, { useState, useEffect } from "react";
-import { fetchClasses, addStudent, fetchClassById } from "@/features/classes/api/classes.api";
+import {
+  fetchClasses,
+  addStudent,
+  fetchClassById,
+} from "@/features/classes/api/classes.api";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-
-import { ClipboardX, Check } from "lucide-react";
+import {
+  ClipboardX,
+  Check,
+  Users,
+  Search,
+  Plus,
+  Loader2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function getInitials(name) {
   if (!name) return "?";
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
-export default function ImportStudentsModal({ open, onOpenChange, currentClassId, existingStudents = [], onSuccess }) {
+export default function ImportStudentsModal({
+  open,
+  onOpenChange,
+  currentClassId,
+  existingStudents = [],
+  onSuccess,
+}) {
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [students, setStudents] = useState([]);
@@ -45,7 +80,7 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
   async function loadClasses() {
     try {
       const { data } = await fetchClasses();
-      setClasses(data.classes.filter(c => c._id !== currentClassId));
+      setClasses(data.classes.filter((c) => c._id !== currentClassId));
     } catch {
       toast.error("Failed to load other classes");
     }
@@ -68,8 +103,8 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
     if (checked) {
       const allIds = new Set(
         students
-          .filter(s => !existingStudents.some(es => es._id === s._id))
-          .map(s => s._id)
+          .filter((s) => !existingStudents.some((es) => es._id === s._id))
+          .map((s) => s._id)
       );
       setSelectedStudents(allIds);
     } else {
@@ -90,21 +125,15 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
   async function handleImport() {
     if (selectedStudents.size === 0) return;
     setImporting(true);
-    let successCount = 0;
     try {
-      // Import them in a Promise.all or sequentially
-      // Since addStudent routes look like `router.post("/:id/students", addStudent)` where studentId is in req.body
-      // Wait, let's check `api/classes.js` addStudent method signature:
-      // Typically `addStudent(classId, studentId)`
-      const promises = Array.from(selectedStudents).map(studentId => 
-        addStudent(currentClassId, studentId).catch(e => {
-            // Filter out existing conflicts quietly
-            if (e.response?.status !== 400 && e.response?.status !== 409) {
-                console.error(e);
-            }
+      const promises = Array.from(selectedStudents).map((studentId) =>
+        addStudent(currentClassId, studentId).catch((e) => {
+          if (e.response?.status !== 400 && e.response?.status !== 409) {
+            console.error(e);
+          }
         })
       );
-      
+
       await Promise.all(promises);
       toast.success(`Imported students successfully`);
       onOpenChange(false);
@@ -118,127 +147,202 @@ export default function ImportStudentsModal({ open, onOpenChange, currentClassId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false}>
-        <div>
-          <div>
-
-            <DialogHeader>
-              <DialogTitle>Import Students</DialogTitle>
-              <DialogDescription>
-                Select students from your other active classes to quickly bulk-add them to this roster.
+      <DialogContent className="sm:max-w-xl rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-zinc-950">
+        <div className="flex flex-col h-[600px]">
+          <div className="p-8 border-b border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 sticky top-0 z-10">
+            <DialogHeader className="p-0 text-left">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <Users size={18} strokeWidth={2.5} />
+                </div>
+                <DialogTitle className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+                  Import Roster
+                </DialogTitle>
+              </div>
+              <DialogDescription className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                Bulk-add students from your other active classes.
               </DialogDescription>
             </DialogHeader>
 
-
-        {classes.length === 0 ? (
-          <div>
-            <div>
-              <span><ClipboardX /></span>
-            </div>
-            <h3>No other classes to import from</h3>
-            <p>
-              The import feature lets you quickly copy rosters from your other existing classes. You currently don't have any other active classes.
-            </p>
+            {classes.length > 0 && (
+              <div className="mt-6">
+                <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                  <SelectTrigger className="h-12 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 font-bold tracking-tight">
+                    <SelectValue placeholder="Select class to import from..." />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-zinc-100 dark:border-zinc-800 shadow-xl">
+                    {classes.map((c) => (
+                      <SelectItem
+                        key={c._id}
+                        value={c._id}
+                        className="rounded-lg font-medium py-3"
+                      >
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
-        ) : (
-          <div>
-            <div>
 
-              <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a class to import from..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map(c => (
-                    <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-
-              {loadingStudents ? (
-                <div>
-                  {[1, 2, 3].map(i => <Skeleton key={i} />)}
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-zinc-50/30 dark:bg-zinc-900/10">
+            {classes.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+                <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-300">
+                  <ClipboardX size={40} strokeWidth={1} />
                 </div>
-              ) : !selectedClassId ? (
-                <div>
-                  Select a class above to view its roster.
+                <div className="space-y-1">
+                  <h3 className="text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+                    No Source Classes
+                  </h3>
+                  <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 max-w-[280px]">
+                    You need at least one other class with students to use the import feature.
+                  </p>
                 </div>
-              ) : students.length === 0 ? (
-                <div>
-                  This class has no students.
+              </div>
+            ) : !selectedClassId ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-300">
+                  <Search size={32} strokeWidth={1} />
                 </div>
-              ) : (
-                <div>
-
-                  {/* Header Row */}
-                  <div>
-                    <Checkbox 
-                      checked={selectedStudents.size === students.length && students.length > 0} 
-                      onCheckedChange={handleSelectAll} 
-                    />
-                    <span>Select All</span>
-                    <span>
-                      {selectedStudents.size} selected
-                    </span>
+                <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                  Pick a class to start
+                </p>
+              </div>
+            ) : loadingStudents ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                    <Skeleton className="w-5 h-5 rounded-md" />
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-[140px] rounded-full" />
+                    </div>
                   </div>
+                ))}
+              </div>
+            ) : students.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-300">
+                  <Users size={32} strokeWidth={1} />
+                </div>
+                <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                  No students in this class
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-2 mb-4">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <Checkbox
+                      checked={
+                        selectedStudents.size ===
+                          students.filter(
+                            (s) => !existingStudents.some((es) => es._id === s._id)
+                          ).length && students.length > 0
+                      }
+                      onCheckedChange={handleSelectAll}
+                      className="rounded-md border-zinc-200"
+                    />
+                    <span className="text-sm font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                      Select All Available
+                    </span>
+                  </label>
+                  <Badge variant="secondary" className="rounded-full px-3 py-1 font-bold">
+                    {selectedStudents.size} selected
+                  </Badge>
+                </div>
 
-                  {/* Roster Rows */}
-                  {students.map(student => {
-                    const isAlreadyAdded = existingStudents.some(es => es._id === student._id);
+                <div className="space-y-2 pb-6">
+                  {students.map((student) => {
+                    const isAlreadyAdded = existingStudents.some(
+                      (es) => es._id === student._id
+                    );
                     const isChecked = selectedStudents.has(student._id);
                     return (
-                      <div 
-                        key={student._id} 
-                        onClick={() => !isAlreadyAdded && handleSelectStudent(student._id, !isChecked)}
-                      >
-
-                        {!isAlreadyAdded ? (
-                          <Checkbox 
-                            checked={isChecked} 
-                            onCheckedChange={(c) => handleSelectStudent(student._id, c)} 
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <div /> // spacing filler
+                      <div
+                        key={student._id}
+                        onClick={() =>
+                          !isAlreadyAdded && handleSelectStudent(student._id, !isChecked)
+                        }
+                        className={cn(
+                          "group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer",
+                          isAlreadyAdded
+                            ? "bg-zinc-100/50 dark:bg-zinc-900/30 border-transparent opacity-60 grayscale cursor-not-allowed"
+                            : isChecked
+                            ? "bg-white dark:bg-zinc-950 border-primary shadow-lg shadow-primary/5 -translate-y-0.5"
+                            : "bg-white dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
                         )}
-                        <div>
-                          <Avatar>
+                      >
+                        {!isAlreadyAdded && (
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={(c) => handleSelectStudent(student._id, c)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded-md"
+                          />
+                        )}
+                        <div className="relative">
+                          <Avatar className="w-10 h-10 border-2 border-white dark:border-zinc-900 shadow-sm">
                             {student?.avatar && <AvatarImage src={student.avatar} />}
-                            <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+                            <AvatarFallback className="font-bold text-xs bg-zinc-100 dark:bg-zinc-800">
+                              {getInitials(student.name)}
+                            </AvatarFallback>
                           </Avatar>
                           {student?.faceEnrolled && (
-                            <div>
-                              <Check />
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[oklch(0.3_0.02_160)] text-white flex items-center justify-center border-2 border-white dark:border-zinc-900">
+                              <Check size={10} strokeWidth={4} />
                             </div>
                           )}
                         </div>
-                        <div>
-                          <span>{student.name}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                            {student.name}
+                          </p>
                         </div>
                         {isAlreadyAdded && (
-                          <Badge variant="outline">Added</Badge>
+                          <Badge variant="outline" className="rounded-full text-[10px] font-black uppercase tracking-tighter">
+                            Already Enrolled
+                          </Badge>
+                        )}
+                        {!isAlreadyAdded && !isChecked && (
+                          <Plus size={16} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                         )}
                       </div>
                     );
-
                   })}
                 </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="p-6 bg-white dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-900 sticky bottom-0 z-10 flex-row gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={importing}
+              className="flex-1 h-12 rounded-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={selectedStudents.size === 0 || importing}
+              className="flex-[2] h-12 rounded-xl font-bold bg-[oklch(0.3_0.02_160)] hover:bg-[oklch(0.25_0.02_160)] text-white shadow-xl shadow-emerald-900/10 transition-all active:scale-[0.98]"
+            >
+              {importing ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  Import {selectedStudents.size > 0 ? selectedStudents.size : ""} Students
+                </>
               )}
-            </div>
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleImport} disabled={selectedStudents.size === 0 || importing}>
-            {importing ? "Importing..." : `Import ${selectedStudents.size > 0 ? selectedStudents.size : ""} Students`}
-          </Button>
-        </DialogFooter>
-
-          </div>
+            </Button>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>

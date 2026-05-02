@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -32,6 +33,7 @@ export default function LoginForm({ ...props }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const { login } = useAuth();
@@ -57,7 +59,7 @@ export default function LoginForm({ ...props }) {
 
     setSubmitting(true);
     try {
-      const user = await login(email, password);
+      const user = await login({ email, password, rememberMe });
       toast.success("Login successful");
       navigate(
         user.role === "teacher" ? "/teacher/dashboard" : "/student/dashboard",
@@ -80,15 +82,15 @@ export default function LoginForm({ ...props }) {
 
   return (
     <div {...props}>
-      <Card className="bg-transparent ring-0 md:bg-card md:ring-1 md:ring-foreground/10">
-        <CardHeader className="px-1 md:px-4">
+      <Card variant="adaptive">
+        <CardHeader>
           <CardTitle>Welcome back</CardTitle>
           <CardDescription>
             Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="px-1 md:px-4">
+        <CardContent>
           <form id="login-form" onSubmit={handleSubmit}>
             <FieldGroup>
               <Field data-invalid={!!fieldErrors.email}>
@@ -168,11 +170,22 @@ export default function LoginForm({ ...props }) {
                   <FieldDescription>{fieldErrors.password}</FieldDescription>
                 )}
               </Field>
+
+              <Field orientation="horizontal" className="items-center">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={setRememberMe}
+                />
+                <FieldLabel htmlFor="rememberMe" className="font-normal">
+                  Remember me
+                </FieldLabel>
+              </Field>
             </FieldGroup>
           </form>
         </CardContent>
 
-        <CardFooter className="flex-col gap-2 border-t-0 bg-transparent px-1 md:border-t md:bg-muted/50 md:px-4">
+        <CardFooter className="flex-col gap-2">
           <Button
             type="submit"
             form="login-form"

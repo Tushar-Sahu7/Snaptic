@@ -3,69 +3,51 @@ const AttendanceRecord = require("../models/AttendanceRecord");
 const Class = require("../models/Class");
 const StudentProfile = require("../models/StudentProfile");
 
-const TemporalService = require("../services/temporalService");
-
-// --- HELPERS ---
-
-/**
- * Checks if a session is currently within its attendance window.
- */
-const checkSessionWindow = (session) => {
-  if (!session.attendanceWindow || !session.attendanceWindow.opensAt) {
-    return { ok: true }; // Fallback for legacy data or manual sessions
-  }
-
-  const isStarted = TemporalService.isPast(session.attendanceWindow.opensAt);
-  const isEnded = TemporalService.isPast(session.attendanceWindow.closesAt);
-
-  if (!isStarted) {
-    return { ok: false, message: "Attendance window hasn't opened yet." };
-  }
-
-  if (isEnded) {
-    return { ok: false, message: "Attendance window has closed." };
-  }
-
-  return { ok: true };
-};
-
 // --- CONTROLLERS ---
+
+const mongoose = require("mongoose");
 
 // POST /api/attendance/start/:classId
 const startSession = async (req, res) => {
+  const dbSession = await mongoose.startSession();
+  dbSession.startTransaction();
+
   try {
     const { classId } = req.params;
     const teacherId = req.user.userId;
-    const now = TemporalService.getNowInstant();
+    const now = new Date();
 
-    // 1. Find the session that covers "now"
-    // Our collision detection ensures only one session exists per time block
+    // 1. Find the session scheduled for today
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
     const session = await AttendanceSession.findOne({
       classId,
       teacherId,
-      startInstant: { $lte: now },
-      endInstant: { $gte: now },
+      startTime: { $gte: startOfDay, $lte: endOfDay },
       status: { $in: ["scheduled", "inprogress", "submitted"] }
-    });
+    }).session(dbSession);
+
 
     if (!session) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       return res.status(404).json({ message: "No active session found for this time." });
     }
 
     // 2. Transition to inprogress if it was scheduled
     if (session.status === "scheduled") {
       session.status = "inprogress";
-      await session.save();
+      await session.save({ session: dbSession });
     }
 
     // 3. Pre-create absent records if they don't exist
-    // Get all enrolled students for this class
     const Enrollment = require("../models/Enrollment");
-    const enrollments = await Enrollment.find({ classId, status: "active" }).lean();
+    const enrollments = await Enrollment.find({ classId, status: "active" }).session(dbSession).lean();
     const enrolledStudentIds = enrollments.map(e => e.studentId);
 
-    const existingRecordsCount = await AttendanceRecord.countDocuments({ sessionId: session._id });
-    
+    const existingRecordsCount = await AttendanceRecord.countDocuments({ sessionId: session._id }).session(dbSession);
+
     if (existingRecordsCount === 0 && enrolledStudentIds.length > 0) {
       const records = enrolledStudentIds.map(studentId => ({
         sessionId: session._id,
@@ -76,15 +58,18 @@ const startSession = async (req, res) => {
         method: "manual",
         createdAt: now
       }));
-      await AttendanceRecord.insertMany(records);
+      await AttendanceRecord.insertMany(records, { session: dbSession });
     }
 
     // 4. Return session + profiles for scanner
     const profiles = await StudentProfile.find({
       userId: { $in: enrolledStudentIds }
-    }).select("userId name avatar embedding faceEnrolled").lean();
+    }).select("userId name avatar embedding faceEnrolled").session(dbSession).lean();
 
-    const records = await AttendanceRecord.find({ sessionId: session._id }).lean();
+    const records = await AttendanceRecord.find({ sessionId: session._id }).session(dbSession).lean();
+
+    await dbSession.commitTransaction();
+    dbSession.endSession();
 
     return res.status(200).json({
       session,
@@ -93,6 +78,8 @@ const startSession = async (req, res) => {
     });
 
   } catch (err) {
+    await dbSession.abortTransaction();
+    dbSession.endSession();
     return res.status(500).json({ message: err.message });
   }
 };
@@ -110,18 +97,12 @@ const markAttendance = async (req, res) => {
       return res.status(403).json({ message: `Session is ${session.status} and cannot be modified.` });
     }
 
-    // 2. Window Check
-    const window = checkSessionWindow(session);
-    if (!window.ok) {
-      return res.status(403).json({ message: window.message });
-    }
-
-    // 3. Mark logic
+    // 2. Mark logic
     const updateData = { status, method };
-    
+
     // If marking as present, set markedAt
     if (status === "present") {
-      updateData.markedAt = TemporalService.getNowInstant();
+      updateData.markedAt = new Date();
     } else {
       updateData.markedAt = null;
     }
@@ -161,27 +142,6 @@ const submitSession = async (req, res) => {
   }
 };
 
-// POST /api/attendance/reopen/:sessionId
-const reopenSession = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const session = await AttendanceSession.findById(sessionId);
-    if (!session) return res.status(404).json({ message: "Session not found" });
-
-    // Only allow reopening if submitted and not finalized
-    if (session.status !== "submitted") {
-      return res.status(400).json({ message: "Only submitted sessions can be reopened." });
-    }
-
-    session.status = "inprogress";
-    await session.save();
-
-    return res.status(200).json({ message: "Session reopened for editing.", session });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
 // DELETE /api/attendance/session/:sessionId/reset
 const resetSession = async (req, res) => {
   try {
@@ -193,14 +153,12 @@ const resetSession = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // Reset logic: Hard delete records and move back to scheduled
-    // This allows a fresh start if the scan was corrupted or accidental
     await AttendanceRecord.deleteMany({ sessionId });
-    
+
     session.status = "scheduled";
     await session.save();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "Session reset. All records deleted.",
       status: "scheduled"
     });
@@ -213,28 +171,29 @@ const resetSession = async (req, res) => {
 const getTodaySession = async (req, res) => {
   try {
     const { classId } = req.params;
-    const dateStr = getDateString();
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const query = {
+      startTime: { $gte: startOfDay, $lte: endOfDay }
+    };
 
     if (classId) {
-      const session = await AttendanceSession.findOne({
-        classId,
-        dateString: dateStr
-      });
+      query.classId = classId;
+      const session = await AttendanceSession.findOne(query);
       return res.status(200).json({ session });
     } else {
+      query.teacherId = req.user.userId;
       // Bulk fetch for all classes today for this teacher
-      const sessions = await AttendanceSession.find({
-        teacherId: req.user.userId,
-        dateString: dateStr
-      }).populate("classId", "name icon status");
+      const sessions = await AttendanceSession.find(query)
+        .populate("classId", "name icon status");
       return res.status(200).json({ sessions });
     }
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
 };
-
-
 
 // GET /api/attendance/session/:sessionId/records
 const getSessionRecords = async (req, res) => {
@@ -262,14 +221,11 @@ const getSessionRecords = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   startSession,
   markAttendance,
   getSessionRecords,
   submitSession,
-  reopenSession,
   resetSession,
   getTodaySession
 };

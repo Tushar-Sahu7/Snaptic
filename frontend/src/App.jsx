@@ -10,7 +10,6 @@ import AttendanceSessionPage from "@/pages/teacher/AttendanceSessionPage";
 import AttendanceSelectionPage from "@/pages/teacher/AttendanceSelectionPage";
 import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
 import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
-import LabelsPage from "@/pages/teacher/LabelsPage";
 import ProfilePage from "@/pages/teacher/ProfilePage";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentClassListPage from "@/pages/student/StudentClassListPage";
@@ -22,7 +21,16 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 export default function App() {
   const { loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-bold animate-pulse uppercase tracking-widest text-muted-foreground">Initializing Snaptic...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="snaptic-theme">
@@ -44,12 +52,10 @@ export default function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<TeacherDashboard />} />
             <Route path="classes" element={<ClassListPage />} />
-              <Route path="take-attendance" element={<AttendanceSelectionPage />} />
               <Route path="classes/:id" element={<ClassDetailPage />} />
               <Route path="classes/:id/attendance" element={<AttendanceSessionPage />} />
               <Route path="attendance/:id/summary" element={<AttendanceSummaryPage />} />
               <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
-              <Route path="labels" element={<LabelsPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
 

@@ -1,117 +1,130 @@
-import { useState, useEffect, useCallback } from "react";
-import { 
-  fetchClasses, 
-  updateClass, 
-  bulkUpdateClassStatus, 
-  restoreClasses,
-  bulkDeleteClasses 
-} from "@/features/classes/api/classes.api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as classesApi from "../api/classes.api";
 import { toast } from "sonner";
 
-export function useClasses() {
-  const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
+export const useClasses = () => {
+  const queryClient = useQueryClient();
+  
+  const query = useQuery({
+    queryKey: ["classes"],
+    queryFn: async () => {
+      const { data } = await classesApi.fetchClasses();
+      return data.classes || [];
+    },
+  });
 
-  const loadClasses = useCallback(async () => {
-    try {
-      const { data } = await fetchClasses();
-      setClasses(data.classes);
-    } catch {
-      // silently fail — empty list shown
-    } finally {
-      setLoading(false);
+  const archiveMutation = useMutation({
+    mutationFn: ({ classId, endDate }) => classesApi.archiveClass(classId, endDate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+      toast.success("Class status updated");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to update class status");
     }
-  }, []);
+  });
 
-  useEffect(() => {
-    loadClasses();
-    window.addEventListener("classes-updated", loadClasses);
-    return () => window.removeEventListener("classes-updated", loadClasses);
-  }, [loadClasses]);
+  const deleteMutation = useMutation({
+    mutationFn: classesApi.deleteClass,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+      toast.success("Class deleted");
+    },
+  });
 
-  const toggleArchive = useCallback(async (cls, endDate) => {
-    const newStatus = cls.status === "archived" ? "active" : "archived";
-    try {
-      await updateClass(cls._id, { status: newStatus, endDate });
-      
-      const successMsg = `Class "${cls.name}" ${newStatus === "archived" ? "archived" : "unarchived"} successfully`;
-      
-      toast.success(successMsg, {
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            try {
-              const undoStatus = newStatus === "archived" ? "active" : "archived";
-              await updateClass(cls._id, { status: undoStatus });
-              toast.success("Action undone");
-              loadClasses();
-            } catch {
-              toast.error("Failed to undo action");
-            }
-          }
-        }
-      });
-      loadClasses();
-    } catch (err) {
-      toast.error("Failed to update class status");
-    }
-  }, [loadClasses]);
+  const bulkUnarchiveMutation = useMutation({
+    mutationFn: ({ ids, endDate }) => classesApi.bulkUnarchive(ids, endDate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+      toast.success("Classes unarchived");
+    },
+  });
 
-  const bulkUnarchiveAll = useCallback(async (ids, endDate) => {
-    if (ids.length === 0) return;
-    try {
-      await bulkUpdateClassStatus(ids, "active", endDate);
-      toast.success(`${ids.length} classes moved to active`, {
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            try {
-              await bulkUpdateClassStatus(ids, "archived");
-              toast.success("Bulk unarchive undone");
-              loadClasses();
-            } catch {
-              toast.error("Failed to undo bulk unarchive");
-            }
-          }
-        }
-      });
-      loadClasses();
-    } catch (err) {
-      toast.error("Failed to unarchive classes");
-    }
-  }, [loadClasses]);
-
-  const bulkDeleteAll = useCallback(async (ids) => {
-    if (ids.length === 0) return;
-    try {
-      await bulkDeleteClasses(ids);
-      toast.success(`${ids.length} classes deleted`, {
-        description: "They can be restored shortly",
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            try {
-              await restoreClasses(ids);
-              toast.success("Bulk delete undone");
-              loadClasses();
-            } catch {
-              toast.error("Failed to restore classes");
-            }
-          }
-        }
-      });
-      loadClasses();
-    } catch (err) {
-      toast.error("Failed to delete classes");
-    }
-  }, [loadClasses]);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids) => classesApi.bulkDelete(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+      toast.success("Classes deleted");
+    },
+  });
 
   return {
-    classes,
-    loading,
-    refresh: loadClasses,
-    toggleArchive,
-    bulkUnarchiveAll,
-    bulkDeleteAll
+    classes: query.data || [],
+    loading: query.isLoading,
+    refresh: () => queryClient.invalidateQueries({ queryKey: ["classes"] }),
+    toggleArchive: (cls, endDate) => archiveMutation.mutateAsync({ classId: cls._id, endDate }),
+    bulkUnarchiveAll: (ids, endDate) => bulkUnarchiveMutation.mutateAsync({ ids, endDate }),
+    bulkDeleteAll: (ids) => bulkDeleteMutation.mutateAsync(ids),
+    deleteClass: (id) => deleteMutation.mutateAsync(id)
   };
-}
+};
+
+export const useClassDetail = (classId) => {
+  return useQuery({
+    queryKey: ["class", classId],
+    queryFn: async () => {
+      const { data } = await classesApi.fetchClassById(classId);
+      return data.class;
+    },
+    enabled: !!classId,
+  });
+};
+
+export const useCreateClass = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: classesApi.createClass,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+    },
+  });
+};
+
+export const useUpdateClass = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ classId, payload }) => classesApi.updateClass(classId, payload),
+    onSuccess: (_, { classId }) => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+      queryClient.invalidateQueries({ queryKey: ["class", classId] });
+    },
+  });
+};
+
+export const useAddStudent = (classId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (studentId) => classesApi.addStudent(classId, studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["class", classId] });
+      toast.success("Student added successfully");
+    },
+  });
+};
+
+export const useRemoveStudent = (classId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (studentIds) => {
+      if (Array.isArray(studentIds)) {
+        return classesApi.removeStudents(classId, studentIds);
+      }
+      return classesApi.removeStudent(classId, studentIds);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["class", classId] });
+      toast.success("Student(s) removed");
+    },
+  });
+};
+
+export const useSearchStudents = (query) => {
+  return useQuery({
+    queryKey: ["searchStudents", query],
+    queryFn: async ({ signal }) => {
+      const { data } = await classesApi.searchStudents(query, signal);
+      return data.students || [];
+    },
+    enabled: query.trim().length > 0,
+  });
+};

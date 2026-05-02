@@ -4,14 +4,18 @@ const TeacherProfile = require("../models/TeacherProfile");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
-const setCookie = (res, token, role) => {
-  const cookieName = role === "teacher" ? "token_teacher" : "token_student";
-  res.cookie(cookieName, token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+const setCookie = (res, token, rememberMe = true) => {
+  const cookieOptions = {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-  });
+  };
+
+  if (rememberMe) {
+    cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  }
+
+  res.cookie("token", token, cookieOptions);
 };
 
 const generateToken = (userId, role) => {
@@ -45,8 +49,10 @@ const register = async (req, res) => {
         return res.status(403).json({ message: "Invalid invite link" });
       }
 
-      if (TemporalService.isPast(inviter.invite.expiry))
+      const now = new Date();
+      if (inviter.invite.expiry && now > new Date(inviter.invite.expiry))
         return res.status(403).json({ message: "Invite link has expired" });
+
 
       await TeacherProfile.findByIdAndUpdate(inviter._id, {
         invite: { token: null, expiry: null },
@@ -72,7 +78,7 @@ const register = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.role);
-    setCookie(res, token, user.role);
+    setCookie(res, token, true); // Registration always persists for better onboarding UX
 
     res.json({
       user: {
@@ -103,8 +109,9 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    const { rememberMe } = req.body;
     const token = generateToken(user._id, user.role);
-    setCookie(res, token, user.role);
+    setCookie(res, token, rememberMe);
 
     const profile = user.role === "teacher"
       ? await TeacherProfile.findOne({ userId: user._id })
@@ -127,7 +134,8 @@ const login = async (req, res) => {
 
 const Enrollment = require("../models/Enrollment");
 const Class = require("../models/Class");
-const TemporalService = require("../services/temporalService");
+// TemporalService removed
+
 
 // GET /api/auth/me
 const me = async (req, res) => {
@@ -139,10 +147,10 @@ const me = async (req, res) => {
 
     let profile = null;
     let stats = {};
-    
+
     if (user.role === "teacher") {
       profile = await TeacherProfile.findOne({ userId: user._id });
-      
+
       // Teacher stats: count of classes they own and unique students enrolled
       const classes = await Class.find({ teacherId: user._id, deletedAt: null });
       const enrollments = await Enrollment.find({ teacherId: user._id, status: "active" });
@@ -155,7 +163,7 @@ const me = async (req, res) => {
       };
     } else {
       profile = await StudentProfile.findOne({ userId: user._id });
-      
+
       // Student stats: count of active enrollments
       const enrollmentCount = await Enrollment.countDocuments({
         studentId: user._id,
@@ -242,8 +250,8 @@ const changePassword = async (req, res) => {
 const generateInvite = async (req, res) => {
   try {
     const token = crypto.randomUUID();
-    const { Temporal } = require("@js-temporal/polyfill");
-    const expiry = Temporal.Now.instant().add({ hours: 1 }).toString();
+    const expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+
 
     await TeacherProfile.findOneAndUpdate(
       { userId: req.user.userId },
@@ -260,17 +268,7 @@ const generateInvite = async (req, res) => {
 // POST /api/auth/logout
 const logout = async (req, res) => {
   try {
-    const role = req.headers["x-role"];
-    if (role === "teacher") {
-      res.clearCookie("token_teacher");
-    } else if (role === "student") {
-      res.clearCookie("token_student");
-    } else {
-      // Clear both if no role specified
-      res.clearCookie("token_teacher");
-      res.clearCookie("token_student");
-    }
-    
+    res.clearCookie("token");
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     return res.status(500).json({ message: err.message });

@@ -83,8 +83,8 @@ export default function RegisterForm({ ...props }) {
 
   return (
     <div {...props}>
-      <Card className="bg-transparent ring-0 md:bg-card md:ring-1 md:ring-foreground/10">
-        <CardHeader className="px-1 md:px-4">
+      <Card variant="adaptive">
+        <CardHeader>
           {inviteToken && (
             <Badge variant="secondary" className="col-span-full self-start">
               🎉 You&apos;re invited as a Teacher
@@ -98,7 +98,7 @@ export default function RegisterForm({ ...props }) {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="px-1 md:px-4">
+        <CardContent>
           <form id="register-form" onSubmit={handleSubmit}>
             <FieldGroup>
               <Field data-invalid={!!fieldErrors.name}>
@@ -197,7 +197,7 @@ export default function RegisterForm({ ...props }) {
           </form>
         </CardContent>
 
-        <CardFooter className="flex-col gap-2 border-t-0 bg-transparent px-1 md:border-t md:bg-muted/50 md:px-4">
+        <CardFooter className="flex-col gap-2">
           <Button
             type="submit"
             form="register-form"

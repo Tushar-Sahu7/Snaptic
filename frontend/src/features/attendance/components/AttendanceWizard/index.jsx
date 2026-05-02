@@ -76,7 +76,7 @@ export default function AttendanceWizard({
     if (initialSession.status === "ended") return 3;
     if (
       params.get("autoStart") === "true" ||
-      initialSession.status === "inProgress"
+      initialSession.status === "inprogress"
     )
       return 2;
 
@@ -108,7 +108,7 @@ export default function AttendanceWizard({
 
     if (
       isManualMode &&
-      session?.status === "inProgress" &&
+      session?.status === "inprogress" &&
       step === 3 &&
       !sessionLoading &&
       !absencesProcessed
