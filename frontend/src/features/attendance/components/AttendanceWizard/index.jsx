@@ -7,13 +7,16 @@ import { ClassSelectionStep } from "./steps/ClassSelectionStep";
 import { ScanStep } from "./steps/ScanStep";
 import { MarkStep } from "./steps/MarkStep";
 import { ReviewStep } from "./steps/ReviewStep";
+import { AnimatePresence, motion } from "motion/react";
+
+const EMPTY_ARRAY = [];
 
 export default function AttendanceWizard({
   session: initialSession,
-  students = [],
-  profiles = [],
-  records = [],
-  classes = [],
+  students = EMPTY_ARRAY,
+  profiles = EMPTY_ARRAY,
+  records = EMPTY_ARRAY,
+  classes = EMPTY_ARRAY,
   todaySessions = {},
   onSelectClass,
 }) {
@@ -73,7 +76,6 @@ export default function AttendanceWizard({
     // Default for submitted is usually review, but we already handled the explicit manual intent above
     if (initialSession.status === "submitted") return 4;
 
-    if (initialSession.status === "ended") return 3;
     if (
       params.get("autoStart") === "true" ||
       initialSession.status === "inprogress"
@@ -168,88 +170,106 @@ export default function AttendanceWizard({
   return (
     <div
       ref={containerRef}
+      className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col"
     >
+      <AttendanceHeader
+        session={session}
+        isFinalized={isFinalized}
+        timeLeft={timeLeft}
+        endTimeFormatted={endTimeFormatted}
+        step={step}
+      />
 
-      {/* 1. Header & Stepper */}
-      <div>
-
-        <AttendanceHeader
-          session={session}
-          isFinalized={isFinalized}
-          timeLeft={timeLeft}
-          endTimeFormatted={endTimeFormatted}
-          step={step}
-        />
-
-        <AttendanceStepper
-          step={step}
-          isFinalized={isFinalized}
-          onStepClick={handleStepChange}
-        />
-      </div>
+      <AttendanceStepper
+        step={step}
+        isFinalized={isFinalized}
+        onStepClick={handleStepChange}
+      />
 
       {/* 2. Content Area */}
-      <main>
+      <main className="flex-1 flex flex-col relative">
+        {/* Subtle background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+        </div>
 
-        {step === 1 && (
-          <ClassSelectionStep
-            session={session}
-            classes={classes}
-            todaySessions={todaySessions}
-            studentsCount={students.length}
-            onSelectClass={handleSelectClassWithFullscreen}
-            onContinue={handleContinueWithFullscreen}
-          />
-        )}
+        <div className="container mx-auto px-4 py-8 flex-1 flex flex-col relative z-10">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 30, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -30, scale: 1.02 }}
+              transition={{ 
+                type: "spring",
+                damping: 25,
+                stiffness: 200,
+                mass: 1,
+                opacity: { duration: 0.3 }
+              }}
+              className="flex-1 flex flex-col"
+            >
+              {step === 1 && (
+                <ClassSelectionStep
+                  session={session}
+                  classes={classes}
+                  todaySessions={todaySessions}
+                  studentsCount={students.length}
+                  onSelectClass={handleSelectClassWithFullscreen}
+                  onContinue={handleContinueWithFullscreen}
+                />
+              )}
 
-        {step === 2 && (
-          <ScanStep
-            session={session}
-            students={students}
-            profiles={profileMap}
-            attendanceState={attendanceState}
-            isFinalized={isFinalized}
-            loading={sessionLoading}
-            modelsLoaded={modelsLoaded}
-            faceApi={faceApiRef.current}
-            onMarkPresent={(id) => handleMarkManual(id, "present", "face")}
-            onComplete={async () => {
-              await handleFinishScan();
-              setStep(3);
-            }}
-          />
-        )}
+              {step === 2 && (
+                <ScanStep
+                  session={session}
+                  students={students}
+                  profiles={profileMap}
+                  attendanceState={attendanceState}
+                  isFinalized={isFinalized}
+                  loading={sessionLoading}
+                  modelsLoaded={modelsLoaded}
+                  faceApi={faceApiRef.current}
+                  onMarkPresent={(id) => handleMarkManual(id, "present", "face")}
+                  onComplete={async () => {
+                    await handleFinishScan();
+                    setStep(3);
+                  }}
+                />
+              )}
 
-        {step === 3 && (
-          <MarkStep
-            students={students}
-            profiles={profileMap}
-            attendanceState={attendanceState}
-            isFinalized={isFinalized}
-            loading={sessionLoading}
-            onMarkManual={handleMarkManual}
-            onBackToScan={() => handleStepChange(2)}
-            onConfirm={() => setStep(4)}
-          />
-        )}
+              {step === 3 && (
+                <MarkStep
+                  students={students}
+                  profiles={profileMap}
+                  attendanceState={attendanceState}
+                  isFinalized={isFinalized}
+                  loading={sessionLoading}
+                  onMarkManual={handleMarkManual}
+                  onBackToScan={() => handleStepChange(2)}
+                  onConfirm={() => setStep(4)}
+                />
+              )}
 
-        {step === 4 && (
-          <ReviewStep
-            session={session}
-            students={students}
-            profiles={profileMap}
-            attendanceState={attendanceState}
-            isFinalized={isFinalized}
-            isSubmitted={isSubmitted}
-            loading={sessionLoading}
-            onSubmit={handleSubmit}
-            onToggleStatus={handleMarkManual}
-            onEdit={() => handleStepChange(3)}
-          />
-        )}
+              {step === 4 && (
+                <ReviewStep
+                  session={session}
+                  students={students}
+                  profiles={profileMap}
+                  attendanceState={attendanceState}
+                  isFinalized={isFinalized}
+                  isSubmitted={isSubmitted}
+                  loading={sessionLoading}
+                  onSubmit={handleSubmit}
+                  onToggleStatus={handleMarkManual}
+                  onEdit={() => handleStepChange(3)}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
-
-
     </div>
   );
 }

@@ -50,7 +50,10 @@ export const useTodayAttendance = () => {
 export const useStartAttendance = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (classId) => attendanceApi.startAttendanceSession(classId),
+    mutationFn: async (classId) => {
+      const { data } = await attendanceApi.startAttendanceSession(classId);
+      return data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attendance-today"] });
     },
@@ -103,20 +106,6 @@ export const useSubmitSession = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: attendanceApi.submitAttendanceSession,
-    onSuccess: (response, sessionId) => {
-      queryClient.invalidateQueries({ queryKey: ["attendance-session", sessionId] });
-      queryClient.invalidateQueries({ queryKey: ["attendance-today"] });
-    },
-  });
-};
-
-/**
- * Hook to reopen a submitted attendance session.
- */
-export const useReopenSession = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: attendanceApi.reopenAttendanceSession,
     onSuccess: (response, sessionId) => {
       queryClient.invalidateQueries({ queryKey: ["attendance-session", sessionId] });
       queryClient.invalidateQueries({ queryKey: ["attendance-today"] });

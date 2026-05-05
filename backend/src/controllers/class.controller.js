@@ -74,9 +74,23 @@ const getMyClasses = async (req, res) => {
         .lean();
     }
 
+    const studentCounts = await Enrollment.aggregate([
+      { 
+        $match: { 
+          classId: { $in: classes.map(c => c._id) }, 
+          status: "active" 
+        } 
+      },
+      { $group: { _id: "$classId", count: { $sum: 1 } } }
+    ]);
+
+    const countMap = Object.fromEntries(
+      studentCounts.map(item => [item._id.toString(), item.count])
+    );
+
     const result = await Promise.all(classes.map(async (c) => {
       await ensureArchivedIfExpired(c);
-      const studentCount = c.denormalized?.studentCount || 0;
+      const studentCount = countMap[c._id.toString()] || 0;
       
       let teacherInfo = null;
       if (isStudent) {
@@ -109,18 +123,25 @@ const getClassById = async (req, res) => {
       .populate("studentId", "name email avatar")
       .lean();
 
-    const students = enrollments.map(e => ({
-      ...e.studentId,
-      enrollmentId: e._id,
-      status: e.status,
-      enrolledAt: e.enrolledAt
+    const students = await Promise.all(enrollments.map(async (e) => {
+      const profile = await StudentProfile.findOne({ userId: e.studentId?._id }).select("name avatar faceEnrolled").lean();
+      return {
+        _id: e.studentId?._id,
+        email: e.studentId?.email,
+        name: profile?.name || "Unknown Student",
+        avatar: profile?.avatar || null,
+        faceEnrolled: profile?.faceEnrolled || false,
+        enrollmentId: e._id,
+        status: e.status,
+        enrolledAt: e.enrolledAt
+      };
     }));
 
     return res.status(200).json({ 
       class: {
         ...classDoc,
         students,
-        studentCount: classDoc.denormalized?.studentCount || 0
+        studentCount: students.filter(s => s.status === "active").length
       } 
     });
   } catch (err) {
@@ -229,24 +250,31 @@ const bulkDeleteClasses = async (req, res) => {
 // POST /api/classes/:id/students
 const addStudent = async (req, res) => {
   try {
-    const { studentId } = req.body;
+    const { studentId, email } = req.body;
     const classId = req.params.id;
 
     const classDoc = await Class.findById(classId);
     if (!classDoc) return res.status(404).json({ message: "Class not found" });
     if (classDoc.teacherId.toString() !== req.user.userId) return res.status(403).json({ message: "Unauthorized" });
 
-    const student = await User.findOne({ _id: studentId, role: "student" });
+    let query = { role: "student" };
+    if (studentId) query._id = studentId;
+    else if (email) query.email = email.toLowerCase();
+    else return res.status(400).json({ message: "Student ID or Email required" });
+
+    const student = await User.findOne(query);
     if (!student) return res.status(404).json({ message: "Student not found" });
 
+    const finalStudentId = student._id;
+
     const enrollment = await Enrollment.findOneAndUpdate(
-      { classId, studentId },
+      { classId, studentId: finalStudentId },
       { teacherId: req.user.userId, status: "active" },
       { upsert: true, new: false }
     );
 
     if (!enrollment || enrollment.status === "inactive") {
-      await Class.findByIdAndUpdate(classId, { $inc: { "denormalized.studentCount": 1 } });
+      await Class.findByIdAndUpdate(classId, { $inc: { studentCount: 1 } });
     }
 
     return res.status(200).json({ message: "Student enrolled successfully" });
@@ -266,7 +294,7 @@ const removeStudent = async (req, res) => {
     if (enrollment.status === "active") {
       enrollment.status = "inactive";
       await enrollment.save();
-      await Class.findByIdAndUpdate(classId, { $inc: { "denormalized.studentCount": -1 } });
+      await Class.findByIdAndUpdate(classId, { $inc: { studentCount: -1 } });
     }
 
     return res.status(200).json({ message: "Student removed from class" });
@@ -301,7 +329,7 @@ const importStudents = async (req, res) => {
     }
 
     if (addedCount > 0) {
-      await Class.findByIdAndUpdate(toClassId, { $inc: { "denormalized.studentCount": addedCount } });
+      await Class.findByIdAndUpdate(toClassId, { $inc: { studentCount: addedCount } });
     }
 
     return res.status(200).json({ message: `Imported ${sourceEnrollments.length} students` });
@@ -323,12 +351,12 @@ const searchStudents = async (req, res) => {
 
     const profilesByName = await StudentProfile.find({
       name: { $regex: q, $options: "i" }
-    }).select("userId name avatar").limit(10).lean();
+    }).select("userId name avatar faceEnrolled").limit(10).lean();
 
     const studentMap = new Map();
 
     usersByEmail.forEach(u => {
-      studentMap.set(u._id.toString(), { id: u._id, email: u.email });
+      studentMap.set(u._id.toString(), { _id: u._id, email: u.email });
     });
 
     for (const p of profilesByName) {
@@ -336,17 +364,19 @@ const searchStudents = async (req, res) => {
       if (studentMap.has(idStr)) {
         studentMap.get(idStr).name = p.name;
         studentMap.get(idStr).avatar = p.avatar;
+        studentMap.get(idStr).faceEnrolled = p.faceEnrolled;
       } else {
         const user = await User.findById(p.userId).select("email").lean();
-        studentMap.set(idStr, { id: p.userId, email: user?.email, name: p.name, avatar: p.avatar });
+        studentMap.set(idStr, { _id: p.userId, email: user?.email, name: p.name, avatar: p.avatar, faceEnrolled: p.faceEnrolled });
       }
     }
 
     const results = await Promise.all(Array.from(studentMap.values()).map(async (s) => {
       if (!s.name) {
-        const p = await StudentProfile.findOne({ userId: s.id }).select("name avatar").lean();
+        const p = await StudentProfile.findOne({ userId: s._id }).select("name avatar faceEnrolled").lean();
         s.name = p?.name || "Unknown Student";
         s.avatar = p?.avatar || null;
+        s.faceEnrolled = p?.faceEnrolled || false;
       }
       return s;
     }));

@@ -26,7 +26,7 @@ const startSession = async (req, res) => {
       teacherId,
       startTime: { $gte: startOfDay, $lte: endOfDay },
       status: { $in: ["scheduled", "inprogress", "submitted"] }
-    }).session(dbSession);
+    }).populate("classId", "name icon status").session(dbSession);
 
 
     if (!session) {

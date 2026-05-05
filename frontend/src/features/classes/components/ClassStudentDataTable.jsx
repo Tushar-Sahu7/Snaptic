@@ -159,21 +159,26 @@ export default function StudentDataTable({
         cell: ({ row }) => {
           const student = row.original;
           return (
-            <div>
-              <div>
-                <Avatar>
+            <div className="flex items-center gap-3 py-1">
+              <div className="relative">
+                <Avatar className="h-10 w-10 border border-border/50 shadow-sm">
                   {student?.avatar && <AvatarImage src={student.avatar} />}
-                  <AvatarFallback>
+                  <AvatarFallback className="bg-muted text-muted-foreground font-medium text-xs">
                     {getInitials(student.name)}
                   </AvatarFallback>
                 </Avatar>
                 {student?.faceEnrolled && (
-                  <div>
-                    <Check />
+                  <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 border border-border">
+                    <div className="bg-emerald-500 rounded-full p-0.5">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </div>
                   </div>
                 )}
               </div>
-              <span>{student.name}</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-sm text-foreground leading-tight">{student.name}</span>
+                <span className="text-xs text-muted-foreground">{student.email || "No email provided"}</span>
+              </div>
             </div>
           );
         },
@@ -185,22 +190,27 @@ export default function StudentDataTable({
         header: "Face status",
         cell: ({ row }) => {
           const isEnrolled = row.original.faceEnrolled;
-          return isEnrolled ? (
-            <Badge
-              variant="secondary"
-            >
-              <CheckCircle />
-              Face Enrolled
-            </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-            >
-              <XCircle />
-              Not Enrolled
-            </Badge>
+          return (
+            <div className="flex items-center">
+              {isEnrolled ? (
+                <Badge
+                  variant="secondary"
+                  className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1.5 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase tracking-wider"
+                >
+                  <CheckCircle className="w-3 h-3" />
+                  Face Enrolled
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="text-muted-foreground border-muted-foreground/20 gap-1.5 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase tracking-wider"
+                >
+                  <XCircle className="w-3 h-3" />
+                  Not Enrolled
+                </Badge>
+              )}
+            </div>
           );
-
         },
       },
       {
@@ -366,6 +376,8 @@ export default function StudentDataTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="group hover:bg-muted/30 transition-colors duration-200"
                 >
 
                   {row.getVisibleCells().map((cell) => {
@@ -404,23 +416,23 @@ export default function StudentDataTable({
             : `Showing ${table.getRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} row(s).`}
         </div>
 
-        <div>
-          <div>
-            <p>Rows per page</p>
+        <div className="flex items-center gap-6 lg:gap-8">
+          <div className="flex items-center gap-3">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
                 table.setPageSize(Number(value));
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-8 w-[70px] rounded-lg bg-background border-muted-foreground/10 focus:ring-primary/10">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
               </SelectTrigger>
-              <SelectContent side="top">
+              <SelectContent side="top" className="rounded-xl border-border/50">
                 {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                  <SelectItem key={pageSize} value={`${pageSize}`} className="rounded-lg">
                     {pageSize}
                   </SelectItem>
                 ))}

@@ -40,35 +40,35 @@ export default function BulkDeleteClassesDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-zinc-950">
+      <AlertDialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-background">
         <div className="p-8 space-y-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-2xl bg-destructive/10 text-destructive shadow-sm">
               <AlertTriangle size={24} />
             </div>
             <AlertDialogHeader className="p-0 text-left">
-              <AlertDialogTitle className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+              <AlertDialogTitle className="text-2xl font-black tracking-tight text-foreground">
                 Bulk Deletion
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                You are about to delete <span className="text-zinc-900 dark:text-zinc-200 font-bold">{count} {count === 1 ? "class" : "classes"}</span>.
+              <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
+                You are about to delete <span className="text-foreground font-bold">{count} {count === 1 ? "class" : "classes"}</span>.
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
 
-          <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-            <p className="text-xs font-medium leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <div className="p-5 rounded-2xl bg-muted/50 border border-border">
+            <p className="text-xs font-medium leading-relaxed text-muted-foreground">
               This will permanently delete the selected classes and remove all students from their rosters. This action <span className="text-destructive font-bold uppercase tracking-tight">cannot be undone</span>.
             </p>
           </div>
         </div>
 
-        <AlertDialogFooter className="p-6 bg-zinc-50/50 dark:bg-zinc-900/30 border-t border-zinc-100 dark:border-zinc-900 sm:justify-end gap-3">
+        <AlertDialogFooter className="p-6 bg-muted/30 border-t border-border sm:justify-end gap-3">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={deleting}
-            className="h-11 px-6 rounded-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
+            className="h-11 px-6 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all"
           >
             Cancel
           </Button>

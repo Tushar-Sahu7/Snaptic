@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation, useOutletContext } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   useClassDetail, 
   useUpdateClass, 
@@ -14,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PrimaryAttendanceAction } from "@/features/attendance/components/PrimaryAttendanceAction";
 import {
   Search,
   Pencil,
@@ -29,7 +32,10 @@ import {
   Play,
   Eye,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Users,
+  Check,
+  Plus
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -39,7 +45,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Icon as LucideIcon } from "@/components/ui/icon-picker";
-import ClassFormSheet from "@/features/classes/components/ClassFormSheet";
+import ClassFormDialog from "@/features/classes/components/ClassFormDialog";
 import ClassDeleteDialog from "@/features/classes/components/ClassDeleteDialog";
 import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDisplay";
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
@@ -52,6 +58,7 @@ export default function ClassDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { setDynamicLabel } = useOutletContext();
   const searchInputRef = useRef(null);
 
@@ -129,14 +136,14 @@ export default function ClassDetailPage() {
       {/* Hero Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-start gap-5">
-          <div className="p-4 rounded-2xl bg-muted/50 border shadow-sm">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-muted/80 to-muted/30 border border-border/50 shadow-sm transition-transform duration-300 hover:scale-105">
             <LucideIcon name={classData.icon} size={32} className="text-primary" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-black tracking-tight">{classData.name}</h1>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground">{classData.name}</h1>
               {classData.status === "archived" && (
-                <Badge variant="secondary" className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700">
+                <Badge variant="secondary" className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-600 border-amber-500/20">
                   Archived
                 </Badge>
               )}
@@ -198,17 +205,20 @@ export default function ClassDetailPage() {
             
             {classData.status !== "archived" && (
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative group w-full sm:w-64">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <div className="relative group w-full sm:w-72">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-all duration-300" />
                   <Input
                     ref={searchInputRef}
-                    placeholder="Search directory..."
+                    placeholder="Search by name or email..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    className="pl-10 h-11 rounded-xl bg-background border-muted-foreground/10 focus:ring-primary/20 font-medium"
+                    className="pl-10 h-11 rounded-xl bg-background/50 border-muted-foreground/10 focus:ring-2 focus:ring-primary/10 focus:border-primary/30 font-medium transition-all"
                   />
                   {query && (
-                    <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <button 
+                      onClick={() => setQuery("")} 
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-md transition-colors"
+                    >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -223,46 +233,72 @@ export default function ClassDetailPage() {
           <CardContent className="p-8">
             {/* Search Overlay */}
             {debouncedQuery && (
-              <div className="mb-10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-10 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 ease-out">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                     <Search className="w-3 h-3" /> Search Results
                   </h3>
                   <Badge variant="outline" className="text-[10px]">{searchResults.length} found</Badge>
                 </div>
-                <ClassStudentDataTable
-                  data={searchResults}
-                  loading={searching}
-                  hideToolbar
-                  syncUrl={false}
-                  actionsRender={(student) => {
-                    const alreadyIn = classData.students?.some(s => s._id === student._id);
-                    return alreadyIn ? (
-                      <Button size="sm" variant="ghost" className="text-muted-foreground pointer-events-none gap-2 font-bold">
-                        <Check className="w-3 h-3" /> Added
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="secondary" className="font-bold gap-2 rounded-lg" onClick={() => addStudentMutation.mutate(student._id)}>
-                        <Plus className="w-3 h-3" /> Add to Class
-                      </Button>
-                    );
-                  }}
-                />
+                
+                {searchResults.length > 0 ? (
+                  <ClassStudentDataTable
+                    data={searchResults}
+                    loading={searching}
+                    hideToolbar
+                    syncUrl={false}
+                    actionsRender={(student) => {
+                      const alreadyIn = classData.students?.some(s => s._id === student._id);
+                      return alreadyIn ? (
+                        <Button size="sm" variant="ghost" className="text-muted-foreground pointer-events-none gap-2 font-bold">
+                          <Check className="w-3 h-3" /> Added
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="secondary" className="font-bold gap-2 rounded-lg" onClick={() => addStudentMutation.mutate({ studentId: student._id })}>
+                          <Plus className="w-3 h-3" /> Add to Class
+                        </Button>
+                      );
+                    }}
+                  />
+                ) : !searching && debouncedQuery.includes("@") ? (
+                  <div className="p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center gap-4 bg-muted/20">
+                    <div className="space-y-1">
+                      <p className="font-bold">No student found for "{debouncedQuery}"</p>
+                      <p className="text-sm text-muted-foreground">Would you like to enroll them using this email?</p>
+                    </div>
+                    <Button 
+                      className="font-bold gap-2 rounded-xl" 
+                      onClick={() => {
+                        addStudentMutation.mutate({ email: debouncedQuery });
+                        setQuery("");
+                      }}
+                    >
+                      <UserPlus className="w-4 h-4" /> Quick Enroll by Email
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground font-medium italic">
+                    {searching ? "Searching directory..." : "No matching students found."}
+                  </div>
+                )}
                 <Separator className="my-8" />
               </div>
             )}
 
             {classData.students?.length === 0 ? (
-              <div className="py-20 text-center space-y-6">
-                <div className="p-6 rounded-full bg-muted/30 w-fit mx-auto">
-                  <Users className="w-12 h-12 text-muted-foreground opacity-30" />
+              <div className="py-24 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                <div className="p-8 rounded-full bg-muted/20 w-fit mx-auto border border-muted/30">
+                  <Users className="w-12 h-12 text-muted-foreground/40" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xl font-black">No students enrolled</p>
-                  <p className="text-muted-foreground font-medium max-w-sm mx-auto">
-                    Start by searching for students in the global directory or import an existing roster.
+                  <p className="text-2xl font-bold tracking-tight">No students enrolled</p>
+                  <p className="text-muted-foreground font-medium max-w-sm mx-auto text-base">
+                    Start by searching for students in the global directory above or import an existing roster.
                   </p>
                 </div>
+                <Button variant="outline" className="rounded-xl font-bold gap-2 px-8 h-11" onClick={() => searchInputRef.current?.focus()}>
+                  <Search className="w-4 h-4" /> Start Searching
+                </Button>
               </div>
             ) : (
               <ClassStudentDataTable
@@ -309,9 +345,18 @@ export default function ClassDetailPage() {
         </Card>
       </div>
 
-      <ClassFormSheet open={editOpen} onOpenChange={setEditOpen} classData={classData} />
+      <ClassFormDialog open={editOpen} onOpenChange={setEditOpen} classData={classData} />
       <ClassDeleteDialog open={deleteOpen} onOpenChange={setDeleteOpen} classData={classData} onDeleted={() => navigate("/teacher/classes")} />
-      <ClassImportStudentsModal open={importOpen} onOpenChange={setImportOpen} currentClassId={id} existingStudents={classData.students} />
+      <ClassImportStudentsModal 
+        open={importOpen} 
+        onOpenChange={setImportOpen} 
+        currentClassId={id} 
+        existingStudents={classData.students} 
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["classes"] });
+          queryClient.invalidateQueries({ queryKey: ["class", id] });
+        }}
+      />
     </div>
   );
 }

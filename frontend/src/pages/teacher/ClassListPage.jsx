@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useClasses } from "@/features/classes/hooks/useClasses";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 
 // UI Components
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +36,7 @@ import {
   Archive,
   Trash2,
   Calendar,
+  Radio,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -52,7 +55,7 @@ import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendan
 // Decomposed Page Components
 import ClassListHeader from "@/features/classes/components/ClassListHeader";
 import ClassDeleteDialog from "@/features/classes/components/ClassDeleteDialog";
-import ClassFormSheet from "@/features/classes/components/ClassFormSheet";
+import ClassFormDialog from "@/features/classes/components/ClassFormDialog";
 
 export default function ClassListPage() {
   const navigate = useNavigate();
@@ -70,6 +73,9 @@ export default function ClassListPage() {
   // Local State
   const [tab, setTab] = useState("active");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+  const [viewType, setViewType] = useState("grid"); // 'grid' | 'list'
+  
   const [deleteClassState, setDeleteClassState] = useState(null);
   const [bulkUnarchiveConfirm, setBulkUnarchiveConfirm] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -77,8 +83,8 @@ export default function ClassListPage() {
   const [processing, setProcessing] = useState(false);
   const [bulkEndDate, setBulkEndDate] = useState("");
   
-  // Sheet state
-  const [formSheetOpen, setFormSheetOpen] = useState(false);
+  // Dialog state
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
 
   // Memoized Filtering & Sorting
@@ -88,8 +94,8 @@ export default function ClassListPage() {
         tab === "active" ? cls.status === "active" : cls.status === "archived";
       if (!isCorrectTab) return false;
 
-      if (search) {
-        const query = search.toLowerCase();
+      if (debouncedSearch) {
+        const query = debouncedSearch.toLowerCase();
         return cls.name.toLowerCase().includes(query);
       }
       return true;
@@ -117,7 +123,26 @@ export default function ClassListPage() {
       // Tie-break: Name
       return a.name.localeCompare(b.name);
     });
-  }, [classes, tab, search]);
+  }, [classes, tab, debouncedSearch]);
+
+  // Featured Class: The one that is either "Live Now" or coming up next today
+  const featuredClass = useMemo(() => {
+    if (tab !== "active" || debouncedSearch || filteredClasses.length < 2) return null;
+    
+    // Find first one that is Live or Today
+    return filteredClasses.find(c => {
+      const { onTime } = isClassInSession(c);
+      if (onTime) return true;
+      
+      const currentDay = new Date().getDay();
+      return c.daysOfWeek?.includes(currentDay);
+    });
+  }, [filteredClasses, tab, debouncedSearch]);
+
+  const remainingClasses = useMemo(() => {
+    if (!featuredClass) return filteredClasses;
+    return filteredClasses.filter(c => c._id !== featuredClass._id);
+  }, [filteredClasses, featuredClass]);
 
   // Bulk Handlers
   const handleBulkUnarchive = async () => {
@@ -170,77 +195,158 @@ export default function ClassListPage() {
         onSearchChange={setSearch}
         onCreateClick={() => {
           setEditingClass(null);
-          setFormSheetOpen(true);
+          setFormDialogOpen(true);
         }}
         onUnarchiveAll={() => setBulkUnarchiveConfirm(true)}
         onDeleteAll={() => setBulkDeleteConfirm(true)}
         canBulkAction={filteredClasses.length > 0}
         hasSearchQuery={!!search}
+        viewType={viewType}
+        onViewTypeChange={setViewType}
       />
 
       {filteredClasses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {filteredClasses.map((cls) => (
-            <ClassCard
-              key={cls._id}
-              cls={cls}
-              onClick={(id) => navigate(`/teacher/classes/${id}`)}
-              actions={
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?tab=history`)}>
-                      <History className="mr-2 w-4 h-4" /> View History
-                    </DropdownMenuItem>
-                    {cls.status !== "archived" && (
-                      <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?action=add-student`)}>
-                        <UserPlus className="mr-2 w-4 h-4" /> Add Student
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    {cls.status !== "archived" && (
-                      <DropdownMenuItem onClick={() => {
-                        setEditingClass(cls);
-                        setFormSheetOpen(true);
-                      }}>
-                        <Pencil className="mr-2 w-4 h-4" /> Edit Class
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => {
-                      if (cls.status === "archived") {
-                        setUnarchiveClass(cls);
-                      } else {
-                        toggleArchive(cls);
-                      }
-                    }}>
-                      {cls.status === "archived" ? (
-                        <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive</>
-                      ) : (
-                        <><Archive className="mr-2 w-4 h-4" /> Archive</>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setDeleteClassState(cls)} className="text-destructive focus:text-destructive">
-                      <Trash2 className="mr-2 w-4 h-4" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              }
-              footer={
-                cls.status !== "archived" && (
-                  <AttendanceActionGroup
-                    cls={cls}
-                    session={todaySessions[cls._id]}
-                    className="w-full"
+        <div className="mt-12 space-y-12">
+          {featuredClass && (
+            <div className="space-y-6">
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground px-2">
+                Featured Session
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8">
+                  <ClassCard
+                    cls={featuredClass}
+                    onClick={(id) => navigate(`/teacher/classes/${id}`)}
+                    className="h-full border-primary/20 shadow-xl shadow-primary/5"
+                    actions={
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${featuredClass._id}?tab=history`)}>
+                            <History className="mr-2 w-4 h-4" /> View History
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => {
+                            setEditingClass(featuredClass);
+                            setFormDialogOpen(true);
+                          }}>
+                            <Pencil className="mr-2 w-4 h-4" /> Edit Class
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleArchive(featuredClass)}>
+                            <Archive className="mr-2 w-4 h-4" /> Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setDeleteClassState(featuredClass)} className="text-destructive focus:text-destructive">
+                            <Trash2 className="mr-2 w-4 h-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    }
+                    footer={
+                      <AttendanceActionGroup
+                        cls={featuredClass}
+                        session={todaySessions[featuredClass._id]}
+                        className="w-full"
+                      />
+                    }
                   />
-                )
-              }
-            />
-          ))}
+                </div>
+                <div className="lg:col-span-4 flex flex-col gap-6">
+                  <div className="flex-1 rounded-[2.5rem] bg-muted/30 border border-border/40 p-8 flex flex-col justify-center gap-4 backdrop-blur-md">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Radio className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-tight">Today's Focus</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      This class is either live or starting soon. Quick access to attendance and student rosters is prioritized here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">
+                {featuredClass ? "Other Classes" : tab === "active" ? "Active Classes" : "Archived Classes"}
+              </h2>
+            </div>
+
+            <div className={cn(
+              "grid gap-6",
+              viewType === "grid" 
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                : "grid-cols-1"
+            )}>
+              {remainingClasses.map((cls) => (
+                <ClassCard
+                  key={cls._id}
+                  cls={cls}
+                  layout={viewType}
+                  onClick={(id) => navigate(`/teacher/classes/${id}`)}
+                  actions={
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?tab=history`)}>
+                          <History className="mr-2 w-4 h-4" /> View History
+                        </DropdownMenuItem>
+                        {cls.status !== "archived" && (
+                          <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?action=add-student`)}>
+                            <UserPlus className="mr-2 w-4 h-4" /> Add Student
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        {cls.status !== "archived" && (
+                          <DropdownMenuItem onClick={() => {
+                            setEditingClass(cls);
+                            setFormDialogOpen(true);
+                          }}>
+                            <Pencil className="mr-2 w-4 h-4" /> Edit Class
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => {
+                          if (cls.status === "archived") {
+                            setUnarchiveClass(cls);
+                          } else {
+                            toggleArchive(cls);
+                          }
+                        }}>
+                          {cls.status === "archived" ? (
+                            <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive</>
+                          ) : (
+                            <><Archive className="mr-2 w-4 h-4" /> Archive</>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setDeleteClassState(cls)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="mr-2 w-4 h-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  }
+                  footer={
+                    cls.status !== "archived" && viewType === "grid" && (
+                      <AttendanceActionGroup
+                        cls={cls}
+                        session={todaySessions[cls._id]}
+                        className="w-full"
+                      />
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <Empty className="mt-20">
@@ -286,9 +392,9 @@ export default function ClassListPage() {
         onDeleted={refresh}
       />
 
-      <ClassFormSheet
-        open={formSheetOpen}
-        onOpenChange={setFormSheetOpen}
+      <ClassFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
         classData={editingClass}
         onSuccess={refresh}
       />

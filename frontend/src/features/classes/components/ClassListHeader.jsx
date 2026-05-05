@@ -1,4 +1,4 @@
-import { Plus, Search, ArchiveRestore, Trash2, SlidersHorizontal } from "lucide-react";
+import { Plus, Search, ArchiveRestore, Trash2, SlidersHorizontal, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -22,6 +22,8 @@ export default function ClassListHeader({
   onDeleteAll,
   canBulkAction,
   hasSearchQuery,
+  viewType,
+  onViewTypeChange,
   hideTabs = false,
   hideCreate = false,
 }) {
@@ -30,10 +32,10 @@ export default function ClassListHeader({
       {/* Title & Primary Action Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
             {hideTabs ? "Enrolled Classes" : "My Classes"}
           </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 font-medium tracking-tight">
+          <p className="text-muted-foreground font-medium tracking-tight">
             Manage your teaching sessions and student rosters.
           </p>
         </div>
@@ -55,7 +57,8 @@ export default function ClassListHeader({
       </div>
 
       {/* Navigation & Search Bar Section */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-2 rounded-[2.5rem] bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-100/50 dark:border-zinc-800/50 backdrop-blur-sm">
+      {/* Navigation & Search Bar Section */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-2 lg:p-3 rounded-2xl lg:rounded-[2.5rem] bg-muted/30 border border-border/40 backdrop-blur-md shadow-sm">
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
           {/* Custom Styled Tabs */}
           {!hideTabs && (
@@ -64,12 +67,12 @@ export default function ClassListHeader({
               onValueChange={onTabChange}
               className="w-full sm:w-auto"
             >
-              <TabsList className="h-12 bg-white dark:bg-zinc-950 p-1 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm">
+              <TabsList className="h-12 bg-background p-1 rounded-2xl border border-border/50 shadow-sm">
                 <TabsTrigger
                   value="active"
                   className={cn(
                     "px-6 h-10 rounded-xl font-bold tracking-tight transition-all duration-300",
-                    "data-[state=active]:bg-[oklch(0.95_0.02_160)] data-[state=active]:text-[oklch(0.3_0.05_160)]",
+                    "data-[state=active]:bg-primary/10 data-[state=active]:text-primary",
                     "data-[state=active]:shadow-none"
                   )}
                 >
@@ -79,7 +82,7 @@ export default function ClassListHeader({
                   value="archived"
                   className={cn(
                     "px-6 h-10 rounded-xl font-bold tracking-tight transition-all duration-300",
-                    "data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-zinc-900"
+                    "data-[state=active]:bg-foreground data-[state=active]:text-background"
                   )}
                 >
                   Archived
@@ -88,7 +91,7 @@ export default function ClassListHeader({
             </Tabs>
           )}
 
-          {!hideTabs && <div className="h-8 w-px bg-zinc-200/50 dark:bg-zinc-800/50 hidden sm:block mx-2" />}
+          {!hideTabs && <div className="h-8 w-px bg-border/50 hidden sm:block mx-2" />}
 
           {/* Bulk Actions for Archived Tab */}
           {tab === "archived" && canBulkAction && (
@@ -97,7 +100,7 @@ export default function ClassListHeader({
                 variant="outline"
                 size="sm"
                 onClick={onUnarchiveAll}
-                className="h-10 rounded-xl font-bold border-zinc-200/50 dark:border-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800"
+                className="h-10 rounded-xl font-bold border-border/50 hover:bg-background"
               >
                 <ArchiveRestore className="mr-2 w-4 h-4 text-emerald-600" />
                 Unarchive All
@@ -106,7 +109,7 @@ export default function ClassListHeader({
                 variant="outline"
                 size="sm"
                 onClick={onDeleteAll}
-                className="h-10 rounded-xl font-bold border-zinc-200/50 dark:border-zinc-800/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
+                className="h-10 rounded-xl font-bold border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
               >
                 <Trash2 className="mr-2 w-4 h-4 text-destructive" />
                 Delete All
@@ -115,31 +118,53 @@ export default function ClassListHeader({
           )}
         </div>
 
-        {/* Enhanced Search Bar */}
-        <div className="w-full lg:w-96">
-          <InputGroup className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm focus-within:ring-2 focus-within:ring-[oklch(0.9_0.05_160)] transition-all duration-300">
-            <InputGroupAddon className="pl-4">
-              <Search className="w-4 h-4 text-zinc-400" />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder="Search by class name..."
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="h-12 border-none bg-transparent placeholder:text-zinc-400 font-medium tracking-tight focus-visible:ring-0"
-            />
-            {hasSearchQuery && (
-              <InputGroupAddon className="pr-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => onSearchChange("")}
-                  className="w-8 h-8 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400" />
-                </Button>
+        <div className="flex items-center gap-4 w-full lg:w-auto">
+          {/* View Type Toggle */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-background border border-border/50">
+            <Button 
+              variant={viewType === "grid" ? "secondary" : "ghost"} 
+              size="icon" 
+              className="h-9 w-9 rounded-lg"
+              onClick={() => onViewTypeChange("grid")}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant={viewType === "list" ? "secondary" : "ghost"} 
+              size="icon" 
+              className="h-9 w-9 rounded-lg"
+              onClick={() => onViewTypeChange("list")}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Enhanced Search Bar */}
+          <div className="flex-1 lg:w-80">
+            <InputGroup className="bg-background rounded-2xl border border-border/50 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-300">
+              <InputGroupAddon className="pl-4">
+                <Search className="w-4 h-4 text-muted-foreground" />
               </InputGroupAddon>
-            )}
-          </InputGroup>
+              <InputGroupInput
+                placeholder="Search by class name..."
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="h-12 border-none bg-transparent placeholder:text-muted-foreground font-medium tracking-tight focus-visible:ring-0"
+              />
+              {hasSearchQuery && (
+                <InputGroupAddon className="pr-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => onSearchChange("")}
+                    className="w-8 h-8 rounded-lg hover:bg-muted"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                </InputGroupAddon>
+              )}
+            </InputGroup>
+          </div>
         </div>
       </div>
     </header>

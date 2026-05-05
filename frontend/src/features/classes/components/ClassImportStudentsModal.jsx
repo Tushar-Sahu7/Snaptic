@@ -127,7 +127,7 @@ export default function ImportStudentsModal({
     setImporting(true);
     try {
       const promises = Array.from(selectedStudents).map((studentId) =>
-        addStudent(currentClassId, studentId).catch((e) => {
+        addStudent(currentClassId, { studentId }).catch((e) => {
           if (e.response?.status !== 400 && e.response?.status !== 409) {
             console.error(e);
           }
@@ -147,19 +147,19 @@ export default function ImportStudentsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-zinc-950">
+      <DialogContent className="sm:max-w-xl rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-background">
         <div className="flex flex-col h-[600px]">
-          <div className="p-8 border-b border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 sticky top-0 z-10">
+          <div className="p-8 border-b border-border bg-background sticky top-0 z-10">
             <DialogHeader className="p-0 text-left">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 rounded-lg bg-primary/10 text-primary">
                   <Users size={18} strokeWidth={2.5} />
                 </div>
-                <DialogTitle className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+                <DialogTitle className="text-2xl font-black tracking-tight text-foreground">
                   Import Roster
                 </DialogTitle>
               </div>
-              <DialogDescription className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <DialogDescription className="text-sm font-medium text-muted-foreground">
                 Bulk-add students from your other active classes.
               </DialogDescription>
             </DialogHeader>
@@ -167,10 +167,10 @@ export default function ImportStudentsModal({
             {classes.length > 0 && (
               <div className="mt-6">
                 <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                  <SelectTrigger className="h-12 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border-zinc-100 dark:border-zinc-800 font-bold tracking-tight">
+                  <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border font-bold tracking-tight">
                     <SelectValue placeholder="Select class to import from..." />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-zinc-100 dark:border-zinc-800 shadow-xl">
+                  <SelectContent className="rounded-xl border-border shadow-xl">
                     {classes.map((c) => (
                       <SelectItem
                         key={c._id}
@@ -186,34 +186,34 @@ export default function ImportStudentsModal({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-zinc-50/30 dark:bg-zinc-900/10">
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-muted/10">
             {classes.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
-                <div className="w-20 h-20 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-300">
+                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center text-muted-foreground/30">
                   <ClipboardX size={40} strokeWidth={1} />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+                  <h3 className="text-lg font-black tracking-tight text-foreground">
                     No Source Classes
                   </h3>
-                  <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 max-w-[280px]">
+                  <p className="text-sm font-medium text-muted-foreground max-w-[280px]">
                     You need at least one other class with students to use the import feature.
                   </p>
                 </div>
               </div>
             ) : !selectedClassId ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-300">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground/30">
                   <Search size={32} strokeWidth={1} />
                 </div>
-                <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                <p className="text-sm font-bold text-muted-foreground/50 uppercase tracking-widest">
                   Pick a class to start
                 </p>
               </div>
             ) : loadingStudents ? (
               <div className="space-y-4">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-background border border-border">
                     <Skeleton className="w-5 h-5 rounded-md" />
                     <Skeleton className="w-10 h-10 rounded-full" />
                     <div className="space-y-2 flex-1">
@@ -224,10 +224,10 @@ export default function ImportStudentsModal({
               </div>
             ) : students.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center text-zinc-300">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground/30">
                   <Users size={32} strokeWidth={1} />
                 </div>
-                <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                <p className="text-sm font-bold text-muted-foreground/50 uppercase tracking-widest">
                   No students in this class
                 </p>
               </div>
@@ -243,9 +243,9 @@ export default function ImportStudentsModal({
                           ).length && students.length > 0
                       }
                       onCheckedChange={handleSelectAll}
-                      className="rounded-md border-zinc-200"
+                      className="rounded-md border-border"
                     />
-                    <span className="text-sm font-black uppercase tracking-widest text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                    <span className="text-sm font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground/70 transition-colors">
                       Select All Available
                     </span>
                   </label>
@@ -269,10 +269,10 @@ export default function ImportStudentsModal({
                         className={cn(
                           "group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer",
                           isAlreadyAdded
-                            ? "bg-zinc-100/50 dark:bg-zinc-900/30 border-transparent opacity-60 grayscale cursor-not-allowed"
+                            ? "bg-muted/50 border-transparent opacity-60 grayscale cursor-not-allowed"
                             : isChecked
-                            ? "bg-white dark:bg-zinc-950 border-primary shadow-lg shadow-primary/5 -translate-y-0.5"
-                            : "bg-white dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                            ? "bg-background border-primary shadow-lg shadow-primary/5 -translate-y-0.5"
+                            : "bg-background border-border hover:border-foreground/20"
                         )}
                       >
                         {!isAlreadyAdded && (
@@ -284,20 +284,20 @@ export default function ImportStudentsModal({
                           />
                         )}
                         <div className="relative">
-                          <Avatar className="w-10 h-10 border-2 border-white dark:border-zinc-900 shadow-sm">
+                          <Avatar className="w-10 h-10 border-2 border-background shadow-sm">
                             {student?.avatar && <AvatarImage src={student.avatar} />}
-                            <AvatarFallback className="font-bold text-xs bg-zinc-100 dark:bg-zinc-800">
+                            <AvatarFallback className="font-bold text-xs bg-muted text-muted-foreground">
                               {getInitials(student.name)}
                             </AvatarFallback>
                           </Avatar>
                           {student?.faceEnrolled && (
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[oklch(0.3_0.02_160)] text-white flex items-center justify-center border-2 border-white dark:border-zinc-900">
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[oklch(0.3_0.02_160)] text-white flex items-center justify-center border-2 border-background">
                               <Check size={10} strokeWidth={4} />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                          <p className="text-sm font-bold text-foreground truncate">
                             {student.name}
                           </p>
                         </div>
@@ -307,7 +307,7 @@ export default function ImportStudentsModal({
                           </Badge>
                         )}
                         {!isAlreadyAdded && !isChecked && (
-                          <Plus size={16} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <Plus size={16} className="text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                         )}
                       </div>
                     );
@@ -317,12 +317,12 @@ export default function ImportStudentsModal({
             )}
           </div>
 
-          <DialogFooter className="p-6 bg-white dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-900 sticky bottom-0 z-10 flex-row gap-3">
+          <DialogFooter className="p-6 bg-background border-t border-border sticky bottom-0 z-10 flex-row gap-3">
             <Button
               variant="ghost"
               onClick={() => onOpenChange(false)}
               disabled={importing}
-              className="flex-1 h-12 rounded-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
+              className="flex-1 h-12 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all"
             >
               Cancel
             </Button>

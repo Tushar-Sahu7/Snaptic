@@ -66,7 +66,7 @@ export const AttendanceActionGroup = ({
   }
 
   // In-Progress — primary ("Resume") + reset button
-  if (status === "inProgress") {
+  if (status === "inprogress") {
     return (
       <ButtonGroup className={className}>
         <ButtonGroup className="flex-1">

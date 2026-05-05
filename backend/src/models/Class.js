@@ -56,6 +56,10 @@ const classSchema = new mongoose.Schema(
       required: [true, "Teacher is required"],
       index: true,
     },
+    studentCount: {
+      type: Number,
+      default: 0,
+    },
     deletedAt: {
       type: Date,
       default: null,

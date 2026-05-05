@@ -40,35 +40,35 @@ export default function DeleteClassDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-white dark:bg-zinc-950">
+      <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-background">
         <div className="p-8 space-y-6">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-2xl bg-destructive/10 text-destructive shadow-sm">
               <AlertTriangle size={24} />
             </div>
             <DialogHeader className="p-0 text-left">
-              <DialogTitle className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-50">
+              <DialogTitle className="text-2xl font-black tracking-tight text-foreground">
                 Delete Class?
               </DialogTitle>
-              <DialogDescription className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                You are about to remove <span className="text-zinc-900 dark:text-zinc-200 font-bold">"{classData?.name}"</span>.
+              <DialogDescription className="text-sm font-medium text-muted-foreground">
+                You are about to remove <span className="text-foreground font-bold">"{classData?.name}"</span>.
               </DialogDescription>
             </DialogHeader>
           </div>
 
-          <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-            <p className="text-xs font-medium leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <div className="p-5 rounded-2xl bg-muted/50 border border-border">
+            <p className="text-xs font-medium leading-relaxed text-muted-foreground">
               This will remove the class and all students from the roster. You can temporarily undo this action from the notification toast that appears after deletion.
             </p>
           </div>
         </div>
 
-        <DialogFooter className="p-6 bg-zinc-50/50 dark:bg-zinc-900/30 border-t border-zinc-100 dark:border-zinc-900 sm:justify-end gap-3">
+        <DialogFooter className="p-6 bg-muted/30 border-t border-border sm:justify-end gap-3">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={deleting}
-            className="h-11 px-6 rounded-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
+            className="h-11 px-6 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all"
           >
             Cancel
           </Button>

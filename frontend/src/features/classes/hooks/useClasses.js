@@ -94,8 +94,9 @@ export const useUpdateClass = () => {
 export const useAddStudent = (classId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (studentId) => classesApi.addStudent(classId, studentId),
+    mutationFn: (payload) => classesApi.addStudent(classId, payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
       queryClient.invalidateQueries({ queryKey: ["class", classId] });
       toast.success("Student added successfully");
     },
@@ -112,6 +113,7 @@ export const useRemoveStudent = (classId) => {
       return classesApi.removeStudent(classId, studentIds);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
       queryClient.invalidateQueries({ queryKey: ["class", classId] });
       toast.success("Student(s) removed");
     },

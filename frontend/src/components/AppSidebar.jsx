@@ -30,7 +30,7 @@ import {
   Check,
   LayoutDashboard,
   UserCheck,
-  UserPlus
+  UserPlus,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
@@ -56,7 +56,6 @@ const teacherNavItems = [
     icon: UserCheck,
   },
   { title: "Face ID", url: "/teacher/face-enrollment", icon: ScanFace },
-  { title: "Manage Labels", url: "/teacher/labels", icon: Palette },
 ];
 
 const studentNavItems = [
@@ -65,7 +64,7 @@ const studentNavItems = [
   { title: "Face ID", url: "/student/face-enrollment", icon: ScanFace },
 ];
 
-export function AppSidebar({ onInvite, isGenerating }) {
+export function AppSidebar({ onInvite }) {
   const { user, logout } = useAuth();
   const { setTheme } = useTheme();
   const location = useLocation();
@@ -78,17 +77,26 @@ export function AppSidebar({ onInvite, isGenerating }) {
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "U";
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border/40 bg-background/50 backdrop-blur-xl">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border/40 bg-background/50 backdrop-blur-xl"
+    >
       <SidebarHeader className="h-16 px-6 flex items-center justify-between">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="hover:bg-transparent"
+            >
               <NavLink to={portalUrl} className="flex items-center gap-3">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-xl bg-foreground text-background font-bold shadow-sm transition-transform hover:scale-105 active:scale-95">
                   S
                 </div>
                 <div className="flex flex-col gap-0 leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="text-[15px] font-bold tracking-tight">Snaptic</span>
+                  <span className="text-[15px] font-bold tracking-tight">
+                    Snaptic
+                  </span>
                   <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/50">
                     {isTeacher ? "Teacher" : "Student"}
                   </span>
@@ -116,14 +124,21 @@ export function AppSidebar({ onInvite, isGenerating }) {
                       tooltip={item.title}
                       className={cn(
                         "relative h-11 rounded-xl px-4 transition-all duration-300",
-                        isActive 
-                          ? "bg-primary/5 text-primary font-bold" 
-                          : "hover:bg-accent/40 text-muted-foreground/80 hover:text-foreground"
+                        isActive
+                          ? "bg-primary/5 text-primary font-bold"
+                          : "hover:bg-accent/40 text-muted-foreground/80 hover:text-foreground",
                       )}
                     >
                       <NavLink to={item.url}>
-                        <item.icon className={cn("size-4.5 transition-transform", isActive && "scale-110")} />
-                        <span className="text-sm tracking-tight">{item.title}</span>
+                        <item.icon
+                          className={cn(
+                            "size-4.5 transition-transform",
+                            isActive && "scale-110",
+                          )}
+                        />
+                        <span className="text-sm tracking-tight">
+                          {item.title}
+                        </span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -136,19 +151,21 @@ export function AppSidebar({ onInvite, isGenerating }) {
         {isTeacher && showInviteBox && (
           <SidebarGroup className="mt-auto px-4 pb-4 group-data-[collapsible=icon]:hidden">
             <div className="relative overflow-hidden rounded-[24px] border border-primary/5 bg-primary/[0.03] p-6 transition-all hover:bg-primary/[0.05]">
-              <button 
+              <button
                 onClick={() => setShowInviteBox(false)}
                 className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground/30 transition-colors hover:bg-background hover:text-foreground"
               >
                 <X className="size-3" />
               </button>
-              
+
               <div className="mb-5 flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
                 <UserPlus className="size-5" />
               </div>
-              
+
               <div className="mb-6">
-                <h4 className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/80">Invite Colleagues</h4>
+                <h4 className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/80">
+                  Invite Teachers
+                </h4>
                 <p className="mt-2 text-xs text-muted-foreground/80 leading-relaxed font-medium">
                   Help fellow teachers automate their attendance tracking.
                 </p>
@@ -157,10 +174,9 @@ export function AppSidebar({ onInvite, isGenerating }) {
               <Button
                 size="sm"
                 onClick={onInvite}
-                disabled={isGenerating}
                 className="w-full h-10 rounded-xl text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isGenerating ? "Generating..." : "Invite Now"}
+                Invite Now
               </Button>
             </div>
           </SidebarGroup>
@@ -172,7 +188,10 @@ export function AppSidebar({ onInvite, isGenerating }) {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg" className="h-12 rounded-xl px-3 transition-colors hover:bg-accent/60 active:bg-accent/80">
+                <SidebarMenuButton
+                  size="lg"
+                  className="h-12 rounded-xl px-3 transition-colors hover:bg-accent/60 active:bg-accent/80"
+                >
                   <div className="flex flex-1 items-center gap-3 overflow-hidden">
                     <div className="relative shrink-0">
                       <Avatar className="size-8 rounded-lg border-2 border-background shadow-md">
@@ -189,7 +208,7 @@ export function AppSidebar({ onInvite, isGenerating }) {
                     </div>
                     <div className="flex flex-1 flex-col overflow-hidden text-left leading-none group-data-[collapsible=icon]:hidden">
                       <span className="truncate text-sm font-bold tracking-tight text-foreground">
-                        {user?.name || user?.email?.split('@')[0]}
+                        {user?.name || user?.email?.split("@")[0]}
                       </span>
                       <span className="truncate text-[10px] font-medium text-muted-foreground/70 mt-0.5">
                         {user?.email}
@@ -199,7 +218,12 @@ export function AppSidebar({ onInvite, isGenerating }) {
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="end" sideOffset={12} className="w-[220px] rounded-2xl p-1.5 shadow-xl border-primary/5">
+              <DropdownMenuContent
+                side="right"
+                align="end"
+                sideOffset={12}
+                className="w-[220px] rounded-2xl p-1.5 shadow-xl border-primary/5"
+              >
                 <DropdownMenuGroup>
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="rounded-lg gap-3 px-3 py-2.5">
@@ -207,16 +231,28 @@ export function AppSidebar({ onInvite, isGenerating }) {
                       <span className="font-semibold text-sm">Appearance</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                      <DropdownMenuSubContent sideOffset={8} className="rounded-2xl p-1.5 shadow-xl border-primary/5 min-w-[140px]">
-                        <DropdownMenuItem onClick={() => setTheme("light")} className="rounded-lg gap-3 px-3 py-2">
+                      <DropdownMenuSubContent
+                        sideOffset={8}
+                        className="rounded-2xl p-1.5 shadow-xl border-primary/5 min-w-[140px]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => setTheme("light")}
+                          className="rounded-lg gap-3 px-3 py-2"
+                        >
                           <Sun className="size-4 text-orange-500" />
                           <span className="font-medium text-sm">Light</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("dark")} className="rounded-lg gap-3 px-3 py-2">
+                        <DropdownMenuItem
+                          onClick={() => setTheme("dark")}
+                          className="rounded-lg gap-3 px-3 py-2"
+                        >
                           <Moon className="size-4 text-indigo-400" />
                           <span className="font-medium text-sm">Dark</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTheme("system")} className="rounded-lg gap-3 px-3 py-2">
+                        <DropdownMenuItem
+                          onClick={() => setTheme("system")}
+                          className="rounded-lg gap-3 px-3 py-2"
+                        >
                           <Laptop className="size-4 text-muted-foreground" />
                           <span className="font-medium text-sm">System</span>
                         </DropdownMenuItem>
@@ -233,7 +269,10 @@ export function AppSidebar({ onInvite, isGenerating }) {
                       <span className="font-semibold text-sm">Settings</span>
                     </NavLink>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout} className="rounded-lg gap-3 px-3 py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="rounded-lg gap-3 px-3 py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
                     <LogOut className="size-4" />
                     <span className="font-semibold text-sm">Sign out</span>
                   </DropdownMenuItem>

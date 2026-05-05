@@ -36,7 +36,7 @@ import {
  * └─────────────┴──────────────┴────────────────────┴──────────────────────────────┘
  */
 function resolveState(cls, session) {
-  const studentCount = cls.studentCount || cls.studentIds?.length || 0;
+  const studentCount = cls.studentCount || cls.students?.length || cls.studentIds?.length || 0;
 
   // Edge case: no students enrolled
   if (studentCount === 0) {
@@ -63,7 +63,7 @@ function resolveState(cls, session) {
   }
 
   // In-Progress — resume face scan
-  if (session?.status === "inProgress") {
+  if (session?.status === "inprogress") {
     return {
       label: "Resume",
       icon: Play,

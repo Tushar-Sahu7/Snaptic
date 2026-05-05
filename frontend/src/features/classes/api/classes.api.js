@@ -17,8 +17,8 @@ export const deleteClass = (id) => api.delete(`/api/classes/${id}`);
 export const bulkDeleteClasses = (classIds) =>
   api.delete("/api/classes/bulk", { data: { classIds } });
 
-export const addStudent = (classId, studentId) =>
-  api.post(`/api/classes/${classId}/students`, { studentId });
+export const addStudent = (classId, payload) =>
+  api.post(`/api/classes/${classId}/students`, payload);
 
 export const importStudents = (classId, fromClassId) =>
   api.post(`/api/classes/${classId}/enrollments/import`, { fromClassId });

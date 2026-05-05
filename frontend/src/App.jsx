@@ -54,6 +54,7 @@ export default function App() {
             <Route path="classes" element={<ClassListPage />} />
               <Route path="classes/:id" element={<ClassDetailPage />} />
               <Route path="classes/:id/attendance" element={<AttendanceSessionPage />} />
+              <Route path="take-attendance" element={<AttendanceSelectionPage />} />
               <Route path="attendance/:id/summary" element={<AttendanceSummaryPage />} />
               <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
               <Route path="profile" element={<ProfilePage />} />

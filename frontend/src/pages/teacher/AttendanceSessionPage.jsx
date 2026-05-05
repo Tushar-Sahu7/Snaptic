@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, useNavigate, useOutletContext, useLocation } from "react-router";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,19 +16,20 @@ export default function AttendanceSessionPage() {
   const origin = searchParams.get("origin");
 
   const startAttendanceMutation = useStartAttendance();
-  const { data, isLoading, error, mutate: startSession } = startAttendanceMutation;
+  const { data, isPending, error, mutate: startSession } = startAttendanceMutation;
 
   useEffect(() => {
     startSession(classId);
   }, [classId, startSession]);
 
   useEffect(() => {
-    if (data?.session?.className) {
-      setDynamicLabel(data.session.className);
+    const className = data?.session?.classId?.name;
+    if (className) {
+      setDynamicLabel(className);
     }
-  }, [data?.session?.className, setDynamicLabel]);
+  }, [data?.session?.classId?.name, setDynamicLabel]);
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8 text-center">
         <div className="space-y-4">
@@ -66,15 +67,25 @@ export default function AttendanceSessionPage() {
     );
   }
 
+  const students = useMemo(() => 
+    data?.profiles?.map(p => ({ ...p, _id: p.userId })) || [],
+    [data?.profiles]
+  );
+
+  const records = useMemo(() => 
+    data?.records || [],
+    [data?.records]
+  );
+
   if (!data) return null;
 
   return (
     <div className="min-h-full">
       <AttendanceWizard 
         session={data.session}
-        students={data.students}
+        students={students}
         profiles={data.profiles}
-        records={data.records}
+        records={records}
         isDirect={origin === "detail"}
       />
     </div>

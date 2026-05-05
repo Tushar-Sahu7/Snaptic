@@ -47,17 +47,6 @@ export const useMarkAttendance = () => {
   });
 };
 
-export const useEndAttendance = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (sessionId) => api.endAttendanceSession(sessionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["attendance"] });
-      queryClient.invalidateQueries({ queryKey: ["classes", "sessions"] });
-    },
-  });
-};
-
 export const useSubmitAttendance = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -69,32 +58,10 @@ export const useSubmitAttendance = () => {
   });
 };
 
-export const useReopenAttendance = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (sessionId) => api.reopenAttendanceSession(sessionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["attendance"] });
-      queryClient.invalidateQueries({ queryKey: ["classes", "sessions"] });
-    },
-  });
-};
-
 export const useResetAttendance = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (sessionId) => api.resetAttendanceSession(sessionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["attendance"] });
-      queryClient.invalidateQueries({ queryKey: ["classes", "sessions"] });
-    },
-  });
-};
-
-export const useTerminateAttendance = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (sessionId) => api.terminateAttendanceSession(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attendance"] });
       queryClient.invalidateQueries({ queryKey: ["classes", "sessions"] });

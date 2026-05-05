@@ -176,6 +176,10 @@ const me = async (req, res) => {
       };
     }
 
+    const inviteLink = (user.role === "teacher" && profile?.invite?.token)
+      ? `${process.env.CLIENT_URL}/register?invite=${profile.invite.token}`
+      : null;
+
     return res.status(200).json({
       user: {
         _id: user._id,
@@ -185,6 +189,7 @@ const me = async (req, res) => {
         name: profile?.name || "",
         avatar: profile?.avatar || null,
         joinedAt: user.createdAt,
+        inviteLink,
         ...stats
       },
     });

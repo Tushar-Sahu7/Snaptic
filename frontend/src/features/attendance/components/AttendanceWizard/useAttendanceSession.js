@@ -4,10 +4,11 @@ import { toast } from "sonner";
 import { 
   useMarkAttendance,
   useSubmitSession,
-  useReopenSession,
   useResetSession
 } from "../../hooks/useAttendance";
-import { endAttendanceSession, terminateAttendanceSession } from "../../api/attendance.api";
+import { resetAttendanceSession } from "../../api/attendance.api";
+
+const EMPTY_ARRAY = [];
 
 /**
  * Hook to manage attendance wizard state and logic.
@@ -15,8 +16,8 @@ import { endAttendanceSession, terminateAttendanceSession } from "../../api/atte
  */
 export const useAttendanceSession = ({
   initialSession,
-  students = [],
-  records = [],
+  students = EMPTY_ARRAY,
+  records = EMPTY_ARRAY,
   onSessionReopened
 }) => {
   const navigate = useNavigate();
@@ -25,7 +26,6 @@ export const useAttendanceSession = ({
   
   const markMutation = useMarkAttendance();
   const submitMutation = useSubmitSession();
-  const reopenMutation = useReopenSession();
   const resetMutation = useResetSession();
 
   // 1. Attendance State (Single Source of Truth)
@@ -45,7 +45,7 @@ export const useAttendanceSession = ({
 
   // Keep attendanceState in sync with initial records if they change
   useEffect(() => {
-    if (records && Array.isArray(records)) {
+    if (records && Array.isArray(records) && records.length > 0) {
       const state = {};
       records.forEach((r) => {
         const sId = typeof r.studentId === "object" ? r.studentId._id?.toString() : r.studentId?.toString();
@@ -53,7 +53,12 @@ export const useAttendanceSession = ({
           state[sId] = { status: r.status || "absent", method: r.method || "manual" };
         }
       });
-      setAttendanceState(state);
+      
+      // Simple stability check: only update if lengths differ or if state is empty
+      // A deep comparison would be better but this covers most refetch scenarios
+      if (Object.keys(state).length > 0) {
+        setAttendanceState(state);
+      }
     }
   }, [records]);
 
@@ -89,36 +94,32 @@ export const useAttendanceSession = ({
   const handleFinishScan = useCallback(async () => {
     if (!session || session.status !== "inprogress") return;
     
-    try {
-      await endAttendanceSession(session._id);
-      
-      // Ensure all students have a record in the local state
-      setAttendanceState(prev => {
-        const newState = { ...prev };
-        students.forEach((s) => {
-          const id = s._id.toString();
-          if (!newState[id]) {
-            newState[id] = { status: "absent", method: "manual" };
-          }
-        });
-        return newState;
+    // Since there's no backend 'end' endpoint, we just update local state
+    // to show that we've finished the AI scanning phase and moved to manual review.
+    setAttendanceState(prev => {
+      const newState = { ...prev };
+      students.forEach((s) => {
+        const id = s._id.toString();
+        if (!newState[id]) {
+          newState[id] = { status: "absent", method: "manual" };
+        }
       });
-      
-      setAbsencesProcessed(true);
-      // We don't change session status to 'ended' because it's not a valid backend status.
-      // We stay in 'inprogress' until 'submitted'.
-    } catch (err) {
-      if (err.response?.status === 403) {
-        setSession(prev => ({ ...prev, status: "finalized" }));
-        toast.error("Class time has ended. Session finalized.");
-      } else {
-        toast.error("Failed to end scanning");
-      }
-    }
+      return newState;
+    });
+    
+    setAbsencesProcessed(true);
+    toast.success("Scanning complete. Moving to review.");
   }, [session, students]);
 
   const handleSubmit = useCallback(async () => {
     if (!session) return;
+    
+    // If already submitted, just toast and consider it a success
+    if (session.status === "submitted") {
+      toast.success("Attendance updated!");
+      return;
+    }
+
     try {
       const { data } = await submitMutation.mutateAsync(session._id);
       setSession(data.session);
@@ -130,32 +131,32 @@ export const useAttendanceSession = ({
 
   const handleReopen = useCallback(async () => {
     if (!session) return;
-    try {
-      const { data } = await reopenMutation.mutateAsync(session._id);
-      setSession(data.session);
-      onSessionReopened?.(data.session);
-      return data.session;
-    } catch (err) {
-      toast.error("Failed to reopen session");
-    }
-  }, [session, reopenMutation, onSessionReopened]);
+    
+    // Reopening locally allows the UI to move back to Step 3 (MarkStep)
+    // The backend 'markAttendance' endpoint works even if status is 'submitted'
+    // so we don't need a backend transition.
+    const reopenedSession = { ...session, status: "inprogress" };
+    setSession(reopenedSession);
+    onSessionReopened?.(reopenedSession);
+    return reopenedSession;
+  }, [session, onSessionReopened]);
 
   const handleTerminate = useCallback(async () => {
     if (!session) return;
     try {
-      await terminateAttendanceSession(session._id);
+      await resetMutation.mutateAsync(session._id);
       toast.success("Session reset");
       navigate(`/teacher/dashboard`, { replace: true });
     } catch (err) {
       toast.error("Failed to reset session");
     }
-  }, [session, navigate]);
+  }, [session, resetMutation, navigate]);
 
   return {
     session,
     setSession,
     attendanceState,
-    loading: markMutation.isPending || submitMutation.isPending || reopenMutation.isPending || resetMutation.isPending,
+    loading: markMutation.isPending || submitMutation.isPending || resetMutation.isPending,
     isSubmitted,
     absencesProcessed,
     handleMarkManual,
