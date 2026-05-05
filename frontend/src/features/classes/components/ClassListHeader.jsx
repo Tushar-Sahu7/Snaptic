@@ -8,10 +8,6 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-/**
- * ClassListHeader - MUJI-inspired minimalist header for the class management interface.
- * Principles: Calm, Tactile, Essential.
- */
 export default function ClassListHeader({
   tab,
   onTabChange,
@@ -30,7 +26,7 @@ export default function ClassListHeader({
   return (
     <header className="flex flex-col gap-10">
       {/* Title & Primary Action Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
             {hideTabs ? "Enrolled Classes" : "My Classes"}
@@ -45,9 +41,7 @@ export default function ClassListHeader({
             onClick={onCreateClick}
             size="lg"
             className={cn(
-              "rounded-2xl px-8 h-14 font-bold text-base transition-all duration-500",
-              "bg-[oklch(0.3_0.02_160)] hover:bg-[oklch(0.25_0.02_160)] text-white shadow-xl shadow-emerald-900/10",
-              "active:scale-95 group"
+              "rounded-2xl p-6 active:scale-95"
             )}
           >
             <Plus className="mr-2.5 w-5 h-5 transition-transform duration-500 group-hover:rotate-90" strokeWidth={3} />
