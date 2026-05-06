@@ -194,14 +194,14 @@ export function AppSidebar({ onInvite }) {
                 >
                   <div className="flex flex-1 items-center gap-3 overflow-hidden">
                     <div className="relative shrink-0">
-                      <Avatar size="default" className="rounded-lg border-2 border-background shadow-md">
+                      <Avatar size="default">
                         {user?.avatar && <AvatarImage src={user.avatar} />}
-                        <AvatarFallback className="rounded-lg bg-muted text-[10px] font-bold uppercase tracking-tighter">
+                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-tighter">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
                       {user?.faceEnrolled && (
-                        <div className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm">
+                        <div className="absolute -bottom-0 -right-0 flex size-3.5 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm">
                           <Check className="size-2 stroke-[4]" />
                         </div>
                       )}

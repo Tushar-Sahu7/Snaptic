@@ -81,7 +81,6 @@ export const AttendanceActionGroup = ({
         <ButtonGroup>
           <AttendanceResetButton sessionId={session._id} />
         </ButtonGroup>
-
       </ButtonGroup>
     );
   }
@@ -126,7 +125,7 @@ export const AttendanceActionGroup = ({
     );
   }
 
-  // On-time, no session: "Face AI" + "Manual Entry"
+  // On-time, no session: "Face Scan" + "Manual Entry"
   return (
     <ButtonGroup className={className}>
       <ButtonGroup className="flex-1">

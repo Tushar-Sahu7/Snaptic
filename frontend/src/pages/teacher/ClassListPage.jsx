@@ -492,10 +492,17 @@ export default function ClassListPage() {
           <EmptyContent>
             {tab !== "archived" && (
               <Button
-                onClick={() => navigate("/teacher/classes/create")}
-                className="rounded-full px-6"
+                onClick={() => {
+                  setEditingClass(null);
+                  setFormDialogOpen(true);
+                }}
+                size="xl"
+                className="group rounded-2xl shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300"
               >
-                <Plus className="mr-2 w-4 h-4" /> Create Class
+                <Plus 
+                  className="mr-2 w-5 h-5 transition-transform duration-500 group-hover:rotate-90" 
+                  strokeWidth={3} 
+                /> Create Class
               </Button>
             )}
           </EmptyContent>

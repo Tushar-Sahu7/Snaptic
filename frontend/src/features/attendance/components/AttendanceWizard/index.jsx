@@ -19,6 +19,8 @@ export default function AttendanceWizard({
   classes = EMPTY_ARRAY,
   todaySessions = {},
   onSelectClass,
+  autoStart = false,
+  manual = false,
 }) {
   // 1. Core Logic Hook
   const {
@@ -62,25 +64,13 @@ export default function AttendanceWizard({
 
   // 2. Wizard State
   const [step, setStep] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const isManual = params.get("manual") === "true";
-
     if (!initialSession) return 1;
 
-    // Finalized is always locked to review
     if (initialSession.status === "finalized") return 4;
-
-    // If user explicitly asked for manual mode (e.g. "Update Attendance"), go to step 3
-    if (isManual) return 3;
-
-    // Default for submitted is usually review, but we already handled the explicit manual intent above
     if (initialSession.status === "submitted") return 4;
 
-    if (
-      params.get("autoStart") === "true" ||
-      initialSession.status === "inprogress"
-    )
-      return 2;
+    if (manual) return 3;
+    if (autoStart || initialSession.status === "inprogress") return 2;
 
     return 1;
   });
@@ -105,11 +95,8 @@ export default function AttendanceWizard({
   }, [handleFinishScan]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const isManualMode = params.get("manual") === "true";
-
     if (
-      isManualMode &&
+      manual &&
       session?.status === "inprogress" &&
       step === 3 &&
       !sessionLoading &&
@@ -117,7 +104,7 @@ export default function AttendanceWizard({
     ) {
       handleFinishScanRef.current();
     }
-  }, [step, session?.status, absencesProcessed, sessionLoading]);
+  }, [step, session?.status, absencesProcessed, sessionLoading, manual]);
 
   // 4. Intercept Stepper/Back Navigation
   const handleStepChange = useCallback(

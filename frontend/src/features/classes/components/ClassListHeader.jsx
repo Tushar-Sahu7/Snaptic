@@ -51,7 +51,7 @@ export default function ClassListHeader({
               onClick={onCreateClick}
               size="xl"
               className={cn(
-                "rounded-2xl shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300",
+                "group rounded-2xl shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300",
               )}
             >
               <Plus

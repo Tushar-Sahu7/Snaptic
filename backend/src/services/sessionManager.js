@@ -12,20 +12,19 @@ async function calculateSessions(classDoc) {
   const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
   const [hours, minutes] = startTime.split(":").map(Number);
 
-  // Use UTC to avoid server-local timezone issues during calculation
-  // We treat the dates and times as "absolute" local values
-  const start = new Date(Date.UTC(startYear, startMonth - 1, startDay));
-  const end = new Date(Date.UTC(endYear, endMonth - 1, endDay));
+  // Use local time to match controller queries
+  const start = new Date(startYear, startMonth - 1, startDay);
+  const end = new Date(endYear, endMonth - 1, endDay);
 
   let current = new Date(start);
   while (current <= end) {
-    // getUTCDay() returns 0 for Sunday, 1 for Monday, etc.
-    if (daysOfWeek.includes(current.getUTCDay())) {
+    // getDay() returns 0 for Sunday, 1 for Monday, etc.
+    if (daysOfWeek.includes(current.getDay())) {
       const sessionStart = new Date(current);
-      sessionStart.setUTCHours(hours, minutes, 0, 0);
+      sessionStart.setHours(hours, minutes, 0, 0);
       
       const sessionEnd = new Date(sessionStart);
-      sessionEnd.setUTCMinutes(sessionEnd.getUTCMinutes() + duration);
+      sessionEnd.setMinutes(sessionEnd.getMinutes() + duration);
 
       sessions.push({
         classId,
@@ -37,7 +36,7 @@ async function calculateSessions(classDoc) {
         status: "scheduled"
       });
     }
-    current.setUTCDate(current.getUTCDate() + 1);
+    current.setDate(current.getDate() + 1);
   }
 
   return sessions;

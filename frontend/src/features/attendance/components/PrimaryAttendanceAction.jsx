@@ -25,7 +25,7 @@ import {
  * ┌─────────────┬──────────────┬────────────────────┬──────────────────────────────┐
  * │ Session      │ Schedule     │ Label              │ Navigation                   │
  * ├─────────────┼──────────────┼────────────────────┼──────────────────────────────┤
- * │ none         │ onTime       │ Face AI            │ wizard step 2                │
+ * │ none         │ onTime       │ Face Scan            │ wizard step 2                │
  * │ none         │ before start │ Starts at X:XX     │ disabled                     │
  * │ none         │ after end    │ Not Taken          │ disabled                     │
  * │ inProgress   │ any          │ Resume             │ wizard step 2                │
@@ -36,7 +36,8 @@ import {
  * └─────────────┴──────────────┴────────────────────┴──────────────────────────────┘
  */
 function resolveState(cls, session) {
-  const studentCount = cls.studentCount || cls.students?.length || cls.studentIds?.length || 0;
+  const studentCount =
+    cls.studentCount || cls.students?.length || cls.studentIds?.length || 0;
 
   // Edge case: no students enrolled
   if (studentCount === 0) {
@@ -57,8 +58,7 @@ function resolveState(cls, session) {
       variant: "outline",
       disabled: false,
       // TODO: Replace with the actual session-record route once built
-      route: (classId, sessionId) =>
-        `/teacher/attendance/${sessionId}/summary`,
+      route: (classId, sessionId) => `/teacher/attendance/${sessionId}/summary`,
     };
   }
 
@@ -81,8 +81,7 @@ function resolveState(cls, session) {
       icon: SquarePen,
       variant: "default",
       disabled: false,
-      route: (classId) =>
-        `/teacher/classes/${classId}/attendance?manual=true`,
+      route: (classId) => `/teacher/classes/${classId}/attendance?manual=true`,
     };
   }
 
@@ -91,7 +90,7 @@ function resolveState(cls, session) {
 
   if (onTime) {
     return {
-      label: "Face AI",
+      label: "Face Scan",
       icon: ScanFace,
       variant: "default",
       disabled: false,
@@ -103,7 +102,7 @@ function resolveState(cls, session) {
   // Off-schedule (before start, after end, or not scheduled today)
   // isClassInSession returns messages like "Starts at 9:00 AM", "Ended at 10:00 AM", or "Not in session"
   const isAfterEnd = message?.startsWith("Ended at");
-  
+
   let finalLabel = message; // Defaults to "Starts at..." or "Next scheduled for..."
   if (isAfterEnd) {
     finalLabel = "Not Taken";
@@ -151,7 +150,13 @@ export const PrimaryAttendanceAction = ({
   // When showText is false, use icon-only button sizing
   const buttonSize = showText
     ? resolvedSize
-    : resolvedSize === "xl" ? "icon-xl" : resolvedSize === "lg" ? "icon-lg" : resolvedSize === "sm" ? "icon-sm" : "icon";
+    : resolvedSize === "xl"
+      ? "icon-xl"
+      : resolvedSize === "lg"
+        ? "icon-lg"
+        : resolvedSize === "sm"
+          ? "icon-sm"
+          : "icon";
 
   const handleClick = (e) => {
     e.stopPropagation();

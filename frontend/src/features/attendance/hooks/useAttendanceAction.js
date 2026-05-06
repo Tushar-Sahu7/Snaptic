@@ -99,7 +99,7 @@ export const useAttendanceAction = (cls, session) => {
   // 5. Not Started Logic
   else if (onTime) {
     primary = {
-      label: "Face AI",
+      label: "Face Scan",
       mode: "auto",
       icon: ScanFace,
       variant: "default",

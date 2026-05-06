@@ -4,6 +4,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStartAttendance } from "@/features/attendance/hooks/useAttendance";
+import { useClasses } from "@/features/classes/hooks/useClasses";
 import AttendanceWizard from "@/features/attendance/components/AttendanceWizard";
 
 export default function AttendanceSessionPage() {
@@ -16,6 +17,7 @@ export default function AttendanceSessionPage() {
   const origin = searchParams.get("origin");
 
   const startAttendanceMutation = useStartAttendance();
+  const { data: classesData, isLoading: classesLoading } = useClasses();
   const { data, isPending, error, mutate: startSession } = startAttendanceMutation;
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function AttendanceSessionPage() {
     }
   }, [data?.session?.classId?.name, setDynamicLabel]);
 
-  if (isPending) {
+  if (isPending || classesLoading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8 text-center">
         <div className="space-y-4">
@@ -77,16 +79,17 @@ export default function AttendanceSessionPage() {
     [data?.records]
   );
 
-  if (!data) return null;
-
   return (
     <div className="min-h-full">
       <AttendanceWizard 
-        session={data.session}
+        session={data?.session}
         students={students}
-        profiles={data.profiles}
+        profiles={data?.profiles}
         records={records}
+        classes={classesData?.classes}
         isDirect={origin === "detail"}
+        autoStart={searchParams.get("autoStart") === "true"}
+        manual={searchParams.get("manual") === "true"}
       />
     </div>
   );
