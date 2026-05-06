@@ -29,6 +29,9 @@ export const AttendanceResetButton = ({ sessionId, showLabel, disabled, onSucces
   const isMobile = useIsMobile();
   const dialogSize = isMobile ? "sm" : "default";
 
+  const resolvedSize = props.size || (isMobile ? "default" : "xl");
+  const buttonSize = showLabel ? "sm" : (resolvedSize === "xl" ? "icon-xl" : resolvedSize === "lg" ? "icon-lg" : resolvedSize === "sm" ? "icon-sm" : "icon");
+
   const handleReset = async (e) => {
     e?.stopPropagation();
     if (!sessionId || pending) return;
@@ -54,7 +57,7 @@ export const AttendanceResetButton = ({ sessionId, showLabel, disabled, onSucces
             "transition-all duration-300 ease-out-expo active:scale-95",
             showLabel && "px-4"
           )}
-          size={showLabel ? "sm" : (props.size || (isMobile ? "icon-sm" : "icon"))}
+          size={buttonSize}
           disabled={disabled || pending}
           onClick={(e) => e.stopPropagation()}
           {...props}

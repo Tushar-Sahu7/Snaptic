@@ -49,13 +49,13 @@ export default function ClassListHeader({
           {!hideCreate && tab === "active" && (
             <Button
               onClick={onCreateClick}
-              size="lg"
+              size="xl"
               className={cn(
-                "rounded-2xl p-6 shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300",
+                "rounded-2xl shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300",
               )}
             >
               <Plus
-                className="mr-2.5 w-5 h-5 transition-transform duration-500 group-hover:rotate-90"
+                className="mr-2 w-5 h-5 transition-transform duration-500 group-hover:rotate-90"
                 strokeWidth={3}
               />
               Create Class
@@ -66,18 +66,20 @@ export default function ClassListHeader({
             <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500">
               <Button
                 variant="outline"
+                size="xl"
                 onClick={onUnarchiveAll}
-                className="h-12 px-6 rounded-2xl font-bold border-border/50 hover:bg-background hover:shadow-sm transition-all active:scale-95"
+                className="rounded-2xl border-border/50 hover:bg-background hover:shadow-sm transition-all active:scale-95"
               >
-                <ArchiveRestore className="mr-2.5 w-5 h-5 text-emerald-600" />
+                <ArchiveRestore className="w-5 h-5 text-emerald-600" />
                 Unarchive All
               </Button>
               <Button
                 variant="outline"
+                size="xl"
                 onClick={onDeleteAll}
-                className="h-12 px-6 rounded-2xl font-bold border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all active:scale-95"
+                className="rounded-2xl border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all active:scale-95"
               >
-                <Trash2 className="mr-2.5 w-5 h-5 text-destructive" />
+                <Trash2 className="w-5 h-5 text-destructive" />
                 Delete All
               </Button>
             </div>
@@ -96,16 +98,10 @@ export default function ClassListHeader({
               className="w-full sm:w-auto"
             >
               <TabsList className="h-10">
-                <TabsTrigger
-                  value="active"
-                  className="px-8"
-                >
+                <TabsTrigger value="active" className="px-8">
                   Active
                 </TabsTrigger>
-                <TabsTrigger
-                  value="archived"
-                  className="px-8"
-                >
+                <TabsTrigger value="archived" className="px-8">
                   Archived
                 </TabsTrigger>
               </TabsList>
@@ -115,8 +111,6 @@ export default function ClassListHeader({
           {!hideTabs && (
             <div className="h-6 w-px bg-border/60 hidden sm:block mx-1" />
           )}
-
-
         </div>
 
         <div className="flex items-center gap-4 w-full lg:w-auto">

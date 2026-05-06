@@ -31,13 +31,11 @@ export const ViewRecordButton = ({
 
   if (!session?._id) return null;
 
-  const resolvedSize = size || (isMobile ? "sm" : "default");
+  const resolvedSize = size || (isMobile ? "default" : "xl");
 
   const buttonSize = showText
     ? resolvedSize
-    : isMobile
-      ? "icon-sm"
-      : "icon";
+    : resolvedSize === "xl" ? "icon-xl" : resolvedSize === "lg" ? "icon-lg" : resolvedSize === "sm" ? "icon-sm" : "icon";
 
   const handleClick = (e) => {
     e.stopPropagation();

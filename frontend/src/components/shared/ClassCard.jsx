@@ -6,7 +6,6 @@ import {
   CalendarDays,
   ChevronRight,
   Users,
-  Radio,
 } from "lucide-react";
 import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import {
@@ -14,9 +13,11 @@ import {
   format12Hour,
   formatRoom,
   isClassInSession,
+  formatClassTimeRange,
   cn,
 } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * ClassCard - A premium, tactile card representing a teaching class.
@@ -108,7 +109,10 @@ const ClassCard = memo(
                     {cls.name}
                   </h3>
                   {isArchived && (
-                    <Badge variant="secondary" className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-600 border-amber-500/20 whitespace-nowrap">
+                    <Badge
+                      variant="secondary"
+                      className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-600 border-amber-500/20 whitespace-nowrap"
+                    >
                       Archived
                     </Badge>
                   )}
@@ -148,7 +152,7 @@ const ClassCard = memo(
                 <Clock size={10} className="opacity-70" /> Schedule
               </p>
               <p className="text-sm font-bold text-foreground/90">
-                {cls.startTime ? format12Hour(cls.startTime) : "Not Set"}
+                {cls.startTime ? formatClassTimeRange(cls) : "Not Set"}
               </p>
             </div>
 
@@ -172,15 +176,30 @@ const ClassCard = memo(
             )}
           >
             <div className="flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-6 h-6 rounded-full border-2 border-background bg-muted flex items-center justify-center shadow-sm"
-                  >
-                    <Users size={10} className="text-muted-foreground/40" />
+              <div className="flex -space-x-3">
+                {cls.previewStudents?.length > 0 || cls.students?.length > 0 ? (
+                  (cls.previewStudents || cls.students).slice(0, 3).map((student) => (
+                    <Avatar key={student._id} className="w-10 h-10 border-2 border-background shadow-sm">
+                      <AvatarImage src={student.avatar} />
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
+                        {student.name?.slice(0, 2).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))
+                ) : cls.studentCount > 0 ? (
+                  [...Array(Math.min(cls.studentCount, 3))].map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center shadow-sm"
+                    >
+                      <Users size={14} className="text-muted-foreground/40" />
+                    </div>
+                  ))
+                ) : (
+                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center">
+                    <Users size={14} className="text-muted-foreground/30" />
                   </div>
-                ))}
+                )}
               </div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 <span className="text-foreground">{cls.studentCount || 0}</span>{" "}
@@ -214,12 +233,11 @@ const ClassCard = memo(
             className="px-4 pb-4 bg-background"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-1 rounded-2xl bg-muted/50 ring-1 ring-inset ring-black/[0.03] dark:ring-white/[0.03]">
+            <div className="pt-2 border-t border-border/40">
               {footer}
             </div>
           </div>
         )}
-
       </Card>
     );
   },

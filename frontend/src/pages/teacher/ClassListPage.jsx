@@ -241,10 +241,10 @@ export default function ClassListPage() {
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
-                            size="icon"
+                            size="icon-xl"
                             className="rounded-full hover:bg-primary/5 text-muted-foreground hover:text-primary transition-colors"
                           >
-                            <MoreVertical className="w-4 h-4" />
+                            <MoreVertical className="w-5 h-5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -373,10 +373,10 @@ export default function ClassListPage() {
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="icon-xl"
                           className="rounded-full hover:bg-primary/5 text-muted-foreground hover:text-primary transition-colors"
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          <MoreVertical className="w-5 h-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent

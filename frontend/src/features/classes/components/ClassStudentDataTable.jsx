@@ -161,9 +161,9 @@ export default function StudentDataTable({
           return (
             <div className="flex items-center gap-3 py-1">
               <div className="relative">
-                <Avatar className="h-10 w-10 border border-border/50 shadow-sm">
+                <Avatar className="h-14 w-14 border border-border/50 shadow-sm">
                   {student?.avatar && <AvatarImage src={student.avatar} />}
-                  <AvatarFallback className="bg-muted text-muted-foreground font-medium text-xs">
+                  <AvatarFallback className="bg-muted text-muted-foreground font-medium text-sm">
                     {getInitials(student.name)}
                   </AvatarFallback>
                 </Avatar>

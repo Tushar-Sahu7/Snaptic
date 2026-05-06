@@ -194,7 +194,7 @@ export function AppSidebar({ onInvite }) {
                 >
                   <div className="flex flex-1 items-center gap-3 overflow-hidden">
                     <div className="relative shrink-0">
-                      <Avatar className="size-8 rounded-lg border-2 border-background shadow-md">
+                      <Avatar size="default" className="rounded-lg border-2 border-background shadow-md">
                         {user?.avatar && <AvatarImage src={user.avatar} />}
                         <AvatarFallback className="rounded-lg bg-muted text-[10px] font-bold uppercase tracking-tighter">
                           {initials}

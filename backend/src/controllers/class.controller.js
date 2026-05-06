@@ -97,7 +97,22 @@ const getMyClasses = async (req, res) => {
         teacherInfo = await TeacherProfile.findOne({ userId: c.teacherId }).select("name avatar").lean();
       }
 
-      return { ...c, studentCount, teacher: teacherInfo };
+      // Fetch preview students
+      const previewEnrollments = await Enrollment.find({ classId: c._id, status: "active" })
+        .limit(3)
+        .populate("studentId", "email")
+        .lean();
+        
+      const previewStudents = await Promise.all(previewEnrollments.map(async (e) => {
+        const profile = await StudentProfile.findOne({ userId: e.studentId?._id }).select("name avatar").lean();
+        return {
+          _id: e.studentId?._id,
+          name: profile?.name || e.studentId?.email?.split('@')[0] || "Unknown Student",
+          avatar: profile?.avatar || null,
+        };
+      }));
+
+      return { ...c, studentCount, teacher: teacherInfo, previewStudents };
     }));
 
     return res.status(200).json({ classes: result });

@@ -48,10 +48,10 @@ export const StudentAttendanceCard = ({
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <div className="relative">
-            <div className="relative p-0.5 rounded-2xl bg-gradient-to-br from-zinc-200 to-transparent dark:from-zinc-800 dark:to-transparent">
-              <Avatar className="w-14 h-14 rounded-2xl border-2 border-white dark:border-zinc-900 shadow-md transition-transform duration-500 group-hover:scale-105">
+            <div className="relative p-0.5 rounded-[1.25rem] bg-gradient-to-br from-zinc-200 to-transparent dark:from-zinc-800 dark:to-transparent">
+              <Avatar className="w-20 h-20 rounded-2xl border-2 border-white dark:border-zinc-900 shadow-md transition-transform duration-500 group-hover:scale-105">
                 <AvatarImage src={avatar} alt={name} className="object-cover" />
-                <AvatarFallback className="bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-lg font-bold">
+                <AvatarFallback className="bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-xl font-bold">
                   {name.charAt(0)}
                 </AvatarFallback>
               </Avatar>

@@ -77,29 +77,59 @@ export function formatRoom(room) {
   return room;
 }
 
-/**
- * Formats an array of days into a readable string
- */
 export function formatDays(days) {
   if (!days || !Array.isArray(days) || days.length === 0) return "No days";
   if (days.length === 7) return "Daily";
   
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   
-  const formatted = days
-    .map(d => (typeof d === "number" ? dayNames[d] : d.toString().slice(0, 3)))
-    .filter(Boolean);
-
-  if (days.length === 5 && 
-      formatted.includes("Mon") && 
-      formatted.includes("Tue") && 
-      formatted.includes("Wed") && 
-      formatted.includes("Thu") && 
-      formatted.includes("Fri")) {
+  const numericDays = days.map(d => typeof d === 'number' ? d : dayNames.findIndex(n => n.startsWith(d.toString().slice(0,3))));
+  const validDays = numericDays.filter(d => d >= 0 && d <= 6);
+  const sortedDays = [...new Set(validDays)].sort((a, b) => a - b);
+  
+  if (sortedDays.length === 5 && sortedDays[0] === 1 && sortedDays[4] === 5) {
     return "Weekdays";
   }
 
-  return formatted.join(", ");
+  const groups = [];
+  let currentGroup = [sortedDays[0]];
+
+  for (let i = 1; i < sortedDays.length; i++) {
+    if (sortedDays[i] === sortedDays[i - 1] + 1) {
+      currentGroup.push(sortedDays[i]);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [sortedDays[i]];
+    }
+  }
+  groups.push(currentGroup);
+
+  const formattedGroups = groups.map(group => {
+    if (group.length === 1) return dayNames[group[0]];
+    if (group.length === 2) return `${dayNames[group[0]]}, ${dayNames[group[1]]}`;
+    return `${dayNames[group[0]]}-${dayNames[group[group.length - 1]]}`;
+  });
+
+  return formattedGroups.join(", ");
+}
+
+/**
+ * Formats class start and end time with duration (e.g., "10:00 AM - 11:00 AM (60m)")
+ */
+export function formatClassTimeRange(cls) {
+  if (!cls || !cls.startTime) return "Not Set";
+  try {
+    const [startH, startM] = cls.startTime.split(":").map(Number);
+    const start = new Date();
+    start.setHours(startH, startM, 0, 0);
+    const end = new Date(start.getTime() + (cls.duration || 60) * 60000);
+    const endH = end.getHours();
+    const endM = end.getMinutes().toString().padStart(2, "0");
+    const endStr = `${endH}:${endM}`;
+    return `${format12Hour(cls.startTime)} - ${format12Hour(endStr)} (${formatDuration(cls.duration || 60)})`;
+  } catch (e) {
+    return format12Hour(cls.startTime);
+  }
 }
 
 /**
@@ -129,7 +159,7 @@ export function formatDuration(minutes) {
   if (!minutes) return "0m";
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h > 0) return `${h}h ${m}m`;
+  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
   return `${m}m`;
 }
 
