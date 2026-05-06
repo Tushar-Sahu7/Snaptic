@@ -22,6 +22,11 @@ export const useAttendanceSession = ({
 }) => {
   const navigate = useNavigate();
   const [session, setSession] = useState(initialSession);
+  
+  useEffect(() => {
+    if (initialSession) setSession(initialSession);
+  }, [initialSession]);
+
   const [absencesProcessed, setAbsencesProcessed] = useState(initialSession?.status !== "inprogress");
   
   const markMutation = useMarkAttendance();

@@ -21,18 +21,19 @@ const startSession = async (req, res) => {
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    const session = await AttendanceSession.findOne({
+    // Find without population first to avoid saving issues with populated docs
+    let session = await AttendanceSession.findOne({
       classId,
       teacherId,
       startTime: { $gte: startOfDay, $lte: endOfDay },
       status: { $in: ["scheduled", "inprogress", "submitted"] }
-    }).populate("classId", "name icon status").session(dbSession);
+    }).session(dbSession);
 
 
     if (!session) {
       await dbSession.abortTransaction();
       dbSession.endSession();
-      return res.status(404).json({ message: "No active session found for this time." });
+      return res.status(404).json({ message: "No active session found for this time today." });
     }
 
     // 2. Transition to inprogress if it was scheduled
@@ -56,31 +57,38 @@ const startSession = async (req, res) => {
         teacherId,
         status: "absent",
         method: "manual",
-        createdAt: now
+        markedAt: null
       }));
       await AttendanceRecord.insertMany(records, { session: dbSession });
     }
 
-    // 4. Return session + profiles for scanner
-    const profiles = await StudentProfile.find({
-      userId: { $in: enrolledStudentIds }
-    }).select("userId name avatar embedding faceEnrolled").session(dbSession).lean();
-
-    const records = await AttendanceRecord.find({ sessionId: session._id }).session(dbSession).lean();
-
+    // 4. Commit mutations before retrieval to ensure data integrity
     await dbSession.commitTransaction();
     dbSession.endSession();
 
+    // 5. Retrieve final state with population for the UI
+    const finalSession = await AttendanceSession.findById(session._id)
+      .populate("classId", "name icon status");
+      
+    const profiles = await StudentProfile.find({
+      userId: { $in: enrolledStudentIds }
+    }).select("userId name avatar embedding faceEnrolled").lean();
+
+    const finalRecords = await AttendanceRecord.find({ sessionId: session._id }).lean();
+
     return res.status(200).json({
-      session,
+      session: finalSession,
       profiles,
-      records
+      records: finalRecords
     });
 
   } catch (err) {
-    await dbSession.abortTransaction();
+    console.error("[AttendanceController] startSession Error:", err);
+    if (dbSession.inTransaction()) {
+      await dbSession.abortTransaction();
+    }
     dbSession.endSession();
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message || "Failed to initialize attendance session" });
   }
 };
 

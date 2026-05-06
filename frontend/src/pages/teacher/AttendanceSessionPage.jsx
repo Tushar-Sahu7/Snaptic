@@ -21,8 +21,11 @@ export default function AttendanceSessionPage() {
   const { data, isPending, error, mutate: startSession } = startAttendanceMutation;
 
   useEffect(() => {
-    startSession(classId);
-  }, [classId, startSession]);
+    // Only start if not already pending and no data exists yet
+    if (!isPending && !data && !error && classId) {
+      startSession(classId);
+    }
+  }, [classId, startSession, isPending, data, error]);
 
   useEffect(() => {
     const className = data?.session?.classId?.name;
@@ -31,56 +34,72 @@ export default function AttendanceSessionPage() {
     }
   }, [data?.session?.classId?.name, setDynamicLabel]);
 
-  if (isPending || classesLoading) {
+  // Handle Loading States
+  if (isPending || classesLoading || (!data && !error)) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8 text-center">
+      <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8 text-center animate-in fade-in duration-500">
         <div className="space-y-4">
-           <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary opacity-50" />
-           <h2 className="text-2xl font-black tracking-tight">Initializing Session</h2>
-           <p className="text-muted-foreground font-medium">Preparing the mass scanner and student list...</p>
+           <div className="relative w-16 h-16 mx-auto mb-8">
+             <Loader2 className="w-16 h-16 animate-spin text-primary opacity-20" />
+             <div className="absolute inset-0 flex items-center justify-center">
+               <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
+             </div>
+           </div>
+           <h2 className="text-3xl font-black tracking-tight italic uppercase">Initializing <span className="text-primary">Session</span></h2>
+           <p className="text-muted-foreground font-medium text-lg">Synchronizing student profiles and biometric data...</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 pt-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 pt-12">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
-            <Skeleton key={i} className="aspect-square rounded-2xl" />
+            <Skeleton key={i} className="aspect-square rounded-[32px] opacity-40" />
           ))}
         </div>
       </div>
     );
   }
 
+  // Handle Error States
   if (error || (data && data.error)) {
     return (
-      <div className="container mx-auto px-4 py-24 max-w-md text-center space-y-6">
-        <div className="p-4 bg-destructive/10 rounded-full w-fit mx-auto">
-          <AlertCircle className="w-10 h-10 text-destructive" />
+      <div className="container mx-auto px-4 py-24 max-w-md text-center space-y-8 animate-in zoom-in-95 duration-500">
+        <div className="relative w-24 h-24 mx-auto">
+          <div className="absolute inset-0 bg-destructive/10 rounded-[32px] rotate-6 blur-xl" />
+          <div className="relative p-6 bg-destructive/10 rounded-[32px] border border-destructive/20 flex items-center justify-center">
+            <AlertCircle className="w-12 h-12 text-destructive" />
+          </div>
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black">Session Error</h2>
-          <p className="text-muted-foreground font-medium">{error?.response?.data?.message || data?.error || "Failed to initialize session"}</p>
+        
+        <div className="space-y-3">
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter">Session <span className="text-destructive">Failure</span></h2>
+          <p className="text-muted-foreground font-medium text-lg leading-relaxed">
+            {error?.response?.data?.message || data?.error || "We encountered a technical hitch while initializing the biometric engine."}
+          </p>
         </div>
-        <Button 
-          variant="outline" 
-          className="rounded-xl px-8"
-          onClick={() => navigate(`/teacher/classes/${classId}`)}
-        >
-          Return to Class Details
-        </Button>
+
+        <div className="flex flex-col gap-3">
+          <Button 
+            className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px]"
+            onClick={() => startSession(classId)}
+          >
+            Retry Initialization
+          </Button>
+          <Button 
+            variant="outline" 
+            className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] border-zinc-200"
+            onClick={() => navigate(`/teacher/classes/${classId}`)}
+          >
+            Return to Class Details
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const students = useMemo(() => 
-    data?.profiles?.map(p => ({ ...p, _id: p.userId })) || [],
-    [data?.profiles]
-  );
-
-  const records = useMemo(() => 
-    data?.records || [],
-    [data?.records]
-  );
+  // Handle Success State (data is present)
+  const students = data?.profiles?.map(p => ({ ...p, _id: p.userId })) || [];
+  const records = data?.records || [];
 
   return (
-    <div className="min-h-full">
+    <div className="min-h-full animate-in fade-in duration-700">
       <AttendanceWizard 
         session={data?.session}
         students={students}
