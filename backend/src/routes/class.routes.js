@@ -151,61 +151,13 @@ router.route("/")
  *       200:
  *         description: Class deleted
  */
+router.put("/bulk/status", restrictTo("teacher"), bulkUpdateStatus);
+router.delete("/bulk", restrictTo("teacher"), bulkDeleteClasses);
+
 router.route("/:id")
   .get(getClassById)
   .put(restrictTo("teacher"), updateClass)
   .delete(restrictTo("teacher"), deleteClass);
-
-/**
- * @swagger
- * /api/classes/bulk/status:
- *   put:
- *     summary: Bulk update class status
- *     tags: [Classes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [ids, status]
- *             properties:
- *               ids:
- *                 type: array
- *                 items:
- *                   type: string
- *               status:
- *                 type: string
- *                 enum: [active, archived]
- *     responses:
- *       200:
- *         description: Classes updated
- */
-router.put("/bulk/status", restrictTo("teacher"), bulkUpdateStatus);
-
-/**
- * @swagger
- * /api/classes/bulk:
- *   delete:
- *     summary: Bulk delete classes
- *     tags: [Classes]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [ids]
- *             properties:
- *               ids:
- *                 type: array
- *                 items:
- *                   type: string
- *     responses:
- *       200:
- *         description: Classes deleted
- */
-router.delete("/bulk", restrictTo("teacher"), bulkDeleteClasses);
 
 /**
  * @swagger

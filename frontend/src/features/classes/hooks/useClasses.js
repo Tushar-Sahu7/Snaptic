@@ -33,6 +33,9 @@ export const useClasses = () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       toast.success("Class deleted");
     },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to delete class");
+    }
   });
 
   const bulkUnarchiveMutation = useMutation({
@@ -41,6 +44,9 @@ export const useClasses = () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       toast.success("Classes unarchived");
     },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to unarchive classes");
+    }
   });
 
   const bulkDeleteMutation = useMutation({
@@ -49,6 +55,9 @@ export const useClasses = () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       toast.success("Classes deleted");
     },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to delete classes");
+    }
   });
 
   return {
