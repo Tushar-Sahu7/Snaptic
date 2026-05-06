@@ -37,6 +37,7 @@ import {
   Trash2,
   Calendar,
   Radio,
+  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +46,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
@@ -75,14 +84,14 @@ export default function ClassListPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [viewType, setViewType] = useState("grid"); // 'grid' | 'list'
-  
+
   const [deleteClassState, setDeleteClassState] = useState(null);
   const [bulkUnarchiveConfirm, setBulkUnarchiveConfirm] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [unarchiveClass, setUnarchiveClass] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [bulkEndDate, setBulkEndDate] = useState("");
-  
+
   // Dialog state
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
@@ -110,7 +119,7 @@ export default function ClassListPage() {
 
         const currentDay = new Date().getDay(); // 0-6 (Sun-Sat)
         const hasToday = c.daysOfWeek?.includes(currentDay);
-        
+
         if (hasToday) return 2;
         return 1;
       };
@@ -127,13 +136,14 @@ export default function ClassListPage() {
 
   // Featured Class: The one that is either "Live Now" or coming up next today
   const featuredClass = useMemo(() => {
-    if (tab !== "active" || debouncedSearch || filteredClasses.length < 2) return null;
-    
+    if (tab !== "active" || debouncedSearch || filteredClasses.length < 2)
+      return null;
+
     // Find first one that is Live or Today
-    return filteredClasses.find(c => {
+    return filteredClasses.find((c) => {
       const { onTime } = isClassInSession(c);
       if (onTime) return true;
-      
+
       const currentDay = new Date().getDay();
       return c.daysOfWeek?.includes(currentDay);
     });
@@ -141,7 +151,7 @@ export default function ClassListPage() {
 
   const remainingClasses = useMemo(() => {
     if (!featuredClass) return filteredClasses;
-    return filteredClasses.filter(c => c._id !== featuredClass._id);
+    return filteredClasses.filter((c) => c._id !== featuredClass._id);
   }, [filteredClasses, featuredClass]);
 
   // Bulk Handlers
@@ -152,7 +162,10 @@ export default function ClassListPage() {
     }
     setProcessing(true);
     try {
-      await bulkUnarchiveAll(filteredClasses.map((c) => c._id), bulkEndDate);
+      await bulkUnarchiveAll(
+        filteredClasses.map((c) => c._id),
+        bulkEndDate,
+      );
       setBulkUnarchiveConfirm(false);
       setBulkEndDate("");
     } finally {
@@ -206,42 +219,73 @@ export default function ClassListPage() {
       />
 
       {filteredClasses.length > 0 ? (
-        <div className="mt-12 space-y-12">
+        <div className="mt-14 space-y-16">
           {featuredClass && (
-            <div className="space-y-6">
-              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground px-2">
-                Featured Session
-              </h2>
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 px-1">
+                <div className="h-px flex-1 bg-border/40" />
+                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60">
+                  Featured Session
+                </h2>
+                <div className="h-px flex-1 bg-border/40" />
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8">
+                <div className="lg:col-span-8 group">
                   <ClassCard
                     cls={featuredClass}
                     onClick={(id) => navigate(`/teacher/classes/${id}`)}
-                    className="h-full border-primary/20 shadow-xl shadow-primary/5"
+                    className="h-full border-primary/20 shadow-2xl shadow-primary/5 hover:shadow-primary/10 transition-all duration-700"
                     actions={
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-full">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full hover:bg-primary/5 text-muted-foreground hover:text-primary transition-colors"
+                          >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${featuredClass._id}?tab=history`)}>
-                            <History className="mr-2 w-4 h-4" /> View History
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-52 p-1.5 rounded-2xl shadow-xl border-primary/5"
+                        >
+                          <DropdownMenuItem
+                            className="rounded-xl py-2.5"
+                            onClick={() =>
+                              navigate(
+                                `/teacher/classes/${featuredClass._id}?tab=history`,
+                              )
+                            }
+                          >
+                            <History className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
+                            View History
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => {
-                            setEditingClass(featuredClass);
-                            setFormDialogOpen(true);
-                          }}>
-                            <Pencil className="mr-2 w-4 h-4" /> Edit Class
+                          <DropdownMenuSeparator className="opacity-50" />
+                          <DropdownMenuItem
+                            className="rounded-xl py-2.5"
+                            onClick={() => {
+                              setEditingClass(featuredClass);
+                              setFormDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
+                            Edit Class
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleArchive(featuredClass)}>
-                            <Archive className="mr-2 w-4 h-4" /> Archive
+                          <DropdownMenuItem
+                            className="rounded-xl py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                            onClick={() => toggleArchive(featuredClass)}
+                          >
+                            <Archive className="mr-3 w-4 h-4" /> Archive Class
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setDeleteClassState(featuredClass)} className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 w-4 h-4" /> Delete
+                          <DropdownMenuSeparator className="opacity-50" />
+                          <DropdownMenuItem
+                            className="rounded-xl py-2.5 text-destructive focus:text-destructive focus:bg-destructive/5"
+                            onClick={() => setDeleteClassState(featuredClass)}
+                          >
+                            <Trash2 className="mr-3 w-4 h-4" /> Delete
+                            Permanently
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -256,33 +300,68 @@ export default function ClassListPage() {
                   />
                 </div>
                 <div className="lg:col-span-4 flex flex-col gap-6">
-                  <div className="flex-1 rounded-[2.5rem] bg-muted/30 border border-border/40 p-8 flex flex-col justify-center gap-4 backdrop-blur-md">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                      <Radio className="w-6 h-6" />
+                  <div className="flex-1 rounded-[2.5rem] bg-gradient-to-br from-primary/[0.03] to-primary/[0.01] border border-primary/5 p-8 flex flex-col justify-center gap-6 backdrop-blur-md relative overflow-hidden group">
+                    {/* Decorative element */}
+                    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-700" />
+
+                    <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                      <Radio className="w-6 h-6 animate-pulse" />
                     </div>
-                    <h3 className="text-xl font-bold tracking-tight">Today's Focus</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      This class is either live or starting soon. Quick access to attendance and student rosters is prioritized here.
-                    </p>
+
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-bold tracking-tight text-foreground">
+                        Today's Focus
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                        This session is prioritized for today. You can quickly
+                        track attendance or manage student rosters directly.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-2">
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center"
+                          >
+                            <Users
+                              size={12}
+                              className="text-muted-foreground/50"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Ready for tracking
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">
-                {featuredClass ? "Other Classes" : tab === "active" ? "Active Classes" : "Archived Classes"}
+          <div className="space-y-8">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60">
+                {featuredClass
+                  ? "Other Classes"
+                  : tab === "active"
+                    ? "Active Classes"
+                    : "Archived Classes"}
               </h2>
+              <div className="h-px flex-1 ml-6 bg-border/40" />
             </div>
 
-            <div className={cn(
-              "grid gap-6",
-              viewType === "grid" 
-                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-                : "grid-cols-1"
-            )}>
+            <div
+              className={cn(
+                "grid gap-6",
+                viewType === "grid"
+                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1",
+              )}
+            >
               {remainingClasses.map((cls) => (
                 <ClassCard
                   key={cls._id}
@@ -292,50 +371,87 @@ export default function ClassListPage() {
                   actions={
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full hover:bg-primary/5 text-muted-foreground hover:text-primary transition-colors"
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?tab=history`)}>
-                          <History className="mr-2 w-4 h-4" /> View History
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-52 p-1.5 rounded-2xl shadow-xl border-primary/5"
+                      >
+                        <DropdownMenuItem
+                          className="rounded-xl py-2.5"
+                          onClick={() =>
+                            navigate(`/teacher/classes/${cls._id}?tab=history`)
+                          }
+                        >
+                          <History className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
+                          View History
                         </DropdownMenuItem>
                         {cls.status !== "archived" && (
-                          <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${cls._id}?action=add-student`)}>
-                            <UserPlus className="mr-2 w-4 h-4" /> Add Student
+                          <DropdownMenuItem
+                            className="rounded-xl py-2.5"
+                            onClick={() =>
+                              navigate(
+                                `/teacher/classes/${cls._id}?action=add-student`,
+                              )
+                            }
+                          >
+                            <UserPlus className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
+                            Add Student
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="opacity-50" />
                         {cls.status !== "archived" && (
-                          <DropdownMenuItem onClick={() => {
-                            setEditingClass(cls);
-                            setFormDialogOpen(true);
-                          }}>
-                            <Pencil className="mr-2 w-4 h-4" /> Edit Class
+                          <DropdownMenuItem
+                            className="rounded-xl py-2.5"
+                            onClick={() => {
+                              setEditingClass(cls);
+                              setFormDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
+                            Edit Class
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => {
-                          if (cls.status === "archived") {
-                            setUnarchiveClass(cls);
-                          } else {
-                            toggleArchive(cls);
-                          }
-                        }}>
+                        <DropdownMenuItem
+                          className="rounded-xl py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                          onClick={() => {
+                            if (cls.status === "archived") {
+                              setUnarchiveClass(cls);
+                            } else {
+                              toggleArchive(cls);
+                            }
+                          }}
+                        >
                           {cls.status === "archived" ? (
-                            <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive</>
+                            <>
+                              <ArchiveRestore className="mr-3 w-4 h-4" />{" "}
+                              Unarchive Class
+                            </>
                           ) : (
-                            <><Archive className="mr-2 w-4 h-4" /> Archive</>
+                            <>
+                              <Archive className="mr-3 w-4 h-4" /> Archive Class
+                            </>
                           )}
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setDeleteClassState(cls)} className="text-destructive focus:text-destructive">
-                          <Trash2 className="mr-2 w-4 h-4" /> Delete
+                        <DropdownMenuSeparator className="opacity-50" />
+                        <DropdownMenuItem
+                          className="rounded-xl py-2.5 text-destructive focus:text-destructive focus:bg-destructive/5"
+                          onClick={() => setDeleteClassState(cls)}
+                        >
+                          <Trash2 className="mr-3 w-4 h-4" /> Delete Permanently
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   }
                   footer={
-                    cls.status !== "archived" && viewType === "grid" && (
+                    cls.status !== "archived" &&
+                    viewType === "grid" && (
                       <AttendanceActionGroup
                         cls={cls}
                         session={todaySessions[cls._id]}
@@ -375,15 +491,16 @@ export default function ClassListPage() {
           </EmptyHeader>
           <EmptyContent>
             {tab !== "archived" && (
-              <Button onClick={() => navigate("/teacher/classes/create")} className="rounded-full px-6">
+              <Button
+                onClick={() => navigate("/teacher/classes/create")}
+                className="rounded-full px-6"
+              >
                 <Plus className="mr-2 w-4 h-4" /> Create Class
               </Button>
             )}
           </EmptyContent>
         </Empty>
       )}
-
-
 
       <ClassDeleteDialog
         open={!!deleteClassState}
@@ -399,93 +516,193 @@ export default function ClassListPage() {
         onSuccess={refresh}
       />
 
-      {/* Bulk Action Dialogs */}
-      <Dialog open={bulkUnarchiveConfirm} onOpenChange={setBulkUnarchiveConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Unarchive {filteredClasses.length} classes?</DialogTitle>
-            <DialogDescription>
-              These classes will be moved back to your Active tab. You must set a new end date to resume tracking.
-            </DialogDescription>
-            <div className="pt-4 space-y-2">
-              <span className="text-xs font-bold text-muted-foreground flex items-center gap-2">
-                <Calendar className="w-3 h-3" /> NEW END DATE
-              </span>
-              <Input
-                type="date"
-                value={bulkEndDate}
-                onChange={(e) => setBulkEndDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-              />
+      {/* Bulk Unarchive Dialog */}
+      <Dialog
+        open={bulkUnarchiveConfirm}
+        onOpenChange={setBulkUnarchiveConfirm}
+      >
+        <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl">
+          <div className="p-8 space-y-8">
+            <div className="space-y-3 text-center sm:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-2 mx-auto sm:mx-0">
+                <ArchiveRestore className="w-6 h-6 text-foreground" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight">
+                Restore {filteredClasses.length} Classes
+              </DialogTitle>
+              <DialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
+                Move these sessions back to your active dashboard. A new end date is required to resume tracking.
+              </DialogDescription>
             </div>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkUnarchiveConfirm(false)} disabled={processing}>
-              Cancel
-            </Button>
-            <Button onClick={handleBulkUnarchive} disabled={processing}>
-              {processing ? "Unarchiving..." : "Unarchive All"}
-            </Button>
-          </DialogFooter>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">
+                  Resumption Date
+                </p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-12 justify-start text-left font-bold rounded-xl border-border/60 bg-background hover:bg-muted/30 transition-all",
+                        !bulkEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2.5 h-4 w-4 opacity-50" />
+                      {bulkEndDate ? format(new Date(bulkEndDate), "PPP") : <span>Set end date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-border/40" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={bulkEndDate ? new Date(bulkEndDate) : undefined}
+                      onSelect={(date) => setBulkEndDate(date?.toISOString())}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
+              <Button
+                variant="ghost"
+                onClick={() => setBulkUnarchiveConfirm(false)}
+                disabled={processing}
+                className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleBulkUnarchive} 
+                disabled={processing || !bulkEndDate}
+                className="h-12 flex-1 rounded-xl font-black tracking-tight bg-foreground text-background hover:bg-foreground/90 shadow-lg active:scale-95 transition-all"
+              >
+                {processing ? "Processing..." : "Restore All"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!unarchiveClass} onOpenChange={(open) => !open && setUnarchiveClass(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Unarchive Class</DialogTitle>
-            <DialogDescription>
-              Set a new end date for <b>{unarchiveClass?.name}</b> to resume session tracking.
-            </DialogDescription>
-            <div className="pt-4 space-y-2">
-              <span className="text-xs font-bold text-muted-foreground flex items-center gap-2">
-                <Calendar className="w-3 h-3" /> NEW END DATE
-              </span>
-              <Input
-                type="date"
-                value={bulkEndDate}
-                onChange={(e) => setBulkEndDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-              />
+      {/* Single Unarchive Dialog */}
+      <Dialog
+        open={!!unarchiveClass}
+        onOpenChange={(open) => !open && setUnarchiveClass(null)}
+      >
+        <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl">
+          <div className="p-8 space-y-8">
+            <div className="space-y-3 text-center sm:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-2 mx-auto sm:mx-0">
+                <ArchiveRestore className="w-6 h-6 text-foreground" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight">
+                Unarchive Class
+              </DialogTitle>
+              <DialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
+                Set a new end date for <span className="text-foreground font-bold">"{unarchiveClass?.name}"</span> to resume tracking.
+              </DialogDescription>
             </div>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUnarchiveClass(null)} disabled={processing}>
-              Cancel
-            </Button>
-            <Button onClick={async () => {
-              if (!bulkEndDate) return toast.error("Please select an end date");
-              setProcessing(true);
-              try {
-                await toggleArchive(unarchiveClass, bulkEndDate);
-                setUnarchiveClass(null);
-                setBulkEndDate("");
-              } finally {
-                setProcessing(false);
-              }
-            }} disabled={processing}>
-              {processing ? "Unarchiving..." : "Confirm"}
-            </Button>
-          </DialogFooter>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">
+                  New End Date
+                </p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-12 justify-start text-left font-bold rounded-xl border-border/60 bg-background hover:bg-muted/30 transition-all",
+                        !bulkEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2.5 h-4 w-4 opacity-50" />
+                      {bulkEndDate ? format(new Date(bulkEndDate), "PPP") : <span>Set end date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border-border/40" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={bulkEndDate ? new Date(bulkEndDate) : undefined}
+                      onSelect={(date) => setBulkEndDate(date?.toISOString())}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
+              <Button
+                variant="ghost"
+                onClick={() => setUnarchiveClass(null)}
+                disabled={processing}
+                className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!bulkEndDate) return toast.error("Please select an end date");
+                  setProcessing(true);
+                  try {
+                    await toggleArchive(unarchiveClass, bulkEndDate);
+                    setUnarchiveClass(null);
+                    setBulkEndDate("");
+                  } finally {
+                    setProcessing(false);
+                  }
+                }}
+                disabled={processing || !bulkEndDate}
+                className="h-12 flex-1 rounded-xl font-black tracking-tight bg-foreground text-background hover:bg-foreground/90 shadow-lg active:scale-95 transition-all"
+              >
+                {processing ? "Processing..." : "Unarchive"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Delete Dialog */}
       <Dialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {filteredClasses.length} archived classes?</DialogTitle>
-            <DialogDescription>
-              This will permanently delete these classes and their student rosters. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)} disabled={processing}>
-              Cancel
-            </Button>
-            <Button onClick={handleBulkDelete} disabled={processing} variant="destructive">
-              {processing ? "Deleting..." : "Delete Permanently"}
-            </Button>
-          </DialogFooter>
+        <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl">
+          <div className="p-8 space-y-8">
+            <div className="space-y-3 text-center sm:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2 mx-auto sm:mx-0">
+                <Trash2 className="w-6 h-6 text-destructive" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-destructive">
+                Delete {filteredClasses.length} Classes?
+              </DialogTitle>
+              <DialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
+                This will permanently delete these classes and all associated student rosters. This action <span className="font-bold text-destructive italic">cannot</span> be undone.
+              </DialogDescription>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
+              <Button
+                variant="ghost"
+                onClick={() => setBulkDeleteConfirm(false)}
+                disabled={processing}
+                className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBulkDelete}
+                disabled={processing}
+                variant="destructive"
+                className="h-12 flex-1 rounded-xl font-black tracking-tight text-primary-foreground shadow-lg shadow-destructive/10 active:scale-95 transition-all"
+              >
+                {processing ? "Deleting..." : "Delete Permanently"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

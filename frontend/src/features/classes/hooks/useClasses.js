@@ -14,7 +14,10 @@ export const useClasses = () => {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: ({ classId, endDate }) => classesApi.archiveClass(classId, endDate),
+    mutationFn: ({ classId, status, endDate }) => {
+      if (status === "active") return classesApi.unarchiveClass(classId, endDate);
+      return classesApi.archiveClass(classId, endDate);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       toast.success("Class status updated");
@@ -52,7 +55,10 @@ export const useClasses = () => {
     classes: query.data || [],
     loading: query.isLoading,
     refresh: () => queryClient.invalidateQueries({ queryKey: ["classes"] }),
-    toggleArchive: (cls, endDate) => archiveMutation.mutateAsync({ classId: cls._id, endDate }),
+    toggleArchive: (cls, endDate) => {
+      const newStatus = cls.status === "active" ? "archived" : "active";
+      return archiveMutation.mutateAsync({ classId: cls._id, status: newStatus, endDate });
+    },
     bulkUnarchiveAll: (ids, endDate) => bulkUnarchiveMutation.mutateAsync({ ids, endDate }),
     bulkDeleteAll: (ids) => bulkDeleteMutation.mutateAsync(ids),
     deleteClass: (id) => deleteMutation.mutateAsync(id)

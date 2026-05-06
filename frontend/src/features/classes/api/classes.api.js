@@ -11,11 +11,21 @@ export const updateClass = (id, data) => api.put(`/api/classes/${id}`, data);
 export const bulkUpdateClassStatus = (classIds, status, endDate) =>
   api.put("/api/classes/bulk/status", { classIds, status, endDate });
 
+export const archiveClass = (classId) =>
+  bulkUpdateClassStatus([classId], "archived");
+
+export const unarchiveClass = (classId, endDate) =>
+  bulkUpdateClassStatus([classId], "active", endDate);
+
+export const bulkUnarchive = (classIds, endDate) =>
+  bulkUpdateClassStatus(classIds, "active", endDate);
 
 export const deleteClass = (id) => api.delete(`/api/classes/${id}`);
 
 export const bulkDeleteClasses = (classIds) =>
   api.delete("/api/classes/bulk", { data: { classIds } });
+
+export const bulkDelete = (classIds) => bulkDeleteClasses(classIds);
 
 export const addStudent = (classId, payload) =>
   api.post(`/api/classes/${classId}/students`, payload);

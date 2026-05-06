@@ -45,21 +45,44 @@ export default function ClassListHeader({
           </p>
         </div>
 
-        {!hideCreate && (
-          <Button
-            onClick={onCreateClick}
-            size="lg"
-            className={cn(
-              "rounded-2xl p-6 shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300",
-            )}
-          >
-            <Plus
-              className="mr-2.5 w-5 h-5 transition-transform duration-500 group-hover:rotate-90"
-              strokeWidth={3}
-            />
-            Create Class
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {!hideCreate && tab === "active" && (
+            <Button
+              onClick={onCreateClick}
+              size="lg"
+              className={cn(
+                "rounded-2xl p-6 shadow-xl shadow-primary/10 active:scale-95 transition-all duration-300",
+              )}
+            >
+              <Plus
+                className="mr-2.5 w-5 h-5 transition-transform duration-500 group-hover:rotate-90"
+                strokeWidth={3}
+              />
+              Create Class
+            </Button>
+          )}
+
+          {tab === "archived" && canBulkAction && (
+            <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500">
+              <Button
+                variant="outline"
+                onClick={onUnarchiveAll}
+                className="h-12 px-6 rounded-2xl font-bold border-border/50 hover:bg-background hover:shadow-sm transition-all active:scale-95"
+              >
+                <ArchiveRestore className="mr-2.5 w-5 h-5 text-emerald-600" />
+                Unarchive All
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onDeleteAll}
+                className="h-12 px-6 rounded-2xl font-bold border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all active:scale-95"
+              >
+                <Trash2 className="mr-2.5 w-5 h-5 text-destructive" />
+                Delete All
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Navigation & Search Bar Section */}
@@ -94,29 +117,6 @@ export default function ClassListHeader({
           )}
 
 
-          {/* Bulk Actions for Archived Tab */}
-          {tab === "archived" && canBulkAction && (
-            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-500">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onUnarchiveAll}
-                className="h-9 rounded-xl font-bold border-border/50 hover:bg-background hover:shadow-sm transition-all"
-              >
-                <ArchiveRestore className="mr-2 w-4 h-4 text-emerald-600" />
-                Unarchive All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onDeleteAll}
-                className="h-9 rounded-xl font-bold border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
-              >
-                <Trash2 className="mr-2 w-4 h-4 text-destructive" />
-                Delete All
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="flex items-center gap-4 w-full lg:w-auto">

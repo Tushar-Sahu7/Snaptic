@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 export default function DeleteClassDialog({
   open,
@@ -24,15 +24,11 @@ export default function DeleteClassDialog({
     setDeleting(true);
     try {
       await deleteClass(classData._id);
-
       toast.success(`Class "${classData.name}" deleted successfully`);
-
       window.dispatchEvent(new CustomEvent("classes-updated"));
       onDeleted?.();
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to delete class"
-      );
+      toast.error(err.response?.data?.message || "Failed to delete class");
     } finally {
       setDeleting(false);
     }
@@ -40,54 +36,60 @@ export default function DeleteClassDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-background">
-        <div className="p-8 space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-destructive/10 text-destructive shadow-sm">
-              <AlertTriangle size={24} />
+      <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl">
+        <div className="p-8 space-y-8">
+          <div className="space-y-3 text-center sm:text-left">
+            <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2 mx-auto sm:mx-0">
+              <Trash2 className="w-6 h-6 text-destructive" />
             </div>
             <DialogHeader className="p-0 text-left">
-              <DialogTitle className="text-2xl font-black tracking-tight text-foreground">
+              <DialogTitle className="text-2xl font-black tracking-tight text-destructive">
                 Delete Class?
               </DialogTitle>
-              <DialogDescription className="text-sm font-medium text-muted-foreground">
-                You are about to remove <span className="text-foreground font-bold">"{classData?.name}"</span>.
+              <DialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
+                You are about to permanently remove{" "}
+                <span className="text-foreground font-bold underline underline-offset-4 decoration-destructive/20">
+                  "{classData?.name}"
+                </span>
+                .
               </DialogDescription>
             </DialogHeader>
           </div>
 
-          <div className="p-5 rounded-2xl bg-muted/50 border border-border">
-            <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-              This will remove the class and all students from the roster. You can temporarily undo this action from the notification toast that appears after deletion.
+          <div className="p-5 rounded-2xl bg-muted/40 border border-border/50">
+            <p className="text-xs font-medium leading-relaxed text-muted-foreground/80">
+              This action cannot be undone. All student records, attendance
+              history, and configuration for this class will be permanently
+              erased.
             </p>
           </div>
-        </div>
 
-        <DialogFooter className="p-6 bg-muted/30 border-t border-border sm:justify-end gap-3">
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={deleting}
-            className="h-11 px-6 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="h-11 px-8 rounded-xl font-bold shadow-lg shadow-destructive/20 transition-all active:scale-[0.98]"
-          >
-            {deleting ? (
-              <>
-                <Loader2 size={16} className="mr-2 animate-spin" />
-                Deleting...
-              </>
-            ) : (
-              "Delete Permanently"
-            )}
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={deleting}
+              className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="h-12 flex-1 rounded-xl font-black tracking-tight text-primary-foreground shadow-lg shadow-destructive/10 active:scale-95 transition-all"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 animate-spin w-4 h-4" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Permanently"
+              )}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
