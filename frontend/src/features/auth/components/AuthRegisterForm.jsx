@@ -63,7 +63,7 @@ export default function RegisterForm({ ...props }) {
 
     setSubmitting(true);
     try {
-      const user = await register(name, email, password, inviteToken);
+      const user = await register({ name, email, password, inviteToken });
       toast.success("Account created successfully");
       navigate(
         user.role === "teacher" ? "/teacher/dashboard" : "/student/dashboard",

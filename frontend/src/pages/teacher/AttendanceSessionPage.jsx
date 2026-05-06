@@ -37,7 +37,7 @@ export default function AttendanceSessionPage() {
         <div className="space-y-4">
            <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary opacity-50" />
            <h2 className="text-2xl font-black tracking-tight">Initializing Session</h2>
-           <p className="text-muted-foreground font-medium">Preparing the mass scanner and student roster...</p>
+           <p className="text-muted-foreground font-medium">Preparing the mass scanner and student list...</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 pt-12">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (

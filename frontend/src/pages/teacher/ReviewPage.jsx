@@ -77,7 +77,7 @@ export default function ReviewPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Review Attendance</h1>
-          <p className="text-muted-foreground">Verify and finalize the roster.</p>
+          <p className="text-muted-foreground">Verify and finalize the student list.</p>
         </div>
       </div>
 

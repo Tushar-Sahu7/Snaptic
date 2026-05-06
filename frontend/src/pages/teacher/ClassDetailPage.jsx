@@ -200,7 +200,7 @@ export default function ClassDetailPage() {
           <CardHeader className="p-8 pb-0 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black">Enrolled Students</CardTitle>
-              <CardDescription className="text-base font-medium">Manage your roster and import student records.</CardDescription>
+              <CardDescription className="text-base font-medium">Manage your students and import records.</CardDescription>
             </div>
             
             {classData.status !== "archived" && (
@@ -293,7 +293,7 @@ export default function ClassDetailPage() {
                 <div className="space-y-2">
                   <p className="text-2xl font-bold tracking-tight">No students enrolled</p>
                   <p className="text-muted-foreground font-medium max-w-sm mx-auto text-base">
-                    Start by searching for students in the global directory above or import an existing roster.
+                    Start by searching for students in the global directory above or import a student list.
                   </p>
                 </div>
                 <Button variant="outline" className="rounded-xl font-bold gap-2 px-8 h-11" onClick={() => searchInputRef.current?.focus()}>

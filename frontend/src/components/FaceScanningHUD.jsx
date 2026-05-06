@@ -56,58 +56,46 @@ export default function FaceScanningHUD({
         )}
       </AnimatePresence>
 
-      {/* Progress Ring */}
+      {/* Scanning Target Box (Minimalist) */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <svg className="w-64 h-64 -rotate-90">
-          <circle
-            cx="128"
-            cy="128"
-            r="120"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-primary/10"
-          />
-          <motion.circle
-            cx="128"
-            cy="128"
-            r="120"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeDasharray="754"
-            animate={{ strokeDashoffset: 754 * (1 - progress) }}
-            className={cn(
-              "text-primary transition-colors duration-300",
-              status === "success" && "text-green-500",
-              status === "error" && "text-red-500"
-            )}
-          />
-        </svg>
-      </div>
-
-      {/* Guide & Status Label */}
-      <div className="absolute bottom-20 left-0 right-0 flex flex-col items-center gap-2">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={guide}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className={cn(
-              "px-4 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase backdrop-blur-md border",
-              status === "scanning" && "bg-black/40 border-primary/30 text-primary",
-              status === "success" && "bg-green-500/20 border-green-500/30 text-green-400",
-              status === "error" && "bg-red-500/20 border-red-500/30 text-red-400"
-            )}
-          >
-            {guide || (status === "scanning" ? "Initializing Scan" : status)}
-          </motion.div>
-        </AnimatePresence>
+        <div className="relative w-64 h-64">
+          <svg className="absolute inset-0 w-full h-full -rotate-90">
+            <circle
+              cx="128"
+              cy="128"
+              r="124"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              className="text-white/5"
+            />
+            <motion.circle
+              cx="128"
+              cy="128"
+              r="124"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeDasharray="779"
+              animate={{ strokeDashoffset: 779 * (1 - progress) }}
+              className={cn(
+                "text-primary transition-colors duration-500",
+                status === "success" && "text-[oklch(0.7_0.2_150)]",
+                status === "error" && "text-[oklch(0.7_0.2_20)]"
+              )}
+            />
+          </svg>
+          
+          {/* Internal Crosshairs */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-20">
+            <div className="w-4 h-[1px] bg-white absolute" />
+            <div className="h-4 w-[1px] bg-white absolute" />
+          </div>
+        </div>
       </div>
 
       {/* Background Dimming / Vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.3)_100%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_30%,rgba(0,0,0,0.6)_100%)] pointer-events-none" />
     </div>
   );
 }

@@ -314,7 +314,7 @@ export default function ClassListPage() {
                       </h3>
                       <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                         This session is prioritized for today. You can quickly
-                        track attendance or manage student rosters directly.
+                        track attendance or manage student lists directly.
                       </p>
                     </div>
 
@@ -687,7 +687,7 @@ export default function ClassListPage() {
                 Delete {filteredClasses.length} Classes?
               </DialogTitle>
               <DialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
-                This will permanently delete these classes and all associated student rosters. This action <span className="font-bold text-destructive italic">cannot</span> be undone.
+                This will permanently delete these classes and all student enrollments. This action <span className="font-bold text-destructive italic">cannot</span> be undone.
               </DialogDescription>
             </div>
 

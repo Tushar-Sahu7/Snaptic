@@ -58,7 +58,7 @@ export default function BulkDeleteClassesDialog({
 
           <div className="p-5 rounded-2xl bg-muted/50 border border-border">
             <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-              This will permanently delete the selected classes and remove all students from their rosters. This action <span className="text-destructive font-bold uppercase tracking-tight">cannot be undone</span>.
+              This will permanently delete the selected classes and remove all student enrollments. This action <span className="text-destructive font-bold uppercase tracking-tight">cannot be undone</span>.
             </p>
           </div>
         </div>

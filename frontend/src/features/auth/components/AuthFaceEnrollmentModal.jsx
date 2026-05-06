@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,6 +145,9 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
           videoRef.current.onloadedmetadata = () => resolve();
         });
         await videoRef.current.play();
+        
+        // Ensure canvases match the video display size
+        updateCanvasDimensions();
         runDetectionLoop();
       }
     } catch (err) {
@@ -184,26 +188,22 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
           if (canvas.width !== vw || canvas.height !== vh) {
             faceapi.matchDimensions(canvas, displaySize);
           }
+          
           const ctx = canvas.getContext("2d");
-          ctx.clearRect(0, 0, vw, vh);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           if (detection) {
             const resizedDetections = faceapi.resizeResults(detection, displaySize);
             
-            const box = detection.detection.box;
-            const score = detection.detection.score;
-            const faceFraction = (box.width * box.height) / (vw * vh);
-            const centerX = box.x + box.width / 2;
-            const centerY = box.y + box.height / 2;
-            const offCenterX = Math.abs(centerX - vw / 2) / (vw / 2);
-            const offCenterY = Math.abs(centerY - vh / 2) / (vh / 2);
-            
-            const isOk = !(score < 0.7 || faceFraction < MIN_FACE_FRACTION || offCenterX > 0.3 || offCenterY > 0.35);
+            const isOk = !(detection.detection.score < 0.7 || 
+                         (detection.detection.box.width * detection.detection.box.height) / (vw * vh) < MIN_FACE_FRACTION || 
+                         Math.abs((detection.detection.box.x + detection.detection.box.width / 2) - vw / 2) / (vw / 2) > 0.3 || 
+                         Math.abs((detection.detection.box.y + detection.detection.box.height / 2) - vh / 2) / (vh / 2) > 0.35);
             
             const drawOptions = {
-              lineWidth: 2,
+              lineWidth: 1.5,
               drawLines: true,
-              color: isOk ? "#22c55e" : "#f59e0b"
+              color: isOk ? "oklch(0.7 0.2 150)" : "oklch(0.7 0.2 40)"
             };
             new faceapi.draw.DrawFaceLandmarks(resizedDetections.landmarks, drawOptions).draw(canvas);
           }
@@ -255,14 +255,24 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     detect();
   }
 
+  function updateCanvasDimensions() {
+    if (!videoRef.current || !overlayCanvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = overlayCanvasRef.current;
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    if (displaySize.width > 0) {
+      faceApiRef.current?.matchDimensions(canvas, displaySize);
+    }
+  }
+
   function failQuality(msg) {
     qualityStartRef.current = null;
     setQualityOk(false);
     setGuide(msg);
   }
 
-  async function captureFrame(autoDescriptor = null) {
-    if (!videoRef.current || !canvasRef.current || !faceApiRef.current) return;
+  async function captureFrame(autoDescriptor) {
+    if (!videoRef.current || !canvasRef.current || !faceApiRef.current || !autoDescriptor) return;
     
     setGuide("Processing capture...");
 
@@ -279,28 +289,9 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     stopCamera();
 
     try {
-      let finalDescriptor = autoDescriptor;
-
-      if (!finalDescriptor) {
-        // Manual capture: we need to run detection on the canvas
-        const options = new faceApiRef.current.TinyFaceDetectorOptions({ inputSize: 320 });
-        const detection = await faceApiRef.current
-          .detectSingleFace(canvas, options)
-          .withFaceLandmarks(true)
-          .withFaceDescriptor();
-          
-        if (detection) {
-          finalDescriptor = detection.descriptor;
-        } else {
-          toast.error("Face not detected clearly. Please try again.");
-          handleRetake();
-          return;
-        }
-      }
-
       const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
       setCapturedImage(dataUrl);
-      setCapturedDescriptor(Array.from(finalDescriptor));
+      setCapturedDescriptor(Array.from(autoDescriptor));
       setStage("captured");
       setGuide(GUIDE_MESSAGES.captured);
     } catch (err) {
@@ -337,7 +328,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     setCapturedImage(null);
     setCapturedDescriptor(null);
     setQualityOk(false);
-    startSetup();
+    loadModels();
   }
 
   async function handleConfirmEnroll() {
@@ -379,7 +370,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-2xl p-0 overflow-hidden border-none bg-zinc-950/90 backdrop-blur-xl sm:rounded-3xl shadow-2xl"
+        className="max-w-2xl p-0 overflow-hidden border-none bg-[oklch(0.12_0.02_250)] backdrop-blur-2xl sm:rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)]"
         showCloseButton={false}
       >
         <div className="relative flex flex-col h-[600px] sm:h-[650px]">
@@ -402,161 +393,164 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-zinc-950"
+                  className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-[oklch(0.12_0.02_250)]"
                 >
                   <div className="relative">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                    <Loader2 className="w-16 h-16 text-primary animate-spin" />
                     <motion.div 
                       animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="absolute inset-0 bg-primary/20 blur-xl rounded-full"
+                      className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"
                     />
                   </div>
-                  <p className="text-zinc-400 font-medium tracking-tight">{guide}</p>
+                  <p className="text-white font-black tracking-tight text-xl">{guide}</p>
                 </motion.div>
-              ) : stage === "camera" ? (
+              ) : (
                 <motion.div
-                  key="camera"
+                  key="content"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="relative flex-1 flex flex-col"
                 >
-                  <div className="relative flex-1 overflow-hidden group">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="absolute inset-0 w-full h-full object-cover scale-x-[-1] z-0 bg-black"
-                    />
-                    
-                    {/* HUD Overlay */}
-                    <FaceScanningHUD 
-                      active={true}
-                      progress={progress}
-                      status={qualityOk ? "success" : "scanning"}
-                      guide={guide}
-                    />
-
-                    {/* Landmarks Canvas (Debug/Visual effect) */}
-                    <canvas
-                      ref={overlayCanvasRef}
-                      className="absolute inset-0 w-full h-full pointer-events-none scale-x-[-1] opacity-50 z-20"
-                    />
-
-                    {/* Live Badge */}
-                    <div className="absolute top-6 left-6 z-20 flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 backdrop-blur-md">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Live Sensor</span>
-                    </div>
+                  {/* Shared Header */}
+                  <div className="flex-none p-8 bg-[oklch(0.15_0.02_250/0.5)] border-b border-white/5">
+                    <DialogTitle className="text-white font-black text-2xl tracking-tight flex items-center gap-2">
+                      <Scan className="w-6 h-6 text-primary" />
+                      {stage === "camera" ? "Biometric Enrollment" : "Verify Identity"}
+                    </DialogTitle>
+                    <DialogDescription className="text-white/50 text-sm font-medium mt-1">
+                      {stage === "camera" 
+                        ? "Secure your identity with enterprise-grade face recognition."
+                        : "Confirm your capture is clear for optimal recognition."}
+                    </DialogDescription>
                   </div>
 
-                  {/* Header/Controls */}
-                  <div className="p-6 bg-zinc-900/50 backdrop-blur-md border-t border-white/5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-white font-semibold text-lg flex items-center gap-2">
-                          <Scan className="w-5 h-5 text-primary" />
-                          Enroll Face Biometrics
-                        </h3>
-                        <p className="text-zinc-400 text-sm">Center your face in the frame for automatic capture.</p>
-                      </div>
-                      <Button
-                        size="lg"
-                        className="rounded-full px-6 bg-white text-black hover:bg-zinc-200"
-                        onClick={() => captureFrame()}
-                      >
-                        <Camera className="w-5 h-5 mr-2" />
-                        Manual Capture
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (stage === "captured" || stage === "enrolling" || stage === "done") ? (
-                <motion.div
-                  key="preview"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.05 }}
-                  className="absolute inset-0 flex flex-col bg-zinc-950"
-                >
                   <div className="relative flex-1 overflow-hidden bg-black">
-                    {capturedImage && (
-                      <img
-                        src={capturedImage}
-                        alt="Captured face"
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                    
-                    {/* Status Overlays */}
-                    <AnimatePresence>
-                      {stage === "enrolling" && (
-                        <motion.div 
+                    <AnimatePresence mode="wait">
+                      {stage === "camera" ? (
+                        <motion.div
+                          key="camera-view"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
+                          className="absolute inset-0"
                         >
-                          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                          <p className="text-white font-medium">Securing Biometric Data...</p>
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                          />
+                          <FaceScanningHUD 
+                            active={true}
+                            progress={progress}
+                            status={qualityOk ? "success" : "scanning"}
+                            guide={guide}
+                          />
+                          <canvas
+                            ref={overlayCanvasRef}
+                            className="absolute inset-0 w-full h-full pointer-events-none scale-x-[-1] object-cover opacity-70 z-20"
+                          />
                         </motion.div>
-                      )}
-                      
-                      {stage === "done" && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.8 }}
+                      ) : (
+                        <motion.div
+                          key="preview-view"
+                          initial={{ opacity: 0, scale: 1.1 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-green-500/10 backdrop-blur-md"
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className="absolute inset-0"
                         >
-                          <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)]">
-                            <CheckCircle2 className="w-10 h-10 text-white" />
-                          </div>
-                          <p className="text-white text-xl font-bold mt-6">Face Enrolled</p>
-                          <p className="text-green-400/80 text-sm mt-1">Identity verified and secured.</p>
+                          {capturedImage && (
+                            <img
+                              src={capturedImage}
+                              alt="Captured face"
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          
+                          {/* Success/Error Overlays */}
+                          <AnimatePresence>
+                            {stage === "enrolling" && (
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[oklch(0.1_0.02_250/0.8)] backdrop-blur-md"
+                              >
+                                <Loader2 className="w-12 h-12 text-primary animate-spin mb-6" />
+                                <p className="text-white font-black text-2xl tracking-tight">Securing Hash...</p>
+                              </motion.div>
+                            )}
+                            
+                            {stage === "done" && (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[oklch(0.6_0.2_150/0.2)] backdrop-blur-xl"
+                              >
+                                <div className="w-24 h-24 rounded-full bg-[oklch(0.7_0.2_150)] flex items-center justify-center shadow-[0_0_40px_oklch(0.7_0.2_150/0.4)]">
+                                  <CheckCircle2 className="w-12 h-12 text-white" />
+                                </div>
+                                <p className="text-white text-3xl font-black mt-8 tracking-tighter">Identity Verified</p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  <div className="p-8 bg-zinc-900/50 backdrop-blur-md border-t border-white/5">
-                    {stage === "captured" && (
-                      <div className="flex flex-col gap-4">
-                        <div className="text-center mb-2">
-                          <h3 className="text-white font-semibold text-lg">Verify Identity</h3>
-                          <p className="text-zinc-400 text-sm">Please confirm if the capture is clear and well-lit.</p>
-                        </div>
-                        <div className="flex gap-3">
-                          <Button
-                            variant="outline"
-                            size="lg"
-                            className="flex-1 rounded-full border-white/10 text-white hover:bg-white/5"
-                            onClick={handleRetake}
-                          >
-                            <RefreshCcw className="w-4 h-4 mr-2" />
-                            Retake
-                          </Button>
-                          <Button
-                            size="lg"
-                            className="flex-1 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-[0_0_20px_rgba(var(--primary),0.3)]"
-                            onClick={handleConfirmEnroll}
-                          >
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Confirm Enrollment
-                          </Button>
+                  <DialogFooter className="flex-none p-6 sm:p-8 bg-[oklch(0.15_0.02_250/0.8)] backdrop-blur-md border-t border-white/5">
+                    {stage === "captured" ? (
+                      <div className="flex items-center gap-4 w-full">
+                        <Button
+                          size="xl"
+                          className="flex-1 rounded-2xl bg-[oklch(0.62_0.17_153)] hover:bg-[oklch(0.65_0.17_153)] text-white shadow-[0_0_30px_oklch(0.62_0.17_153/0.4)]"
+                          onClick={handleConfirmEnroll}
+                        >
+                          <CheckCircle2 data-icon="inline-start" />
+                          Confirm & Secure Enrollment
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="icon-xl"
+                          className="rounded-2xl bg-white/10 hover:bg-white/20 text-white border-white/10"
+                          onClick={handleRetake}
+                          title="Retake Capture"
+                        >
+                          <RefreshCcw />
+                        </Button>
+                      </div>
+                    ) : stage === "done" ? (
+                      <div className="text-center py-2 w-full">
+                        <p className="text-white/40 text-sm font-bold tracking-widest uppercase">System Secured</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center w-full gap-4">
+                        <div className="flex flex-col items-center text-center">
+                          <AnimatePresence mode="wait">
+                            <motion.p
+                              key={guide}
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="text-white font-black text-lg tracking-tight"
+                            >
+                              {guide}
+                            </motion.p>
+                          </AnimatePresence>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
+                            <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">Sensors Active</p>
+                          </div>
                         </div>
                       </div>
                     )}
-                    
-                    {stage === "done" && (
-                      <div className="text-center py-4">
-                        <p className="text-zinc-400 text-sm">Closing automatically...</p>
-                      </div>
-                    )}
-                  </div>
+                  </DialogFooter>
                 </motion.div>
-              ) : null}
+              )}
             </AnimatePresence>
           </div>
         </div>

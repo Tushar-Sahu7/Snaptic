@@ -128,7 +128,7 @@ export default function AttendanceSummaryPage() {
                    <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                   <p className="text-xs font-bold text-muted-foreground uppercase">Roster Size</p>
+                   <p className="text-xs font-bold text-muted-foreground uppercase">Class Size</p>
                    <p className="text-lg font-semibold">{stats.total} Enrolled Students</p>
                 </div>
              </div>

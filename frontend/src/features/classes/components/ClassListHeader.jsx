@@ -41,7 +41,7 @@ export default function ClassListHeader({
             {hideTabs ? "Enrolled Classes" : "My Classes"}
           </h1>
           <p className="text-muted-foreground font-medium tracking-tight">
-            Manage your teaching sessions and student rosters.
+            Manage your teaching sessions and students.
           </p>
         </div>
 

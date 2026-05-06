@@ -75,7 +75,7 @@ export const MarkStep = ({
           </div>
 
           <div className="space-y-4 relative z-10">
-            <h4 className="font-black text-4xl text-zinc-900 dark:text-zinc-50 italic uppercase tracking-tighter">Empty Roster</h4>
+            <h4 className="font-black text-4xl text-zinc-900 dark:text-zinc-50 italic uppercase tracking-tighter">Empty Class</h4>
             <p className="text-zinc-500 dark:text-zinc-400 font-medium max-w-sm text-xl leading-relaxed">
               No students are currently enrolled in this specific class session.
             </p>

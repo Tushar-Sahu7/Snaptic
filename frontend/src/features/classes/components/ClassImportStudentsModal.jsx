@@ -156,7 +156,7 @@ export default function ImportStudentsModal({
                   <Users size={18} strokeWidth={2.5} />
                 </div>
                 <DialogTitle className="text-2xl font-black tracking-tight text-foreground">
-                  Import Roster
+                  Import Students
                 </DialogTitle>
               </div>
               <DialogDescription className="text-sm font-medium text-muted-foreground">
