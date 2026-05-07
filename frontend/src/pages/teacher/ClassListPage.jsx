@@ -58,7 +58,7 @@ import { CalendarIcon } from "lucide-react";
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
-import { isClassInSession, WEEKDAYS } from "@/lib/utils";
+import { isClassInSession, getNowIST, getTodayISTStr, formatIST } from "@/lib/date-utils";
 import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
 
 // Decomposed Page Components
@@ -117,8 +117,8 @@ export default function ClassListPage() {
       const getPriority = (c, onTime) => {
         if (onTime) return 3;
 
-        const currentDay = new Date().getDay(); // 0-6 (Sun-Sat)
-        const hasToday = c.daysOfWeek?.includes(currentDay);
+        const currentDay = getNowIST().getDay(); // 0-6 (Sun-Sat)
+        const hasToday = c.schedule?.daysOfWeek?.includes(currentDay);
 
         if (hasToday) return 2;
         return 1;
@@ -144,8 +144,8 @@ export default function ClassListPage() {
       const { onTime } = isClassInSession(c);
       if (onTime) return true;
 
-      const currentDay = new Date().getDay();
-      return c.daysOfWeek?.includes(currentDay);
+      const currentDay = getNowIST().getDay();
+      return c.schedule?.daysOfWeek?.includes(currentDay);
     });
   }, [filteredClasses, tab, debouncedSearch]);
 
@@ -564,8 +564,8 @@ export default function ClassListPage() {
                     <CalendarComponent
                       mode="single"
                       selected={bulkEndDate ? new Date(bulkEndDate) : undefined}
-                      onSelect={(date) => setBulkEndDate(date?.toISOString())}
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      onSelect={(date) => setBulkEndDate(date ? formatIST(date, "yyyy-MM-dd") : "")}
+                      disabled={(date) => formatIST(date, "yyyy-MM-dd") < getTodayISTStr()}
                       initialFocus
                     />
                   </PopoverContent>
@@ -635,8 +635,8 @@ export default function ClassListPage() {
                     <CalendarComponent
                       mode="single"
                       selected={bulkEndDate ? new Date(bulkEndDate) : undefined}
-                      onSelect={(date) => setBulkEndDate(date?.toISOString())}
-                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      onSelect={(date) => setBulkEndDate(date ? formatIST(date, "yyyy-MM-dd") : "")}
+                      disabled={(date) => formatIST(date, "yyyy-MM-dd") < getTodayISTStr()}
                       initialFocus
                     />
                   </PopoverContent>

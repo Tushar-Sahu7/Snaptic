@@ -4,7 +4,7 @@ import { Loader2, ArrowLeft, Calendar as CalendarIcon, CheckCircle2, XCircle } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-utils";
 import axios from "@/lib/axios";
 import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 

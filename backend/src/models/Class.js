@@ -24,27 +24,16 @@ const classSchema = new mongoose.Schema(
       enum: ["active", "archived"],
       default: "active",
     },
-    startDate: {
-      type: String, // ISO Date string (YYYY-MM-DD)
-      required: [true, "Start date is required"],
-    },
-    endDate: {
-      type: String, // ISO Date string (YYYY-MM-DD)
-      required: [true, "End date is required"],
-    },
-    startTime: {
-      type: String, // "HH:mm"
-      required: [true, "Start time is required"],
-    },
-    duration: {
-      type: Number, // minutes
-      required: [true, "Duration is required"],
-      default: 60,
-    },
-    daysOfWeek: {
-      type: [Number], // 0-6
-      required: [true, "Days of week are required"],
-      default: [],
+    schedule: {
+      rrule: {
+        type: String,
+        required: [true, "Schedule RRULE is required"],
+      },
+      duration: {
+        type: Number, // in minutes
+        required: [true, "Duration is required"],
+        default: 60,
+      },
     },
     location: {
       type: String,

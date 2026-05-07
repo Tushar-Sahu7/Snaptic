@@ -6,7 +6,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { isClassInSession } from "@/lib/utils";
+import { isClassInSession } from "@/lib/date-utils";
 import {
   ScanFace,
   Play,

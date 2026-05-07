@@ -37,10 +37,14 @@ import {
   Calendar as CalendarIcon,
   Sparkles,
   Type,
+  ChevronDown,
 } from "lucide-react";
-import { cn, WEEKDAYS, format12Hour } from "@/lib/utils";
 import { IconPicker, Icon as LucideIcon } from "@/components/ui/icon-picker";
 import { motion } from "motion/react";
+import { toUTC, toLocal, formatIST, generateRRuleString, format12Hour, WEEKDAYS, getNowIST, getTodayISTStr, parseSchedule } from "@/lib/date-utils";
+import { formatInTimeZone } from "date-fns-tz";
+import { cn } from "@/lib/utils";
+import { TimePicker } from "./TimePicker";
 
 import {
   ColorPickerSelection,
@@ -101,13 +105,12 @@ const PRESET_COLORS = [
 ];
 
 const DURATION_PRESETS = [
-  { label: "30 Minutes", value: "30" },
-  { label: "45 Minutes", value: "45" },
-  { label: "1 Hour", value: "60" },
-  { label: "1.5 Hours", value: "90" },
-  { label: "2 Hours", value: "120" },
-  { label: "3 Hours", value: "180" },
-  { label: "Custom...", value: "custom" },
+  { label: "30 mins", value: "30" },
+  { label: "45 mins", value: "45" },
+  { label: "1 hr", value: "60" },
+  { label: "1 hr 30 mins", value: "90" },
+  { label: "2 hrs", value: "120" },
+  { label: "3 hrs", value: "180" },
 ];
 
 export default function ClassFormDialog({
@@ -135,6 +138,7 @@ export default function ClassFormDialog({
   const [daysOfWeek, setDaysOfWeek] = useState([]);
   const [location, setLocation] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [isDurationPopoverOpen, setIsDurationPopoverOpen] = useState(false);
 
   // Time intervals for select
   const timeIntervals = useMemo(() => {
@@ -153,22 +157,24 @@ export default function ClassFormDialog({
         setIcon(classData.icon || "book-open");
         setColor(classData.color || "oklch(0.585 0.233 277.117)");
 
-        setStartDate(classData.startDate || "");
-        setEndDate(classData.endDate || "");
-        setStartTime(classData.startTime || "09:00");
-
-        const d = classData.duration || 60;
-        setDuration(d);
-        const isCustom = !DURATION_PRESETS.find(
-          (p) => p.value === d.toString(),
-        );
-        setIsCustomDuration(isCustom);
-        if (isCustom) {
-          setCustomHours(Math.floor(d / 60));
-          setCustomMinutes(d % 60);
+        const parsed = parseSchedule(classData.schedule);
+        if (parsed) {
+          setStartDate(parsed.startDate);
+          setEndDate(parsed.endDate);
+          setStartTime(parsed.startTime);
+          setDuration(parsed.duration);
+          
+          const d = parsed.duration;
+          const isCustom = !DURATION_PRESETS.find(
+            (p) => p.value === d.toString(),
+          );
+          setIsCustomDuration(isCustom);
+          if (isCustom) {
+            setCustomHours(Math.floor(d / 60));
+            setCustomMinutes(d % 60);
+          }
+          setDaysOfWeek(parsed.daysOfWeek || []);
         }
-
-        setDaysOfWeek(classData.daysOfWeek || []);
         setLocation(classData.location || "");
       } else {
         setName("");
@@ -176,16 +182,16 @@ export default function ClassFormDialog({
         setIcon("book-open");
         setColor("oklch(0.585 0.233 277.117)");
 
-        const today = new Date();
-        const sixMonthsLater = new Date();
-        sixMonthsLater.setMonth(today.getMonth() + 6);
+        const now = getNowIST();
+        const sixMonthsLater = getNowIST();
+        sixMonthsLater.setMonth(now.getMonth() + 6);
 
-        setStartDate(today.toISOString().split("T")[0]);
-        setEndDate(sixMonthsLater.toISOString().split("T")[0]);
+        setStartDate(getTodayISTStr());
+        setEndDate(formatIST(sixMonthsLater, "yyyy-MM-dd"));
 
         // Calculate next closest hour
-        const nextHour = new Date(today);
-        nextHour.setHours(today.getHours() + 1, 0, 0, 0);
+        const nextHour = getNowIST();
+        nextHour.setHours(now.getHours() + 1, 0, 0, 0);
         const nextHourStr = `${nextHour.getHours().toString().padStart(2, "0")}:${nextHour.getMinutes().toString().padStart(2, "0")}`;
 
         setStartTime(nextHourStr);
@@ -217,6 +223,14 @@ export default function ClassFormDialog({
     }
   };
 
+  const disabledHours = useMemo(() => {
+    if (startDate === getTodayISTStr()) {
+      const currentH = getNowIST().getHours();
+      return Array.from({ length: currentH + 1 }, (_, i) => i);
+    }
+    return [];
+  }, [startDate]);
+
   async function handleSubmit(e) {
     if (e) e.preventDefault();
     const errors = {};
@@ -225,6 +239,19 @@ export default function ClassFormDialog({
     if (!startDate) errors.startDate = "Start date is required.";
     if (!endDate) errors.endDate = "End date is required.";
     if (daysOfWeek.length === 0) errors.daysOfWeek = "Select at least one day.";
+    
+    // Past Time Validation
+    if (startDate === getTodayISTStr()) {
+      const now = getNowIST();
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      const [selH, selM] = startTime.split(":").map(Number);
+      
+      if (selH < currentH || (selH === currentH && selM <= currentM)) {
+        errors.startTime = "Start time must be in the future.";
+      }
+    }
+
     const finalDuration = isCustomDuration
       ? customHours * 60 + customMinutes
       : parseInt(duration);
@@ -239,12 +266,17 @@ export default function ClassFormDialog({
         description: description.trim(),
         icon,
         color,
-        startDate,
-        endDate,
-        startTime,
-        duration: finalDuration,
-        daysOfWeek,
         location: location.trim(),
+        schedule: {
+          rrule: generateRRuleString({
+            startDate,
+            startTime,
+            endDate,
+            daysOfWeek,
+            duration: finalDuration,
+          }),
+          duration: finalDuration,
+        },
       };
 
       if (isEdit) {
@@ -435,29 +467,26 @@ export default function ClassFormDialog({
               <Clock size={12} /> Time & Schedule
             </h3>
 
-            <div className="flex flex-col gap-6">
-              <Field
-                data-invalid={!!(fieldErrors.startDate || fieldErrors.endDate)}
-              >
-                <FieldLabel className="text-xs font-bold text-muted-foreground mb-2 block">
-                  Validity Period
-                </FieldLabel>
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-6">              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field data-invalid={!!fieldErrors.startDate}>
+                  <FieldLabel className="text-xs font-bold text-muted-foreground mb-2 block">
+                    Start Date
+                  </FieldLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         type="button"
                         className={cn(
-                          "h-12 flex-1 justify-start text-left font-bold text-xs rounded-xl bg-muted/50 border-border",
+                          "h-12 w-full justify-start text-left font-bold text-xs rounded-xl bg-muted/50 border-border",
                           !startDate && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {startDate ? (
-                          format(new Date(startDate), "dd/MM/yyyy")
+                          formatIST(startDate, "dd/MM/yyyy")
                         ) : (
-                          <span>Start</span>
+                          <span>Select Start Date</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -471,18 +500,14 @@ export default function ClassFormDialog({
                         selected={startDate ? new Date(startDate) : undefined}
                         onSelect={(date) => {
                           if (date) {
-                            const tzOffsetDate = new Date(
-                              date.getTime() - date.getTimezoneOffset() * 60000,
-                            );
-                            setStartDate(
-                              tzOffsetDate.toISOString().split("T")[0],
-                            );
+                            setStartDate(formatInTimeZone(date, "Asia/Kolkata", "yyyy-MM-dd"));
+                            setFieldErrors((prev) => ({ ...prev, startDate: undefined }));
                           } else {
                             setStartDate("");
                           }
                         }}
                         disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                          formatIST(date, "yyyy-MM-dd") < getTodayISTStr()
                         }
                         initialFocus
                         captionLayout="dropdown"
@@ -491,24 +516,30 @@ export default function ClassFormDialog({
                       />
                     </PopoverContent>
                   </Popover>
+                  {fieldErrors.startDate && (
+                    <FieldError>{fieldErrors.startDate}</FieldError>
+                  )}
+                </Field>
 
-                  <div className="h-px w-3 bg-muted-foreground/30 shrink-0" />
-
+                <Field data-invalid={!!fieldErrors.endDate}>
+                  <FieldLabel className="text-xs font-bold text-muted-foreground mb-2 block">
+                    End Date
+                  </FieldLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         type="button"
                         className={cn(
-                          "h-12 flex-1 justify-start text-left font-bold text-xs rounded-xl bg-muted/50 border-border",
+                          "h-12 w-full justify-start text-left font-bold text-xs rounded-xl bg-muted/50 border-border",
                           !endDate && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {endDate ? (
-                          format(new Date(endDate), "dd/MM/yyyy")
+                          formatIST(endDate, "dd/MM/yyyy")
                         ) : (
-                          <span>End</span>
+                          <span>Select End Date</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -519,29 +550,22 @@ export default function ClassFormDialog({
                     >
                       <Calendar
                         mode="single"
-                        selected={endDate ? new Date(endDate) : undefined}
-                        defaultMonth={endDate ? new Date(endDate) : undefined}
+                        selected={endDate ? toLocal(endDate) : undefined}
+                        defaultMonth={endDate ? toLocal(endDate) : undefined}
                         onSelect={(date) => {
                           if (date) {
-                            const tzOffsetDate = new Date(
-                              date.getTime() - date.getTimezoneOffset() * 60000,
-                            );
-                            setEndDate(
-                              tzOffsetDate.toISOString().split("T")[0],
-                            );
+                            setEndDate(formatInTimeZone(date, "Asia/Kolkata", "yyyy-MM-dd"));
+                            setFieldErrors((prev) => ({ ...prev, endDate: undefined }));
                           } else {
                             setEndDate("");
                           }
                         }}
                         disabled={(date) => {
-                          const today = new Date(
-                            new Date().setHours(0, 0, 0, 0),
-                          );
+                          const todayStr = getTodayISTStr();
                           if (startDate) {
-                            const start = new Date(startDate + "T00:00:00");
-                            return date < start;
+                            return formatIST(date, "yyyy-MM-dd") < startDate;
                           }
-                          return date < today;
+                          return formatIST(date, "yyyy-MM-dd") < todayStr;
                         }}
                         initialFocus
                         captionLayout="dropdown"
@@ -550,41 +574,34 @@ export default function ClassFormDialog({
                       />
                     </PopoverContent>
                   </Popover>
-                </div>
-                {(fieldErrors.startDate || fieldErrors.endDate) && (
-                  <FieldError>
-                    {fieldErrors.startDate || fieldErrors.endDate}
-                  </FieldError>
-                )}
-              </Field>
+                  {fieldErrors.endDate && (
+                    <FieldError>{fieldErrors.endDate}</FieldError>
+                  )}
+                </Field>
+              </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field>
+                <Field data-invalid={!!fieldErrors.startTime}>
                   <FieldLabel className="text-xs font-bold text-muted-foreground mb-2 block">
                     Start Time
                   </FieldLabel>
-                  <div className="relative">
-                    <Select value={startTime} onValueChange={setStartTime}>
-                      <SelectTrigger className="data-[size=default]:h-12 w-full pl-10 rounded-xl bg-muted/50 border-border font-bold text-sm">
-                        <SelectValue placeholder="Start" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-48 rounded-xl">
-                        {timeIntervals.map((t) => (
-                          <SelectItem
-                            key={t}
-                            value={t}
-                            className="text-xs font-bold"
-                          >
-                            {format12Hour(t)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Clock
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
-                    />
-                  </div>
+                  <TimePicker
+                    id="start-time"
+                    value={startTime}
+                    onChange={(val) => {
+                      setStartTime(val);
+                      setFieldErrors((prev) => ({ ...prev, startTime: undefined }));
+                    }}
+                    onInput={() => {
+                      setFieldErrors((prev) => ({ ...prev, startTime: undefined }));
+                    }}
+                    disabledHours={disabledHours}
+                    aria-invalid={!!fieldErrors.startTime}
+                  />
+                  {fieldErrors.startTime && (
+                    <FieldError>{fieldErrors.startTime}</FieldError>
+                  )}
                 </Field>
 
                 <Field data-invalid={!!fieldErrors.duration}>
@@ -593,31 +610,98 @@ export default function ClassFormDialog({
                   </FieldLabel>
                   <div className="flex flex-col gap-2">
                     <div className="relative">
-                      <Select
-                        value={
-                          isCustomDuration ? "custom" : duration.toString()
-                        }
-                        onValueChange={handleDurationChange}
+                      <Popover
+                        open={isDurationPopoverOpen}
+                        onOpenChange={setIsDurationPopoverOpen}
                       >
-                        <SelectTrigger className="data-[size=default]:h-12 w-full pl-10 rounded-xl bg-muted/50 border-border font-bold text-sm">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-48 rounded-xl">
-                          {DURATION_PRESETS.map((p) => (
-                            <SelectItem
-                              key={p.value}
-                              value={p.value}
-                              className="text-xs font-bold"
-                            >
-                              {p.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Clock
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
-                      />
+                        <PopoverTrigger asChild>
+                          <div className="relative group cursor-pointer">
+                            <Input
+                              value={
+                                isCustomDuration
+                                  ? `${customHours} hr${customHours !== 1 ? "s" : ""}${
+                                      customMinutes > 0
+                                        ? ` ${customMinutes} mins`
+                                        : ""
+                                    }`
+                                  : DURATION_PRESETS.find(
+                                      (p) => p.value === duration.toString(),
+                                    )?.label || `${duration} mins`
+                              }
+                              readOnly
+                              className="h-12 w-full pl-10 pr-10 rounded-xl bg-muted/50 border-border font-bold text-sm cursor-pointer transition-all focus-visible:ring-primary/20"
+                              placeholder="Select duration"
+                            />
+                            <Clock
+                              size={16}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none transition-colors group-focus-within:text-primary"
+                            />
+                            <ChevronDown
+                              size={16}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none transition-colors group-focus-within:text-primary"
+                            />
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-[var(--radix-popover-trigger-width)] p-1 rounded-xl shadow-xl border-border bg-popover"
+                          align="start"
+                          sideOffset={8}
+                          onWheel={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <div
+                            className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent overscroll-contain"
+                            onWheel={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex flex-col gap-0.5">
+                              {DURATION_PRESETS.map((p) => {
+                                const isSelected =
+                                  !isCustomDuration &&
+                                  duration.toString() === p.value;
+                                return (
+                                  <Button
+                                    key={p.value}
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                      "justify-start font-bold text-xs h-10 rounded-lg px-3 shrink-0",
+                                      isSelected &&
+                                        "bg-primary text-primary-foreground hover:bg-primary/90",
+                                    )}
+                                    onClick={() => {
+                                      handleDurationChange(p.value);
+                                      setIsDurationPopoverOpen(false);
+                                    }}
+                                  >
+                                    {p.label}
+                                    {isSelected && (
+                                      <div className="ml-auto size-1.5 rounded-full bg-current" />
+                                    )}
+                                  </Button>
+                                );
+                              })}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn(
+                                  "justify-start font-bold text-xs h-10 rounded-lg px-3 shrink-0",
+                                  isCustomDuration &&
+                                    "bg-primary text-primary-foreground hover:bg-primary/90",
+                                )}
+                                onClick={() => {
+                                  handleDurationChange("custom");
+                                  setIsDurationPopoverOpen(false);
+                                }}
+                              >
+                                Custom Duration...
+                                {isCustomDuration && (
+                                  <div className="ml-auto size-1.5 rounded-full bg-current" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {isCustomDuration && (
@@ -678,10 +762,10 @@ export default function ClassFormDialog({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    const monToSat = [1, 2, 3, 4, 5, 6];
+                    const monToSat = [0, 1, 2, 3, 4, 5];
                     const hasAllMonSat =
                       monToSat.every((d) => daysOfWeek.includes(d)) &&
-                      !daysOfWeek.includes(0);
+                      !daysOfWeek.includes(6);
                     if (hasAllMonSat) {
                       setDaysOfWeek([]);
                     } else {

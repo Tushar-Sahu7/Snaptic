@@ -51,7 +51,7 @@ import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDis
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
 import ClassImportStudentsModal from "@/features/classes/components/ClassImportStudentsModal";
 import { useDebounce } from "@/hooks/use-debounce";
-import { isClassInSession } from "@/lib/utils";
+import { isClassInSession } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 export default function ClassDetailPage() {
@@ -150,8 +150,7 @@ export default function ClassDetailPage() {
             </div>
             <div className="flex items-center gap-4 text-muted-foreground font-medium">
               <ClassScheduleDisplay 
-                daysOfWeek={classData.daysOfWeek} 
-                startTime={classData.startTime} 
+                schedule={classData.schedule} 
               />
             </div>
           </div>

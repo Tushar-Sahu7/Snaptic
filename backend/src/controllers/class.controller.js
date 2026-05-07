@@ -4,13 +4,17 @@ const Enrollment = require("../models/Enrollment");
 const TeacherProfile = require("../models/TeacherProfile");
 const StudentProfile = require("../models/StudentProfile");
 const sessionManager = require("../services/sessionManager");
+const { formatIST, getNowIST } = require("../utils/dateUtils");
+const { RRule } = require("rrule");
 
 // Helper: Just-In-Time Archiving
 const ensureArchivedIfExpired = async (classDoc) => {
   if (classDoc.status === "archived") return classDoc;
   
-  const today = new Date().toISOString().split("T")[0];
-  if (classDoc.endDate < today) {
+  const endDate = classDoc.schedule?.endDate;
+  const today = formatIST(new Date(), "yyyy-MM-dd");
+  
+  if (endDate && endDate < today) {
     classDoc.status = "archived";
     await Class.findByIdAndUpdate(classDoc._id, { status: "archived" });
   }
@@ -20,11 +24,20 @@ const ensureArchivedIfExpired = async (classDoc) => {
 // POST /api/classes
 const createClass = async (req, res) => {
   try {
-    const { name, description, icon, color, startDate, endDate, startTime, duration, daysOfWeek, location } = req.body;
+    const { name, description, icon, color, schedule, location } = req.body;
     const teacherId = req.user.userId;
 
-    if (!name || !startDate || !endDate || !startTime || !daysOfWeek) {
+    if (!name || (!schedule?.rrule && !req.body.startDate)) {
       return res.status(400).json({ message: "Required fields missing" });
+    }
+
+    // Validation: Prevent scheduling in the past
+    if (schedule?.rrule) {
+      const rule = RRule.fromString(schedule.rrule);
+      const now = new Date(); // Use absolute UTC comparison
+      if (rule.options.dtstart < now) {
+        return res.status(400).json({ message: "Start time cannot be in the past" });
+      }
     }
 
     const newClass = await Class.create({
@@ -32,16 +45,12 @@ const createClass = async (req, res) => {
       description,
       icon: icon || "BookOpen",
       color: color || "oklch(0.6 0.2 250)",
-      startDate,
-      endDate,
-      startTime,
-      duration: duration || 60,
-      daysOfWeek: daysOfWeek || [],
+      schedule, 
       location,
       teacherId,
     });
 
-    // Generate sessions
+    // Generate sessions using RRULE logic
     await sessionManager.syncClassSessions(newClass);
 
     return res.status(201).json({ class: newClass });
@@ -164,10 +173,9 @@ const getClassById = async (req, res) => {
   }
 };
 
-// PUT /api/classes/:id
 const updateClass = async (req, res) => {
   try {
-    const { name, description, icon, color, startDate, endDate, startTime, duration, daysOfWeek, location, status } = req.body;
+    const { name, description, icon, color, schedule, location, status } = req.body;
     const classDoc = await Class.findById(req.params.id);
 
     if (!classDoc || classDoc.deletedAt) return res.status(404).json({ message: "Class not found" });
@@ -178,16 +186,24 @@ const updateClass = async (req, res) => {
     if (icon) classDoc.icon = icon;
     if (color) classDoc.color = color;
     if (status) classDoc.status = status;
-    if (startDate) classDoc.startDate = startDate;
-    if (endDate) classDoc.endDate = endDate;
-    if (startTime) classDoc.startTime = startTime;
-    if (duration) classDoc.duration = duration;
-    if (daysOfWeek) classDoc.daysOfWeek = daysOfWeek;
     if (location !== undefined) classDoc.location = location;
+
+    // Update schedule if provided
+    if (schedule) {
+      // Validation: Prevent scheduling in the past for new start dates
+      if (schedule.rrule) {
+        const rule = RRule.fromString(schedule.rrule);
+        const now = new Date();
+        if (rule.options.dtstart < now) {
+          return res.status(400).json({ message: "Start time cannot be in the past" });
+        }
+      }
+      classDoc.schedule = schedule;
+    }
 
     await classDoc.save();
 
-    // Regenerate future sessions
+    // Regenerate future sessions using the updated schedule
     await sessionManager.syncClassSessions(classDoc);
 
     return res.status(200).json({ class: classDoc });
@@ -225,7 +241,10 @@ const bulkUpdateStatus = async (req, res) => {
     }
 
     const updateData = { status };
-    if (endDate) updateData.endDate = endDate;
+    if (endDate && status === "archived") {
+      // In bulk update, if we are archiving, we might want to update the schedule's end date
+      // but usually bulk update just flips the status.
+    }
 
     await Class.updateMany(
       { _id: { $in: classIds }, teacherId: req.user.userId },

@@ -14,8 +14,8 @@ import {
   formatRoom,
   isClassInSession,
   formatClassTimeRange,
-  cn,
-} from "@/lib/utils";
+} from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -152,7 +152,7 @@ const ClassCard = memo(
                 <Clock size={10} className="opacity-70" /> Schedule
               </p>
               <p className="text-sm font-bold text-foreground/90">
-                {cls.startTime ? formatClassTimeRange(cls) : "Not Set"}
+                {formatClassTimeRange(cls)}
               </p>
             </div>
 
@@ -161,7 +161,7 @@ const ClassCard = memo(
                 <CalendarDays size={10} className="opacity-70" /> Occurrence
               </p>
               <p className="text-sm font-bold text-foreground/90 truncate">
-                {formatDays(cls.daysOfWeek)}
+                {formatDays(cls.schedule)}
               </p>
             </div>
           </div>

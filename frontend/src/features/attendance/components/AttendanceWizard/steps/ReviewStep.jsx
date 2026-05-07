@@ -19,7 +19,8 @@ import { useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import { useState, useEffect } from "react";
-import { format12Hour, formatRoom, cn } from "@/lib/utils";
+import { format12Hour, formatRoom } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 
 import {

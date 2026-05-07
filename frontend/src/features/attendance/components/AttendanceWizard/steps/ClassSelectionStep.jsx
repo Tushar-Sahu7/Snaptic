@@ -3,7 +3,7 @@ import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import { PrimaryAttendanceAction } from "@/features/attendance/components/PrimaryAttendanceAction";
 import { Badge } from "@/components/ui/badge";
-import { isClassInSession } from "@/lib/utils";
+import { isClassInSession } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 

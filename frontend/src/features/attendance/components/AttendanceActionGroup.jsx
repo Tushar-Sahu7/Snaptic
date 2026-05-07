@@ -1,5 +1,5 @@
 import { ButtonGroup } from "@/components/ui/button-group";
-import { isClassInSession } from "@/lib/utils";
+import { isClassInSession } from "@/lib/date-utils";
 import { PrimaryAttendanceAction } from "./PrimaryAttendanceAction";
 import { ManualEntryButton } from "./ManualEntryButton";
 import { ViewRecordButton } from "./ViewRecordButton";

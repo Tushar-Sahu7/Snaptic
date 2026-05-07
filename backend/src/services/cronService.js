@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const AttendanceSession = require("../models/AttendanceSession");
 const AttendanceRecord = require("../models/AttendanceRecord");
 const Class = require("../models/Class");
+const { formatIST } = require("../utils/dateUtils");
 
 /**
  * Finalization Job: Runs every 5 minutes to lock sessions and handle misses.
@@ -55,12 +56,12 @@ async function runFinalizationJob() {
  */
 async function runArchivingJob() {
   console.log("Running Class Archiving Job...");
-  const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const todayStr = formatIST(new Date(), "yyyy-MM-dd"); // YYYY-MM-DD
 
   try {
     const expiredClasses = await Class.find({
       status: "active",
-      endDate: { $lt: todayStr }
+      "schedule.endDate": { $lt: todayStr }
     });
 
     for (const classDoc of expiredClasses) {

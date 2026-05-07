@@ -2,6 +2,7 @@ const AttendanceSession = require("../models/AttendanceSession");
 const AttendanceRecord = require("../models/AttendanceRecord");
 const Class = require("../models/Class");
 const StudentProfile = require("../models/StudentProfile");
+const { getISTDayBounds } = require("../utils/dateUtils");
 
 // --- CONTROLLERS ---
 
@@ -17,15 +18,14 @@ const startSession = async (req, res) => {
     const teacherId = req.user.userId;
     const now = new Date();
 
-    // 1. Find the session scheduled for today
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    // 1. Find the session scheduled for today in IST
+    const { startUTC, endUTC } = getISTDayBounds(now);
 
     // Find without population first to avoid saving issues with populated docs
     let session = await AttendanceSession.findOne({
       classId,
       teacherId,
-      startTime: { $gte: startOfDay, $lte: endOfDay },
+      startTime: { $gte: startUTC, $lte: endUTC },
       status: { $in: ["scheduled", "inprogress", "submitted"] }
     }).session(dbSession);
 
@@ -179,12 +179,10 @@ const resetSession = async (req, res) => {
 const getTodaySession = async (req, res) => {
   try {
     const { classId } = req.params;
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const { startUTC, endUTC } = getISTDayBounds(new Date());
 
     const query = {
-      startTime: { $gte: startOfDay, $lte: endOfDay }
+      startTime: { $gte: startUTC, $lte: endUTC }
     };
 
     if (classId) {
