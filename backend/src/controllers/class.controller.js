@@ -157,7 +157,6 @@ const getClassById = async (req, res) => {
         faceEnrolled: profile?.faceEnrolled || false,
         enrollmentId: e._id,
         status: e.status,
-        enrolledAt: e.enrolledAt
       };
     }));
 
@@ -353,6 +352,48 @@ const removeStudent = async (req, res) => {
   }
 };
 
+// DELETE /api/classes/:id/students/bulk
+const bulkRemoveStudents = async (req, res) => {
+  try {
+    const { id: classId } = req.params;
+    const { studentIds } = req.body;
+
+    if (!studentIds || !Array.isArray(studentIds)) {
+      return res.status(400).json({ message: "studentIds must be an array" });
+    }
+
+    const classDoc = await Class.findById(classId);
+    if (!classDoc) return res.status(404).json({ message: "Class not found" });
+    if (classDoc.teacherId.toString() !== req.user.userId) return res.status(403).json({ message: "Unauthorized" });
+
+    // Find active enrollments to be removed
+    const enrollmentsToUpdate = await Enrollment.find({
+      classId,
+      studentId: { $in: studentIds },
+      status: "active"
+    });
+
+    const updateCount = enrollmentsToUpdate.length;
+
+    if (updateCount > 0) {
+      await Enrollment.updateMany(
+        {
+          classId,
+          studentId: { $in: studentIds },
+          status: "active"
+        },
+        { status: "inactive" }
+      );
+
+      await Class.findByIdAndUpdate(classId, { $inc: { studentCount: -updateCount } });
+    }
+
+    return res.status(200).json({ message: `Successfully removed ${updateCount} student(s)` });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 // POST /api/classes/:id/enrollments/import
 const importStudents = async (req, res) => {
   try {
@@ -447,6 +488,7 @@ module.exports = {
   bulkDeleteClasses,
   addStudent,
   removeStudent,
+  bulkRemoveStudents,
   importStudents,
   searchStudents,
 };

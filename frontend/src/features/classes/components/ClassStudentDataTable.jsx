@@ -25,6 +25,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -82,9 +83,9 @@ export default function StudentDataTable({
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL sync helpers
-  const initialPage = syncUrl ? (Number(searchParams.get("page")) || 1) : 1;
-  const initialSize = syncUrl ? (Number(searchParams.get("size")) || 10) : 10;
-  const initialSearch = syncUrl ? (searchParams.get("q") || "") : "";
+  const initialPage = syncUrl ? Number(searchParams.get("page")) || 1 : 1;
+  const initialSize = syncUrl ? Number(searchParams.get("size")) || 10 : 10;
+  const initialSearch = syncUrl ? searchParams.get("q") || "" : "";
   const initialSort = React.useMemo(() => {
     if (!syncUrl) return [];
     const s = searchParams.get("sort");
@@ -94,7 +95,9 @@ export default function StudentDataTable({
   }, [searchParams, syncUrl]);
 
   const [rowSelection, setRowSelection] = React.useState({});
-  const [sorting, setSorting] = React.useState(initialSort.length ? initialSort : [{ id: "name", desc: false }]);
+  const [sorting, setSorting] = React.useState(
+    initialSort.length ? initialSort : [{ id: "name", desc: false }],
+  );
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState(initialSearch);
   const [pagination, setPagination] = React.useState({
@@ -105,7 +108,7 @@ export default function StudentDataTable({
   // Update URL when table state changes
   React.useEffect(() => {
     if (!syncUrl) return;
-    
+
     const params = new URLSearchParams(searchParams);
 
     if (globalFilter) params.set("q", globalFilter);
@@ -130,7 +133,14 @@ export default function StudentDataTable({
     if (params.toString() !== searchParams.toString()) {
       setSearchParams(params, { replace: true });
     }
-  }, [globalFilter, sorting, pagination, setSearchParams, searchParams, syncUrl]);
+  }, [
+    globalFilter,
+    sorting,
+    pagination,
+    setSearchParams,
+    searchParams,
+    syncUrl,
+  ]);
 
   React.useEffect(() => {
     if (onSelectionChange) {
@@ -176,13 +186,16 @@ export default function StudentDataTable({
                 )}
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-sm text-foreground leading-tight">{student.name}</span>
-                <span className="text-xs text-muted-foreground">{student.email || "No email provided"}</span>
+                <span className="font-bold text-sm text-foreground leading-tight">
+                  {student.name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {student.email || "No email provided"}
+                </span>
               </div>
             </div>
           );
         },
-
       },
 
       {
@@ -222,7 +235,7 @@ export default function StudentDataTable({
         enableHiding: false,
       },
     ];
- 
+
     let finalCols = cols;
 
     if (selectable) {
@@ -283,156 +296,189 @@ export default function StudentDataTable({
   return (
     <div>
       {!hideToolbar && (
-        <div>
-          <InputGroup>
-          <InputGroupAddon align="inline-start">
-            <Search data-icon="inline-start" />
-          </InputGroupAddon>
-          <InputGroupInput
-            placeholder="Search students…"
-            value={globalFilter ?? ""}
-            onChange={(event) => table.setGlobalFilter(event.target.value)}
-            disabled={loading}
-          />
-        </InputGroup>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+          <div className="relative group w-full sm:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-all duration-300" />
+            <Input
+              placeholder="Search students..."
+              value={globalFilter ?? ""}
+              onChange={(event) => table.setGlobalFilter(event.target.value)}
+              disabled={loading}
+              className="pl-10 h-11 rounded-xl bg-background border-border/50 focus:ring-2 focus:ring-primary/10 focus:border-primary/30 font-medium transition-all shadow-sm"
+            />
+          </div>
 
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            {toolbarActions && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                {toolbarActions}
+              </div>
+            )}
 
-        {toolbarActions && (
-          <div>{toolbarActions}</div>
-        )}
-
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Columns{" "}
-                <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id === "faceEnrolled"
-                        ? "Face status"
-                        : column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-11 rounded-xl font-bold gap-2 px-5 bg-background border-border/50 hover:bg-muted/50 transition-all hover:border-primary/30 shadow-sm"
+                >
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <span>Columns</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="rounded-xl w-48 p-1.5 shadow-lg border-border/50"
+              >
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="rounded-lg font-medium"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {column.id === "faceEnrolled"
+                          ? "Face Enrollment Status"
+                          : column.id.charAt(0).toUpperCase() +
+                            column.id.slice(1)}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
       )}
-
 
       <div>
         <div>
           <Table>
-            <TableHeader>
-
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const isFaceStatus = header.column.id === "faceEnrolled";
-                  return (
-                    <TableHead
-                      key={header.id}
-                    >
-
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              Array.from({ length: initialSize }).map((_, i) => (
-                <TableRow key={i}>
-                  {columns.map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+            <TableHeader className="bg-muted/30 hover:bg-muted/30 transition-none">
+              {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="group hover:bg-muted/30 transition-colors duration-200"
+                  key={headerGroup.id}
+                  className="hover:bg-transparent border-b border-border/50"
                 >
-
-                  {row.getVisibleCells().map((cell) => {
-                    const isFaceStatus = cell.column.id === "faceEnrolled";
+                  {headerGroup.headers.map((header) => {
                     return (
-                      <TableCell 
-                        key={cell.id}
+                      <TableHead
+                        key={header.id}
+                        className="h-12 text-xs font-bold uppercase tracking-wider text-muted-foreground/70 py-3"
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
                     );
                   })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                >
-                  No students found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: initialSize }).map((_, i) => (
+                  <TableRow key={i}>
+                    {columns.map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="group hover:bg-primary/2 transition-colors duration-200 border-b border-border/40 last:border-0"
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const isFaceStatus = cell.column.id === "faceEnrolled";
+                      return (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length}>
+                    No students found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
           </Table>
         </div>
       </div>
 
-      <div>
-        <div>
-          {selectable
-            ? `${table.getFilteredSelectedRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} row(s) selected.`
-            : `Showing ${table.getRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} row(s).`}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-2 py-6 border-t border-border/40 mt-4">
+        <div className="text-sm font-medium text-muted-foreground bg-muted/20 px-4 py-2 rounded-lg border border-border/30">
+          {selectable ? (
+            <>
+              <span className="text-primary font-bold">
+                {table.getFilteredSelectedRowModel().rows.length}
+              </span>
+              {" students selected of "}
+              <span className="font-bold text-foreground">
+                {table.getFilteredRowModel().rows.length}
+              </span>
+            </>
+          ) : (
+            <>
+              {"Showing "}
+              <span className="font-bold text-foreground">
+                {table.getRowModel().rows.length}
+              </span>
+              {" of "}
+              <span className="font-bold text-foreground">
+                {table.getFilteredRowModel().rows.length}
+              </span>
+              {" students"}
+            </>
+          )}
         </div>
 
-        <div className="flex items-center gap-6 lg:gap-8">
+        <div className="flex flex-col sm:flex-row items-center gap-6 lg:gap-8">
           <div className="flex items-center gap-3">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">Rows per page</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+              Rows per page
+            </p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
                 table.setPageSize(Number(value));
               }}
             >
-              <SelectTrigger className="h-8 w-[70px] rounded-lg bg-background border-muted-foreground/10 focus:ring-primary/10">
+              <SelectTrigger className="h-9 w-[80px] rounded-xl bg-background border-border/50 focus:ring-primary/10 font-bold">
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
               </SelectTrigger>
-              <SelectContent side="top" className="rounded-xl border-border/50">
+              <SelectContent
+                side="top"
+                className="rounded-xl border-border/50 shadow-xl"
+              >
                 {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`} className="rounded-lg">
+                  <SelectItem
+                    key={pageSize}
+                    value={`${pageSize}`}
+                    className="rounded-lg font-medium"
+                  >
                     {pageSize}
                   </SelectItem>
                 ))}
@@ -440,9 +486,7 @@ export default function StudentDataTable({
             </Select>
           </div>
 
-
           <Pagination>
-
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious

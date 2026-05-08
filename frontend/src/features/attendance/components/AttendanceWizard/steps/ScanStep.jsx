@@ -23,9 +23,9 @@ export const ScanStep = ({
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col h-full space-y-8 pb-10">
+    <div className="flex flex-col h-full space-y-6 pb-10">
       {/* Immersive Camera Container */}
-      <div className="relative flex-1 rounded-[48px] overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-black shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] group">
+      <div className="relative flex-1 rounded-3xl overflow-hidden border border-border bg-black shadow-sm group">
         <AttendanceRecognitionStep
           students={[...students].sort((a, b) => {
             const pA = profiles[a._id.toString()];
@@ -44,41 +44,41 @@ export const ScanStep = ({
         />
         
         {/* Detection Overlay - Top Left */}
-        <div className="absolute top-8 left-8 flex flex-col gap-3">
+        <div className="absolute top-6 left-6 flex flex-col gap-2">
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/10 text-white shadow-2xl"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/80 backdrop-blur-md border border-border text-foreground shadow-sm"
           >
             <div className="relative flex items-center justify-center">
-              <span className="absolute w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-              <span className="relative w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="absolute w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span className="relative w-2 h-2 rounded-full bg-emerald-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Recognition Live</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest opacity-90">Live Scan</span>
           </motion.div>
 
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/10 text-white shadow-2xl"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/80 backdrop-blur-md border border-border text-foreground shadow-sm"
           >
-            <Activity className="w-4 h-4 text-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Auto-Optimizing View</span>
+            <Activity className="w-3.5 h-3.5 text-primary animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest opacity-90">Auto-Optimizing</span>
           </motion.div>
         </div>
 
         {/* Floating Stats - Bottom Right */}
-        <div className="absolute bottom-8 right-8 flex flex-col items-end gap-3 pointer-events-none">
+        <div className="absolute bottom-6 right-6 flex flex-col items-end gap-2 pointer-events-none">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-black/60 backdrop-blur-3xl p-6 rounded-[32px] border border-white/10 shadow-2xl space-y-1"
+            className="bg-background/80 backdrop-blur-md p-5 rounded-2xl border border-border shadow-sm space-y-0.5"
           >
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Class Presence</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-white tabular-nums">{presentCount}</span>
-              <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">/ {students.length}</span>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Present</p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold text-foreground tabular-nums">{presentCount}</span>
+              <span className="text-xs font-medium text-muted-foreground">/ {students.length}</span>
             </div>
           </motion.div>
         </div>
@@ -86,46 +86,45 @@ export const ScanStep = ({
 
       {/* Control Bar */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-2xl p-8 rounded-[40px] border border-white/20 dark:border-zinc-800/50 shadow-2xl shadow-zinc-200/50 dark:shadow-none"
+        className="flex flex-col md:flex-row items-center justify-between gap-6 bg-muted/30 p-6 rounded-3xl border border-border"
       >
-        <div className="flex flex-col sm:flex-row items-center gap-8">
-          <div className="flex items-center gap-4">
-            <div className="p-4 rounded-2xl bg-primary/10 text-primary shadow-inner">
-              <Users className="w-6 h-6" />
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-primary/10 text-primary">
+              <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Step 02</p>
-              <h4 className="text-xl font-black text-zinc-900 dark:text-zinc-50 italic uppercase tracking-tight">Active Scanning</h4>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Recognition</p>
+              <h4 className="text-lg font-bold text-foreground tracking-tight">Active Scan</h4>
             </div>
           </div>
           
-          <div className="hidden sm:block w-px h-12 bg-zinc-200 dark:bg-zinc-800" />
+          <div className="hidden sm:block w-px h-8 bg-border" />
           
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 max-w-xs text-center sm:text-left">
-            The system is identifying students in real-time. You can switch to manual marking at any time.
+          <p className="text-xs font-medium text-muted-foreground max-w-xs text-center sm:text-left">
+            The system is identifying students in real-time. Switch to manual marking if needed.
           </p>
         </div>
 
-        <div className="flex items-center gap-4 w-full md:w-auto">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <Button
             variant="ghost"
             onClick={onComplete}
             disabled={loading || isFinalized}
-            className="flex-1 md:flex-none rounded-2xl h-16 px-8 font-black uppercase tracking-widest text-[10px] text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all"
+            className="flex-1 md:flex-none rounded-xl h-12 px-6 font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-foreground transition-all"
           >
             <SquarePen className="w-4 h-4 mr-2" />
-            Manual Mark
+            Manual
           </Button>
           <Button
-            size="lg"
             onClick={onComplete}
             disabled={loading || isFinalized}
-            className="flex-1 md:flex-none rounded-[24px] h-16 px-12 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black uppercase tracking-[0.2em] text-[11px] shadow-2xl shadow-zinc-900/20 dark:shadow-white/5 hover:scale-105 active:scale-95 transition-all"
+            className="flex-1 md:flex-none rounded-xl h-12 px-8 bg-foreground text-background font-bold uppercase tracking-widest text-[10px] transition-all"
           >
             Finish & Review
-            <ChevronRight className="ml-2 w-5 h-5" />
+            <ChevronRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
       </motion.div>

@@ -11,6 +11,7 @@ const {
   addStudent,
   importStudents,
   removeStudent,
+  bulkRemoveStudents,
   searchStudents,
 } = require("../controllers/class.controller");
 const { protect, restrictTo } = require("../middlewares/auth.middleware");
@@ -154,6 +155,24 @@ router.route("/")
 router.put("/bulk/status", restrictTo("teacher"), bulkUpdateStatus);
 router.delete("/bulk", restrictTo("teacher"), bulkDeleteClasses);
 
+/**
+ * @swagger
+ * /api/classes/students/search:
+ *   get:
+ *     summary: Search for students by email or name
+ *     tags: [Classes]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of students found
+ */
+router.get("/students/search", searchStudents);
+
 router.route("/:id")
   .get(getClassById)
   .put(restrictTo("teacher"), updateClass)
@@ -236,24 +255,7 @@ router.post("/:id/enrollments/import", restrictTo("teacher"), importStudents);
  *       200:
  *         description: Student removed
  */
+router.delete("/:id/students/bulk", restrictTo("teacher"), bulkRemoveStudents);
 router.delete("/:id/students/:studentId", restrictTo("teacher"), removeStudent);
-
-/**
- * @swagger
- * /api/classes/students/search:
- *   get:
- *     summary: Search for students by email or name
- *     tags: [Classes]
- *     parameters:
- *       - in: query
- *         name: q
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of students found
- */
-router.get("/students/search", searchStudents);
 
 module.exports = router;

@@ -77,35 +77,32 @@ export const ClassSelectionStep = ({
   });
 
   return (
-    <div className="space-y-16 py-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
-      <div className="max-w-3xl space-y-6">
-        <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Attendance Wizard</p>
-          <h2 className="text-5xl md:text-6xl font-black tracking-tighter text-zinc-900 dark:text-zinc-50 italic uppercase leading-[0.9]">
-            Ready to <span className="text-primary not-italic">Scan?</span>
-          </h2>
-        </div>
-        <p className="text-xl text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed max-w-xl">
-          Select your class below to begin the biometric recognition session. Only active classes are shown for real-time tracking.
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out">
+      <div className="space-y-1">
+        <h3 className="text-3xl font-black tracking-tighter text-foreground uppercase">
+          Select Class
+        </h3>
+        <p className="text-sm text-muted-foreground font-medium tracking-tight">
+          Choose a class to begin taking attendance via face scan or manual entry.
         </p>
       </div>
 
       {sortedClasses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 px-4 bg-white/50 dark:bg-zinc-900/30 backdrop-blur-xl rounded-[48px] border border-dashed border-zinc-200 dark:border-zinc-800 text-center shadow-inner">
-          <div className="w-24 h-24 rounded-[32px] bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center mb-8 shadow-2xl">
-            <CalendarDays className="w-12 h-12 text-zinc-300" />
+        <div className="flex flex-col items-center justify-center py-24 px-4 bg-muted/30 rounded-3xl border border-dashed border-border text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-6">
+            <CalendarDays className="w-8 h-8 text-muted-foreground/40" />
           </div>
-          <div className="max-w-sm space-y-3">
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 uppercase italic">
+          <div className="max-w-sm space-y-2">
+            <h3 className="text-xl font-bold text-foreground">
               No active classes
             </h3>
-            <p className="text-zinc-500 dark:text-zinc-400 font-medium">
-              It looks like you don't have any classes scheduled for this time. Check your schedule or try again later.
+            <p className="text-sm text-muted-foreground">
+              It looks like you don't have any classes scheduled for this time.
             </p>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {sortedClasses.map((c) => {
             const { onTime } = isClassInSession(c);
             const tSession = todaySessions[c._id];
@@ -118,25 +115,25 @@ export const ClassSelectionStep = ({
               <ClassCard
                 key={c._id}
                 cls={{
-                  ...c,
+                   ...c,
                   studentCount: sCount,
                 }}
                 onClick={() => canStart && onSelectClass?.(c, onTime ? "auto" : "manual")}
                 className={cn(
-                  "h-full transition-all duration-700 hover:scale-[1.02] active:scale-[0.98]",
+                  "h-full transition-all duration-500",
                   !canStart && "opacity-60 grayscale-[0.5] pointer-events-none"
                 )}
                 badge={
                   hasActiveSession ? (
-                    <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600 text-white border-none px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                    <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600 text-white border-none px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-wider">
                       In Progress
                     </Badge>
                   ) : isSubmitted ? (
-                    <Badge variant="secondary" className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-none px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest">
+                    <Badge variant="secondary" className="px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-wider">
                       Submitted
                     </Badge>
                   ) : onTime ? (
-                    <Badge variant="default" className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-none px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl">
+                    <Badge variant="default" className="bg-foreground text-background border-none px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-wider">
                       Live Now
                     </Badge>
                   ) : null

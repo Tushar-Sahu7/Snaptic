@@ -40,6 +40,6 @@ export const removeStudents = (classId, studentIds) =>
   api.delete(`/api/classes/${classId}/students/bulk`, { data: { studentIds } });
 
 export const searchStudents = (q, signal) =>
-  api.get("/api/students/search", { params: { q }, signal });
+  api.get("/api/classes/students/search", { params: { q }, signal });
 
 export const fetchTeacherSessions = (params) => api.get("/api/sessions/teacher", { params });

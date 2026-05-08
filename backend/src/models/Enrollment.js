@@ -23,10 +23,6 @@ const enrollmentSchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
-    enrolledAt: {
-      type: Date,
-      default: Date.now,
-    },
   },
   { timestamps: true }
 );

@@ -11,9 +11,9 @@ export const AttendanceStepper = ({ step, isFinalized, onStepClick }) => {
   ];
 
   return (
-    <nav className="w-full bg-white/40 dark:bg-zinc-950/40 backdrop-blur-3xl border-b border-zinc-200/50 dark:border-zinc-900 overflow-x-auto no-scrollbar">
+    <nav className="w-full bg-background overflow-x-auto no-scrollbar">
       <div className="container mx-auto px-4 py-6 md:py-8">
-        <div className="flex items-center justify-between gap-6 md:gap-12 min-w-max md:min-w-0 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between gap-6 md:gap-12 min-w-max md:min-w-0 max-w-4xl mx-auto">
           {steps.map((s, idx) => {
             const isCompleted = step > s.id;
             const isActive = step === s.id;
@@ -30,34 +30,34 @@ export const AttendanceStepper = ({ step, isFinalized, onStepClick }) => {
                   disabled={!isClickable}
                   onClick={() => onStepClick(s.id)}
                   className={cn(
-                    "group flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-500 whitespace-nowrap relative",
+                    "group flex items-center gap-4 px-4 py-2.5 rounded-xl transition-all duration-500 whitespace-nowrap relative",
                     isActive 
-                      ? "text-zinc-900 dark:text-zinc-50"
+                      ? "text-foreground"
                       : isCompleted
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200",
+                        ? "text-emerald-600"
+                        : "text-muted-foreground hover:text-foreground",
                     isClickable && "cursor-pointer active:scale-95"
                   )}
                 >
                   <div className={cn(
-                    "w-9 h-9 rounded-2xl flex items-center justify-center text-[11px] font-black transition-all duration-700 z-10",
+                    "w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all duration-500 z-10",
                     isActive 
-                      ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xl shadow-zinc-900/20 dark:shadow-white/10 rotate-3"
+                      ? "bg-foreground text-background"
                       : isCompleted
-                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                        : "bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-muted border border-border"
                   )}>
                     {isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5" strokeWidth={3} />
+                      <CheckCircle2 className="w-4 h-4" strokeWidth={3} />
                     ) : (
-                      <span className={cn(isActive && "scale-110")}>{s.id}</span>
+                      <span>{s.id}</span>
                     )}
                   </div>
 
-                  <div className="flex flex-col items-start gap-0.5">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Step 0{s.id}</p>
+                  <div className="flex flex-col items-start gap-0">
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Step {s.id}</p>
                     <span className={cn(
-                      "font-black text-[11px] uppercase tracking-widest transition-all duration-500",
+                      "font-bold text-[10px] uppercase tracking-widest transition-all duration-500",
                       isActive ? "opacity-100" : "opacity-60"
                     )}>
                       <span className="hidden lg:inline">{s.label}</span>
@@ -68,19 +68,18 @@ export const AttendanceStepper = ({ step, isFinalized, onStepClick }) => {
                   {isActive && (
                     <motion.div 
                       layoutId="stepper-active"
-                      className="absolute inset-0 bg-white dark:bg-zinc-900/50 rounded-2xl z-0 border border-zinc-200/50 dark:border-zinc-800 shadow-xl shadow-zinc-200/20 dark:shadow-none"
+                      className="absolute inset-0 bg-muted/50 rounded-xl z-0 border border-border/50"
                     />
                   )}
                 </button>
 
                 {idx < steps.length - 1 && (
-                  <div className="flex-1 h-px min-w-[20px] max-w-[80px] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-900" />
+                  <div className="flex-1 h-[2px] min-w-[10px] max-w-[60px] relative overflow-hidden bg-border/40">
                     {step > s.id && (
                       <motion.div 
                         initial={{ x: "-100%" }}
                         animate={{ x: "0%" }}
-                        className="absolute inset-0 bg-emerald-500/40"
+                        className="absolute inset-0 bg-emerald-500"
                       />
                     )}
                   </div>

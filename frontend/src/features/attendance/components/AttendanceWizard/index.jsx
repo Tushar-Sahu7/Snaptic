@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useAttendanceSession } from "./useAttendanceSession";
 import { useTimeLock } from "./useTimeLock";
-import { AttendanceHeader } from "./shared/AttendanceHeader";
+
 import { AttendanceStepper } from "./shared/AttendanceStepper";
 import { ClassSelectionStep } from "./steps/ClassSelectionStep";
 import { ScanStep } from "./steps/ScanStep";
@@ -157,15 +157,9 @@ export default function AttendanceWizard({
   return (
     <div
       ref={containerRef}
-      className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950/50 flex flex-col"
+      className="min-h-screen bg-background flex flex-col"
     >
-      <AttendanceHeader
-        session={session}
-        isFinalized={isFinalized}
-        timeLeft={timeLeft}
-        endTimeFormatted={endTimeFormatted}
-        step={step}
-      />
+
 
       <AttendanceStepper
         step={step}
@@ -175,13 +169,7 @@ export default function AttendanceWizard({
 
       {/* 2. Content Area */}
       <main className="flex-1 flex flex-col relative">
-        {/* Subtle background decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-        </div>
-
-        <div className="container mx-auto px-4 py-8 flex-1 flex flex-col relative z-10">
+        <div className="container mx-auto px-8 py-4 flex-1 flex flex-col relative z-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
