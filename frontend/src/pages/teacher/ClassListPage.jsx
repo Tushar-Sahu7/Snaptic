@@ -300,7 +300,7 @@ export default function ClassListPage() {
                   />
                 </div>
                 <div className="lg:col-span-4 flex flex-col gap-6">
-                  <div className="flex-1 rounded-[2.5rem] bg-gradient-to-br from-primary/[0.03] to-primary/[0.01] border border-primary/5 p-8 flex flex-col justify-center gap-6 backdrop-blur-md relative overflow-hidden group">
+                  <div className="flex-1 rounded-[2.5rem] bg-linear-to-br from-primary/3 to-primary/1 border border-primary/5 p-8 flex flex-col justify-center gap-6 backdrop-blur-md relative overflow-hidden group">
                     {/* Decorative element */}
                     <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-700" />
 

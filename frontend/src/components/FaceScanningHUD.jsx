@@ -51,7 +51,7 @@ export default function FaceScanningHUD({
               repeatType: "reverse", 
               ease: "easeInOut" 
             }}
-            className="absolute left-10 right-10 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(var(--primary),0.5)]"
+            className="absolute left-10 right-10 h-[2px] bg-linear-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(var(--primary),0.5)]"
           />
         )}
       </AnimatePresence>
@@ -88,8 +88,8 @@ export default function FaceScanningHUD({
           
           {/* Internal Crosshairs */}
           <div className="absolute inset-0 flex items-center justify-center opacity-20">
-            <div className="w-4 h-[1px] bg-white absolute" />
-            <div className="h-4 w-[1px] bg-white absolute" />
+            <div className="w-4 h-px bg-white absolute" />
+            <div className="h-4 w-px bg-white absolute" />
           </div>
         </div>
       </div>

@@ -40,7 +40,7 @@ export const StudentAttendanceCard = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.08] via-transparent to-transparent pointer-events-none"
+            className="absolute inset-0 bg-linear-to-br from-emerald-500/8 via-transparent to-transparent pointer-events-none"
           />
         )}
       </AnimatePresence>
@@ -48,7 +48,7 @@ export const StudentAttendanceCard = ({
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <div className="relative">
-            <div className="relative p-0.5 rounded-[1.25rem] bg-gradient-to-br from-zinc-200 to-transparent dark:from-zinc-800 dark:to-transparent">
+            <div className="relative p-0.5 rounded-[1.25rem] bg-linear-to-br from-zinc-200 to-transparent dark:from-zinc-800 dark:to-transparent">
               <Avatar className="w-20 h-20 rounded-2xl border-2 border-white dark:border-zinc-900 shadow-md transition-transform duration-500 group-hover:scale-105">
                 <AvatarImage src={avatar} alt={name} className="object-cover" />
                 <AvatarFallback className="bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-xl font-bold">

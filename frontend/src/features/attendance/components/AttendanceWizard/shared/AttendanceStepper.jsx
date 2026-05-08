@@ -68,7 +68,7 @@ export const AttendanceStepper = ({ step, isFinalized, onStepClick }) => {
                   {isActive && (
                     <motion.div 
                       layoutId="stepper-active"
-                      className="absolute inset-0 bg-white dark:bg-zinc-900/50 rounded-2xl -z-0 border border-zinc-200/50 dark:border-zinc-800 shadow-xl shadow-zinc-200/20 dark:shadow-none"
+                      className="absolute inset-0 bg-white dark:bg-zinc-900/50 rounded-2xl z-0 border border-zinc-200/50 dark:border-zinc-800 shadow-xl shadow-zinc-200/20 dark:shadow-none"
                     />
                   )}
                 </button>

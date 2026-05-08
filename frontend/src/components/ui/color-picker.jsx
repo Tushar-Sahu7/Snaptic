@@ -273,7 +273,7 @@ export const ColorPickerAlpha = ({
             'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==") left center',
         }}>
         <div
-          className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent to-black/50" />
+          className="absolute inset-0 rounded-full bg-linear-to-r from-transparent to-black/50" />
         <Slider.Range className="absolute h-full rounded-full bg-transparent" />
       </Slider.Track>
       <Slider.Thumb
@@ -353,7 +353,7 @@ const PercentageInput = ({
         type="text"
         {...(props)}
         className={cn(
-          "h-8 w-[3.25rem] rounded-l-none bg-secondary px-2 text-xs shadow-none",
+          "h-8 w-13 rounded-l-none bg-secondary px-2 text-xs shadow-none",
           className
         )} />
       <span

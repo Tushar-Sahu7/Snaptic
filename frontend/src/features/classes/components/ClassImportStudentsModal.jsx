@@ -329,7 +329,7 @@ export default function ImportStudentsModal({
             <Button
               onClick={handleImport}
               disabled={selectedStudents.size === 0 || importing}
-              className="flex-[2] h-12 rounded-xl font-bold bg-[oklch(0.3_0.02_160)] hover:bg-[oklch(0.25_0.02_160)] text-white shadow-xl shadow-emerald-900/10 transition-all active:scale-[0.98]"
+              className="flex-2 h-12 rounded-xl font-bold bg-[oklch(0.3_0.02_160)] hover:bg-[oklch(0.25_0.02_160)] text-white shadow-xl shadow-emerald-900/10 transition-all active:scale-[0.98]"
             >
               {importing ? (
                 <>

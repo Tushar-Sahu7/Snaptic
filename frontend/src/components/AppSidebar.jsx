@@ -150,7 +150,7 @@ export function AppSidebar({ onInvite }) {
 
         {isTeacher && showInviteBox && (
           <SidebarGroup className="mt-auto px-4 pb-4 group-data-[collapsible=icon]:hidden">
-            <div className="relative overflow-hidden rounded-[24px] border border-primary/5 bg-primary/[0.03] p-6 transition-all hover:bg-primary/[0.05]">
+            <div className="relative overflow-hidden rounded-[24px] border border-primary/5 bg-primary/3 p-6 transition-all hover:bg-primary/5">
               <button
                 onClick={() => setShowInviteBox(false)}
                 className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground/30 transition-colors hover:bg-background hover:text-foreground"
@@ -163,7 +163,7 @@ export function AppSidebar({ onInvite }) {
               </div>
 
               <div className="mb-6">
-                <h4 className="text-xs font-bold uppercase tracking-[0.1em] text-foreground/80">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-foreground/80">
                   Invite Teachers
                 </h4>
                 <p className="mt-2 text-xs text-muted-foreground/80 leading-relaxed font-medium">
@@ -201,8 +201,8 @@ export function AppSidebar({ onInvite }) {
                         </AvatarFallback>
                       </Avatar>
                       {user?.faceEnrolled && (
-                        <div className="absolute -bottom-0 -right-0 flex size-3.5 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm">
-                          <Check className="size-2 stroke-[4]" />
+                        <div className="absolute bottom-0 right-0 flex size-3.5 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm">
+                          <Check className="size-2 stroke-4" />
                         </div>
                       )}
                     </div>

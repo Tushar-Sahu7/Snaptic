@@ -338,7 +338,7 @@ const IconPicker = React.forwardRef(
                   <h3 className="font-medium text-sm capitalize">
                     {categorizedIcons[item.categoryIndex].name}
                   </h3>
-                  <div className="h-[1px] bg-foreground/10 w-full" />
+                  <div className="h-px bg-foreground/10 w-full" />
                 </div>
               );
             }

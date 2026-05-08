@@ -62,7 +62,7 @@ export default function TeacherDashboard() {
                 <span className="text-2xl font-semibold block tracking-tight">
                   {isLoading ? "..." : stat.value}
                 </span>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">{stat.label}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -114,7 +114,7 @@ export default function TeacherDashboard() {
               <CardTitle>Sessions Today</CardTitle>
               <CardDescription>Live tracking of your upcoming classes</CardDescription>
             </div>
-            <Badge variant="secondary" className="rounded-md font-bold uppercase text-[9px] tracking-[0.1em] px-2 py-0.5">
+            <Badge variant="secondary" className="rounded-md font-bold uppercase text-[9px] tracking-widest px-2 py-0.5">
               {Object.keys(todaySessions).length} Total
             </Badge>
           </CardHeader>

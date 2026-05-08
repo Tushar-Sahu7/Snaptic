@@ -148,7 +148,7 @@ export function TimePicker({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-1 rounded-xl shadow-xl border-border bg-popover"
+          className="w-(--radix-popover-trigger-width) p-1 rounded-xl shadow-xl border-border bg-popover"
           align="start"
           sideOffset={8}
           onOpenAutoFocus={(e) => e.preventDefault()}

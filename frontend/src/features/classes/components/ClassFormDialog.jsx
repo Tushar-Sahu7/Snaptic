@@ -681,7 +681,7 @@ export default function ClassFormDialog({
                           </div>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-[var(--radix-popover-trigger-width)] p-1 rounded-xl shadow-xl border-border bg-popover"
+                          className="w-(--radix-popover-trigger-width) p-1 rounded-xl shadow-xl border-border bg-popover"
                           align="start"
                           sideOffset={8}
                           onWheel={(e) => e.stopPropagation()}
@@ -857,7 +857,7 @@ export default function ClassFormDialog({
             type="submit"
             disabled={submitting}
             onClick={handleSubmit}
-            className="flex-[2] h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
+            className="flex-2 h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
           >
             {submitting
               ? "Processing..."

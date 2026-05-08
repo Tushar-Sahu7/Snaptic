@@ -241,7 +241,7 @@ export const ReviewStep = ({
                           stiffness: 150
                         }}
                         onClick={() => handleToggle(s._id)}
-                        className="w-full flex items-center gap-5 p-5 rounded-[32px] border border-emerald-500/10 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.02] hover:bg-emerald-500/[0.08] dark:hover:bg-emerald-500/[0.05] transition-all group relative overflow-hidden"
+                        className="w-full flex items-center gap-5 p-5 rounded-[32px] border border-emerald-500/10 bg-emerald-500/3 dark:bg-emerald-500/2 hover:bg-emerald-500/8 dark:hover:bg-emerald-500/5 transition-all group relative overflow-hidden"
                       >
                         <div className="relative">
                           <Avatar className="w-14 h-14 rounded-2xl border-2 border-white dark:border-zinc-900 shadow-md transition-transform group-hover:scale-110 duration-500">
@@ -335,7 +335,7 @@ export const ReviewStep = ({
           >
             <div className="relative flex flex-col items-center text-center space-y-10">
               <div className="absolute inset-0 -top-40 pointer-events-none">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[140%] bg-emerald-500/[0.05] dark:bg-emerald-500/[0.03] rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[140%] bg-emerald-500/5 dark:bg-emerald-500/3 rounded-full blur-[120px] animate-pulse" />
               </div>
 
               <motion.div 
