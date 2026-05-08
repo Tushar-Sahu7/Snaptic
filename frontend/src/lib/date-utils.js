@@ -1,5 +1,5 @@
 import { fromZonedTime, toZonedTime, formatInTimeZone } from "date-fns-tz";
-import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, parse } from "date-fns";
 import { RRule } from "rrule";
 
 export const APP_TIMEZONE = "Asia/Kolkata";
@@ -122,10 +122,6 @@ export function isClassInSession(cls) {
   const now = getNowIST();
   const currentDay = (now.getDay() + 6) % 7; // Map JS (0=Sun) to RRule (0=Mon)
   
-  if (!parsed.daysOfWeek.includes(currentDay)) {
-    return { onTime: false, message: "Not scheduled for today" };
-  }
-
   const [startH, startM] = parsed.startTime.split(":").map(Number);
   const startDate = new Date(now);
   startDate.setHours(startH, startM, 0, 0);
@@ -133,18 +129,47 @@ export function isClassInSession(cls) {
   const duration = parsed.duration;
   const endDate = new Date(startDate.getTime() + duration * 60000);
 
-  const onTime = now >= startDate && now <= endDate;
-  
-  let message = "";
-  if (onTime) {
-    message = "Live Now";
-  } else if (now < startDate) {
-    message = `Starts at ${format12Hour(parsed.startTime)}`;
-  } else {
-    message = "Session ended";
+  // Case 1: Today is a scheduled day
+  if (parsed.daysOfWeek.includes(currentDay)) {
+    if (now >= startDate && now <= endDate) {
+      return { onTime: true, message: "Live Now" };
+    }
+    if (now < startDate) {
+      return { onTime: false, message: `Starts at ${format12Hour(parsed.startTime)}` };
+    }
+    // If today's session is over, we fall through to the "Next on..." logic
   }
 
-  return { onTime, message };
+  // Case 2: Today is not a scheduled day OR today's session is finished
+  try {
+    const rule = RRule.fromString(cls.schedule.rrule);
+    // Find the next occurrence after NOW
+    // rule.after expects a Date. Since our rule uses UTC, we should pass UTC now.
+    const nextDateUTC = rule.after(fromZonedTime(now, APP_TIMEZONE));
+    
+    if (!nextDateUTC) {
+      return { onTime: false, message: "Course Completed" };
+    }
+    
+    const nextDateIST = toLocal(nextDateUTC);
+    const todayStr = format(now, "yyyy-MM-dd");
+    const tomorrowStr = format(addDays(now, 1), "yyyy-MM-dd");
+    const nextStr = format(nextDateIST, "yyyy-MM-dd");
+
+    if (nextStr === todayStr) {
+      // Should ideally be handled by Case 1, but safe fallback
+      return { onTime: false, message: `Starts at ${format12Hour(parsed.startTime)}` };
+    }
+
+    if (nextStr === tomorrowStr) {
+      return { onTime: false, message: `Next Session: Tomorrow` };
+    }
+    
+    return { onTime: false, message: `Next Session: ${format(nextDateIST, "EEEE")}` };
+  } catch (e) {
+    console.error("isClassInSession Error:", e);
+    return { onTime: false, message: "Off Schedule" };
+  }
 }
 
 export function format12Hour(timeStr) {
@@ -237,6 +262,26 @@ export function formatDuration(minutes) {
   const m = minutes % 60;
   if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
   return `${m}m`;
+}
+
+export function formatClassValidity(schedule) {
+  if (!schedule) return "Continuous";
+  const parsed = parseSchedule(schedule);
+  if (!parsed || !parsed.startDate) return "Continuous";
+  
+  try {
+    const start = parse(parsed.startDate, "yyyy-MM-dd", new Date());
+    const startStr = format(start, "dd MMM yy");
+    
+    if (!parsed.endDate) return `${startStr} - Open`;
+    
+    const end = parse(parsed.endDate, "yyyy-MM-dd", new Date());
+    const endStr = format(end, "dd MMM yy");
+    
+    return `${startStr} - ${endStr}`;
+  } catch (e) {
+    return parsed.startDate;
+  }
 }
 
 export function formatRelative(date) {

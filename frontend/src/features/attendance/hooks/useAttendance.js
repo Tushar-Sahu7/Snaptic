@@ -26,6 +26,7 @@ export const useTodayAttendance = () => {
       // Return both raw sessions and a map for convenience
       const sessionsMap = {};
       data.sessions.forEach((s) => {
+        if (!s.classId) return; // Skip sessions with missing/deleted class data
         const classId = typeof s.classId === 'object' ? s.classId._id : s.classId;
         sessionsMap[classId] = s;
       });
@@ -77,6 +78,7 @@ export const useMarkAttendance = () => {
         return {
           ...old,
           records: (old.records || []).map(r => {
+            if (!r.studentId) return r;
             const rId = typeof r.studentId === "object" ? r.studentId._id : r.studentId;
             if (rId?.toString() === newRecord.studentId?.toString()) {
               return { ...r, status: newRecord.status, method: newRecord.method };

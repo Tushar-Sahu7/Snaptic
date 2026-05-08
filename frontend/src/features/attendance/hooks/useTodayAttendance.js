@@ -16,6 +16,8 @@ export const useTodayAttendance = () => {
       const sessionsMap = {};
       
       data.sessions.forEach((s) => {
+        if (!s.classId) return; // Skip sessions with missing/deleted class data
+        
         // Handle both populated and non-populated classId
         const classId = typeof s.classId === 'object' ? s.classId._id : s.classId;
         sessionsMap[classId] = s;

@@ -191,10 +191,13 @@ const getTodaySession = async (req, res) => {
       return res.status(200).json({ session });
     } else {
       query.teacherId = req.user.userId;
-      // Bulk fetch for all classes today for this teacher
       const sessions = await AttendanceSession.find(query)
         .populate("classId", "name icon status");
-      return res.status(200).json({ sessions });
+      
+      // Filter out sessions where class no longer exists (orphaned sessions)
+      const validSessions = sessions.filter(s => s.classId);
+      
+      return res.status(200).json({ sessions: validSessions });
     }
   } catch (err) {
     return res.status(500).json({ message: err.message });

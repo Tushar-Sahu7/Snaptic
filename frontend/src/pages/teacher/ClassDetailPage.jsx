@@ -35,7 +35,8 @@ import {
   AlertCircle,
   Users,
   Check,
-  Plus
+  Plus,
+  MapPin
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -51,7 +52,7 @@ import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDis
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
 import ClassImportStudentsModal from "@/features/classes/components/ClassImportStudentsModal";
 import { useDebounce } from "@/hooks/use-debounce";
-import { isClassInSession } from "@/lib/date-utils";
+import { isClassInSession, formatClassValidity, formatRoom } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 export default function ClassDetailPage() {
@@ -136,8 +137,15 @@ export default function ClassDetailPage() {
       {/* Hero Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-start gap-5">
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-muted/80 to-muted/30 border border-border/50 shadow-sm transition-transform duration-300 hover:scale-105">
-            <LucideIcon name={classData.icon} size={32} className="text-primary" />
+          <div 
+            className="p-4 rounded-2xl border border-border/50 shadow-sm transition-transform duration-300 hover:scale-105 relative overflow-hidden"
+            style={{
+              backgroundColor: `color-mix(in oklch, ${classData.color || "oklch(0.4 0.02 160)"}, transparent 92%)`,
+              color: classData.color || "oklch(0.4 0.02 160)"
+            }}
+          >
+            <div className="absolute inset-0 bg-white/40 dark:bg-black/20 backdrop-blur-[2px]" />
+            <LucideIcon name={classData.icon} size={32} strokeWidth={1.5} className="relative z-10 drop-shadow-sm" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -148,10 +156,18 @@ export default function ClassDetailPage() {
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-4 text-muted-foreground font-medium">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground font-medium">
               <ClassScheduleDisplay 
                 schedule={classData.schedule} 
               />
+              <div className="flex items-center gap-2 text-sm">
+                <CalendarDays className="w-4 h-4 text-primary/60" />
+                <span>{formatClassValidity(classData.schedule)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4 text-primary/60" />
+                <span>{formatRoom(classData.location)}</span>
+              </div>
             </div>
           </div>
         </div>

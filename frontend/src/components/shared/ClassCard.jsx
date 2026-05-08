@@ -14,6 +14,7 @@ import {
   formatRoom,
   isClassInSession,
   formatClassTimeRange,
+  formatClassValidity,
 } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -140,18 +141,20 @@ const ClassCard = memo(
             )}
           </div>
 
-          {/* Info Grid: Timing & Days */}
+          {/* Info Grid: Timing, Days & Validity */}
           <div
             className={cn(
-              "grid gap-6",
-              isList ? "hidden sm:grid grid-cols-2 lg:w-80" : "grid-cols-2",
+              "grid",
+              isList 
+                ? "hidden lg:grid grid-cols-3 flex-1 px-8 border-x border-border/40 gap-6" 
+                : "grid-cols-2 gap-x-10 gap-y-6",
             )}
           >
             <div className="space-y-1">
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2">
                 <Clock size={10} className="opacity-70" /> Schedule
               </p>
-              <p className="text-sm font-bold text-foreground/90">
+              <p className={cn("text-sm font-bold text-foreground/90", isList && "whitespace-nowrap")}>
                 {formatClassTimeRange(cls)}
               </p>
             </div>
@@ -162,6 +165,15 @@ const ClassCard = memo(
               </p>
               <p className="text-sm font-bold text-foreground/90 truncate">
                 {formatDays(cls.schedule)}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2">
+                <CalendarDays size={10} className="opacity-70" /> Validity
+              </p>
+              <p className="text-sm font-bold text-foreground/90">
+                {formatClassValidity(cls.schedule)}
               </p>
             </div>
           </div>
