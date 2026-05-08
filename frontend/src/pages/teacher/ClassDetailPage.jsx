@@ -36,7 +36,8 @@ import {
   Users,
   Check,
   Plus,
-  MapPin
+  MapPin,
+  Clock
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -52,7 +53,7 @@ import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDis
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
 import ClassImportStudentsModal from "@/features/classes/components/ClassImportStudentsModal";
 import { useDebounce } from "@/hooks/use-debounce";
-import { isClassInSession, formatClassValidity, formatRoom } from "@/lib/date-utils";
+import { isClassInSession, formatClassValidity, formatRoom, formatDays, formatClassTimeRange } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 export default function ClassDetailPage() {
@@ -157,9 +158,10 @@ export default function ClassDetailPage() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground font-medium">
-              <ClassScheduleDisplay 
-                schedule={classData.schedule} 
-              />
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-primary/60" />
+                <span>{formatDays(classData.schedule)} • {formatClassTimeRange(classData)}</span>
+              </div>
               <div className="flex items-center gap-2 text-sm">
                 <CalendarDays className="w-4 h-4 text-primary/60" />
                 <span>{formatClassValidity(classData.schedule)}</span>

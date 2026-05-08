@@ -190,12 +190,28 @@ const updateClass = async (req, res) => {
 
     // Update schedule if provided
     if (schedule) {
-      // Validation: Prevent scheduling in the past for new start dates
       if (schedule.rrule) {
-        const rule = RRule.fromString(schedule.rrule);
-        const now = new Date();
-        if (rule.options.dtstart < now) {
-          return res.status(400).json({ message: "Start time cannot be in the past" });
+        const newRule = RRule.fromString(schedule.rrule);
+        const newDtStart = newRule.options.dtstart;
+
+        // If schedule already existed, only validate if dtstart changed
+        let shouldValidatePast = true;
+        if (classDoc.schedule?.rrule) {
+          try {
+            const oldRule = RRule.fromString(classDoc.schedule.rrule);
+            if (oldRule.options.dtstart.getTime() === newDtStart.getTime()) {
+              shouldValidatePast = false;
+            }
+          } catch (e) {
+            // If old rule is unparseable, we fallback to validation
+          }
+        }
+
+        if (shouldValidatePast) {
+          const now = new Date();
+          if (newDtStart < now) {
+            return res.status(400).json({ message: "Start time cannot be in the past" });
+          }
         }
       }
       classDoc.schedule = schedule;

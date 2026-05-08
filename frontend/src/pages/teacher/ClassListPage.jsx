@@ -59,7 +59,7 @@ import { CalendarIcon } from "lucide-react";
 import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import { isClassInSession, getNowIST, getTodayISTStr, formatIST } from "@/lib/date-utils";
-import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
+import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
 
 // Decomposed Page Components
 import ClassListHeader from "@/features/classes/components/ClassListHeader";

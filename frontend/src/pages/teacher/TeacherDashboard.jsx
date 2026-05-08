@@ -14,14 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
 import { useClasses } from "@/features/classes/hooks/useClasses";
-import { useTodayAttendance } from "@/features/attendance/hooks/useTodayAttendance";
+import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
   const { classes, loading: classesLoading } = useClasses();
-  const { todaySessions, loading: sessionsLoading } = useTodayAttendance();
+  const { todaySessions, isPending: sessionsLoading } = useTodayAttendance();
 
   const stats = useMemo(() => {
     const activeClasses = classes.filter(c => c.status === "active");

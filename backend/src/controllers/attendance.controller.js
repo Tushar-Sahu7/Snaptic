@@ -2,6 +2,7 @@ const AttendanceSession = require("../models/AttendanceSession");
 const AttendanceRecord = require("../models/AttendanceRecord");
 const Class = require("../models/Class");
 const StudentProfile = require("../models/StudentProfile");
+const Enrollment = require("../models/Enrollment");
 const { getISTDayBounds } = require("../utils/dateUtils");
 
 // --- CONTROLLERS ---
@@ -11,70 +12,71 @@ const mongoose = require("mongoose");
 // POST /api/attendance/start/:classId
 const startSession = async (req, res) => {
   const dbSession = await mongoose.startSession();
-  dbSession.startTransaction();
 
   try {
     const { classId } = req.params;
     const teacherId = req.user.userId;
     const now = new Date();
-
-    // 1. Find the session scheduled for today in IST
     const { startUTC, endUTC } = getISTDayBounds(now);
 
-    // Find without population first to avoid saving issues with populated docs
-    let session = await AttendanceSession.findOne({
-      classId,
-      teacherId,
-      startTime: { $gte: startUTC, $lte: endUTC },
-      status: { $in: ["scheduled", "inprogress", "submitted"] }
-    }).session(dbSession);
+    let sessionData = null;
+    let enrolledStudentIds = [];
 
-
-    if (!session) {
-      await dbSession.abortTransaction();
-      dbSession.endSession();
-      return res.status(404).json({ message: "No active session found for this time today." });
-    }
-
-    // 2. Transition to inprogress if it was scheduled
-    if (session.status === "scheduled") {
-      session.status = "inprogress";
-      await session.save({ session: dbSession });
-    }
-
-    // 3. Pre-create absent records if they don't exist
-    const Enrollment = require("../models/Enrollment");
-    const enrollments = await Enrollment.find({ classId, status: "active" }).session(dbSession).lean();
-    const enrolledStudentIds = enrollments.map(e => e.studentId);
-
-    const existingRecordsCount = await AttendanceRecord.countDocuments({ sessionId: session._id }).session(dbSession);
-
-    if (existingRecordsCount === 0 && enrolledStudentIds.length > 0) {
-      const records = enrolledStudentIds.map(studentId => ({
-        sessionId: session._id,
-        studentId,
+    // withTransaction handles TransientTransactionError (WriteConflict) and retries automatically
+    await dbSession.withTransaction(async () => {
+      // 1. Find the session scheduled for today in IST
+      const session = await AttendanceSession.findOne({
         classId,
         teacherId,
-        status: "absent",
-        method: "manual",
-        markedAt: null
-      }));
-      await AttendanceRecord.insertMany(records, { session: dbSession });
-    }
+        startTime: { $gte: startUTC, $lte: endUTC },
+        status: { $in: ["scheduled", "inprogress", "submitted"] }
+      }).session(dbSession);
 
-    // 4. Commit mutations before retrieval to ensure data integrity
-    await dbSession.commitTransaction();
-    dbSession.endSession();
+      if (!session) {
+        throw new Error("SESSION_NOT_FOUND");
+      }
 
-    // 5. Retrieve final state with population for the UI
-    const finalSession = await AttendanceSession.findById(session._id)
+      // 2. Transition to inprogress if it was scheduled
+      if (session.status === "scheduled") {
+        session.status = "inprogress";
+        await session.save({ session: dbSession });
+      }
+
+      // 3. Pre-create absent records if they don't exist
+      const enrollments = await Enrollment.find({ classId, status: "active" }).session(dbSession).lean();
+      enrolledStudentIds = enrollments.map(e => e.studentId);
+
+      const existingRecordsCount = await AttendanceRecord.countDocuments({ 
+        sessionId: session._id 
+      }).session(dbSession);
+
+      if (existingRecordsCount === 0 && enrolledStudentIds.length > 0) {
+        const records = enrolledStudentIds.map(studentId => ({
+          sessionId: session._id,
+          studentId,
+          classId,
+          teacherId,
+          status: "absent",
+          method: "manual",
+          markedAt: null
+        }));
+        await AttendanceRecord.insertMany(records, { session: dbSession });
+      }
+
+      sessionData = session;
+    });
+
+    // 4. Retrieve final state with population for the UI (outside transaction for cleaner retrieval)
+    const finalSession = await AttendanceSession.findById(sessionData._id)
       .populate("classId", "name icon status");
       
     const profiles = await StudentProfile.find({
       userId: { $in: enrolledStudentIds }
     }).select("userId name avatar embedding faceEnrolled").lean();
 
-    const finalRecords = await AttendanceRecord.find({ sessionId: session._id }).lean();
+    const finalRecords = await AttendanceRecord.find({ 
+      sessionId: sessionData._id 
+    }).lean();
 
     return res.status(200).json({
       session: finalSession,
@@ -83,12 +85,16 @@ const startSession = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("[AttendanceController] startSession Error:", err);
-    if (dbSession.inTransaction()) {
-      await dbSession.abortTransaction();
+    if (err.message === "SESSION_NOT_FOUND") {
+      return res.status(404).json({ message: "No active session found for this time today." });
     }
+    
+    console.error("[AttendanceController] startSession Error:", err);
+    return res.status(500).json({ 
+      message: err.message || "Failed to initialize attendance session" 
+    });
+  } finally {
     dbSession.endSession();
-    return res.status(500).json({ message: err.message || "Failed to initialize attendance session" });
   }
 };
 

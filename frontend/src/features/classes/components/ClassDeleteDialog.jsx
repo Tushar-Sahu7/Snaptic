@@ -26,6 +26,7 @@ export default function DeleteClassDialog({
       await deleteClass(classData._id);
       toast.success(`Class "${classData.name}" deleted successfully`);
       window.dispatchEvent(new CustomEvent("classes-updated"));
+      onOpenChange(false); // Ensure the dialog closes
       onDeleted?.();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete class");

@@ -28,6 +28,7 @@ export default function BulkDeleteClassesDialog({
       toast.success(
         `${count} ${count === 1 ? "class" : "classes"} deleted successfully`
       );
+      onOpenChange(false); // Ensure the dialog closes
       onDeleted?.();
     } catch (err) {
       toast.error(

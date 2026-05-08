@@ -240,8 +240,29 @@ export default function ClassFormDialog({
     if (!endDate) errors.endDate = "End date is required.";
     if (daysOfWeek.length === 0) errors.daysOfWeek = "Select at least one day.";
     
-    // Past Time Validation
-    if (startDate === getTodayISTStr()) {
+    const finalDuration = isCustomDuration
+      ? customHours * 60 + customMinutes
+      : parseInt(duration);
+    if (finalDuration <= 0) errors.duration = "Enter a valid duration.";
+
+    // Conditional Validation for Edits:
+    // Only validate past time if we are creating NEW or if startDate/startTime changed on existing
+    const parsedInitial = isEdit ? parseSchedule(classData.schedule) : null;
+    
+    const startDateTimeChanged = !isEdit || (
+      startDate !== parsedInitial?.startDate ||
+      startTime !== parsedInitial?.startTime
+    );
+
+    const scheduleChanged = !isEdit || (
+      startDateTimeChanged ||
+      endDate !== parsedInitial?.endDate ||
+      JSON.stringify(daysOfWeek) !== JSON.stringify(parsedInitial?.daysOfWeek) ||
+      finalDuration !== parsedInitial?.duration
+    );
+
+    // Past Time Validation (only if start date/time changed or new class)
+    if (startDateTimeChanged && startDate === getTodayISTStr()) {
       const now = getNowIST();
       const currentH = now.getHours();
       const currentM = now.getMinutes();
@@ -252,37 +273,54 @@ export default function ClassFormDialog({
       }
     }
 
-    const finalDuration = isCustomDuration
-      ? customHours * 60 + customMinutes
-      : parseInt(duration);
-    if (finalDuration <= 0) errors.duration = "Enter a valid duration.";
-
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
     try {
-      const payload = {
-        name: name.trim(),
-        description: description.trim(),
-        icon,
-        color,
-        location: location.trim(),
-        schedule: {
-          rrule: generateRRuleString({
-            startDate,
-            startTime,
-            endDate,
-            daysOfWeek,
-            duration: finalDuration,
-          }),
-          duration: finalDuration,
-        },
-      };
+      let payload = {};
+      const newRRule = generateRRuleString({
+        startDate,
+        startTime,
+        endDate,
+        daysOfWeek,
+        duration: finalDuration,
+      });
 
       if (isEdit) {
+        // Build Delta Payload
+        if (name.trim() !== classData.name) payload.name = name.trim();
+        if (description.trim() !== classData.description) payload.description = description.trim();
+        if (icon !== classData.icon) payload.icon = icon;
+        if (color !== classData.color) payload.color = color;
+        if (location.trim() !== classData.location) payload.location = location.trim();
+        
+        if (scheduleChanged) {
+          payload.schedule = {
+            rrule: newRRule,
+            duration: finalDuration,
+          };
+        }
+
+        if (Object.keys(payload).length === 0) {
+          toast.info("No changes detected");
+          onOpenChange(false);
+          return;
+        }
+
         await updateMutation.mutateAsync({ classId: classData._id, payload });
         toast.success("Class updated successfully");
       } else {
+        payload = {
+          name: name.trim(),
+          description: description.trim(),
+          icon,
+          color,
+          location: location.trim(),
+          schedule: {
+            rrule: newRRule,
+            duration: finalDuration,
+          },
+        };
         await createMutation.mutateAsync(payload);
         toast.success("Class created successfully");
       }

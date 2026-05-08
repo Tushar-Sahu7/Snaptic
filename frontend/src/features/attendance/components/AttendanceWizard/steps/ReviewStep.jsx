@@ -197,7 +197,7 @@ export const ReviewStep = ({
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="py-24 flex flex-col items-center justify-center text-center space-y-6 rounded-[48px] border-2 border-dashed border-emerald-500/20 bg-emerald-500/[0.02] backdrop-blur-sm"
+                      className="py-24 flex flex-col items-center justify-center text-center space-y-6 rounded-[48px] border-2 border-dashed border-emerald-500/20 bg-emerald-500/2 backdrop-blur-sm"
                     >
                       <div className="relative">
                         <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full scale-150 animate-pulse" />

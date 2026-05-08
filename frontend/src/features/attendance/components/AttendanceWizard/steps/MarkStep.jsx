@@ -65,7 +65,7 @@ export const MarkStep = ({
           animate={{ opacity: 1, scale: 1 }}
           className="py-32 flex flex-col items-center justify-center text-center space-y-10 rounded-[60px] border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-white/30 dark:bg-zinc-950/30 backdrop-blur-md relative overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-b from-primary/5 to-transparent pointer-events-none" />
           
           <div className="relative group">
             <div className="absolute inset-0 bg-primary/20 blur-[50px] rounded-full scale-150 animate-pulse group-hover:bg-primary/30 transition-colors" />
