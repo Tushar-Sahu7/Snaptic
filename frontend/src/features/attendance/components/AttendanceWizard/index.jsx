@@ -72,7 +72,7 @@ export default function AttendanceWizard({
 
     // 1. Finalized sessions always go to review
     if (initialSession.status === "finalized") return 4;
-    
+
     // 2. If manual mode requested, go to manual mark (even if submitted, as we allow updates)
     if (manual) return 3;
 
@@ -148,8 +148,6 @@ export default function AttendanceWizard({
       ref={containerRef}
       className="min-h-screen bg-background flex flex-col"
     >
-
-
       <AttendanceStepper
         step={step}
         isFinalized={isFinalized}
@@ -166,12 +164,12 @@ export default function AttendanceWizard({
               initial={{ opacity: 0, x: 30, scale: 0.98 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: -30, scale: 1.02 }}
-              transition={{ 
+              transition={{
                 type: "spring",
                 damping: 25,
                 stiffness: 200,
                 mass: 1,
-                opacity: { duration: 0.3 }
+                opacity: { duration: 0.3 },
               }}
               className="flex-1 flex flex-col"
             >
@@ -196,7 +194,9 @@ export default function AttendanceWizard({
                   loading={sessionLoading}
                   modelsLoaded={modelsLoaded}
                   faceApi={faceApiRef.current}
-                  onMarkPresent={(id) => handleMarkManual(id, "present", "face")}
+                  onMarkPresent={(id) =>
+                    handleMarkManual(id, "present", "face")
+                  }
                   onComplete={async () => {
                     await handleFinishScan();
                     setStep(3);

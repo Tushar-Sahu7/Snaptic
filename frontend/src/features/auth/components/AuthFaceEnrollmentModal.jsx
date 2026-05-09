@@ -59,7 +59,9 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   // When modal opens → start setup; when it closes → cleanup
@@ -95,7 +97,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
       ]);
 
       if (!mountedRef.current) return;
-      
+
       // Models loaded, switch to camera stage to mount video element
       setStage("camera");
       setGuide(GUIDE_MESSAGES.noFace);
@@ -116,10 +118,10 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
   async function startCamera() {
     try {
       const constraints = {
-        video: { 
+        video: {
           facingMode: "user",
           width: { ideal: 640 },
-          height: { ideal: 480 }
+          height: { ideal: 480 },
         },
         audio: false,
       };
@@ -133,19 +135,19 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
       }
 
       if (!mountedRef.current) {
-        stream.getTracks().forEach(t => t.stop());
+        stream.getTracks().forEach((t) => t.stop());
         return;
       }
 
       streamRef.current = stream;
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await new Promise((resolve) => {
           videoRef.current.onloadedmetadata = () => resolve();
         });
         await videoRef.current.play();
-        
+
         // Ensure canvases match the video display size
         updateCanvasDimensions();
         runDetectionLoop();
@@ -153,10 +155,13 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     } catch (err) {
       console.error("Camera access failed:", err);
       let message = "Camera access denied or unavailable";
-      if (err.name === "NotAllowedError") message = "Permission denied. Please allow camera access.";
-      if (err.name === "NotFoundError") message = "No camera found on this device.";
-      if (err.name === "NotReadableError") message = "Camera is already in use by another app.";
-      
+      if (err.name === "NotAllowedError")
+        message = "Permission denied. Please allow camera access.";
+      if (err.name === "NotFoundError")
+        message = "No camera found on this device.";
+      if (err.name === "NotReadableError")
+        message = "Camera is already in use by another app.";
+
       toast.error(message);
       onOpenChange(false);
     }
@@ -165,10 +170,14 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     const faceapi = faceApiRef.current;
     if (!faceapi || !videoRef.current) return;
 
-    const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
+    const options = new faceapi.TinyFaceDetectorOptions({
+      inputSize: 320,
+      scoreThreshold: 0.5,
+    });
 
     async function detect() {
-      if (!mountedRef.current || !videoRef.current || videoRef.current.paused) return;
+      if (!mountedRef.current || !videoRef.current || videoRef.current.paused)
+        return;
 
       try {
         const detection = await faceapi
@@ -181,31 +190,53 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
         const video = videoRef.current;
         const vw = video.videoWidth;
         const vh = video.videoHeight;
-        
+
         const canvas = overlayCanvasRef.current;
         if (canvas && video && vw > 0) {
           const displaySize = { width: vw, height: vh };
           if (canvas.width !== vw || canvas.height !== vh) {
             faceapi.matchDimensions(canvas, displaySize);
           }
-          
+
           const ctx = canvas.getContext("2d");
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           if (detection) {
-            const resizedDetections = faceapi.resizeResults(detection, displaySize);
-            
-            const isOk = !(detection.detection.score < 0.7 || 
-                         (detection.detection.box.width * detection.detection.box.height) / (vw * vh) < MIN_FACE_FRACTION || 
-                         Math.abs((detection.detection.box.x + detection.detection.box.width / 2) - vw / 2) / (vw / 2) > 0.3 || 
-                         Math.abs((detection.detection.box.y + detection.detection.box.height / 2) - vh / 2) / (vh / 2) > 0.35);
-            
+            const resizedDetections = faceapi.resizeResults(
+              detection,
+              displaySize,
+            );
+
+            const isOk = !(
+              detection.detection.score < 0.7 ||
+              (detection.detection.box.width * detection.detection.box.height) /
+                (vw * vh) <
+                MIN_FACE_FRACTION ||
+              Math.abs(
+                detection.detection.box.x +
+                  detection.detection.box.width / 2 -
+                  vw / 2,
+              ) /
+                (vw / 2) >
+                0.3 ||
+              Math.abs(
+                detection.detection.box.y +
+                  detection.detection.box.height / 2 -
+                  vh / 2,
+              ) /
+                (vh / 2) >
+                0.35
+            );
+
             const drawOptions = {
               lineWidth: 1.5,
               drawLines: true,
-              color: isOk ? "oklch(0.7 0.2 150)" : "oklch(0.7 0.2 40)"
+              color: isOk ? "oklch(0.7 0.2 150)" : "oklch(0.7 0.2 40)",
             };
-            new faceapi.draw.DrawFaceLandmarks(resizedDetections.landmarks, drawOptions).draw(canvas);
+            new faceapi.draw.DrawFaceLandmarks(
+              resizedDetections.landmarks,
+              drawOptions,
+            ).draw(canvas);
           }
         }
 
@@ -272,8 +303,14 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
   }
 
   async function captureFrame(autoDescriptor) {
-    if (!videoRef.current || !canvasRef.current || !faceApiRef.current || !autoDescriptor) return;
-    
+    if (
+      !videoRef.current ||
+      !canvasRef.current ||
+      !faceApiRef.current ||
+      !autoDescriptor
+    )
+      return;
+
     setGuide("Processing capture...");
 
     const video = videoRef.current;
@@ -285,7 +322,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
     stopCamera();
 
     try {
@@ -306,7 +343,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
       animFrameRef.current = null;
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -320,7 +357,12 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     faceApiRef.current = null;
     if (overlayCanvasRef.current) {
       const ctx = overlayCanvasRef.current.getContext("2d");
-      ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+      ctx.clearRect(
+        0,
+        0,
+        overlayCanvasRef.current.width,
+        overlayCanvasRef.current.height,
+      );
     }
   }
 
@@ -358,7 +400,10 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
     let interval;
     if (qualityOk && qualityStartRef.current && stage === "camera") {
       interval = setInterval(() => {
-        const p = Math.min((Date.now() - qualityStartRef.current) / QUALITY_HOLD_MS, 1);
+        const p = Math.min(
+          (Date.now() - qualityStartRef.current) / QUALITY_HOLD_MS,
+          1,
+        );
         setProgress(p);
       }, 50);
     } else {
@@ -376,7 +421,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
         <div className="relative flex flex-col h-[600px] sm:h-[650px]">
           {/* Close Button */}
           {stage !== "enrolling" && (
-            <button 
+            <button
               onClick={() => onOpenChange(false)}
               className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
             >
@@ -397,13 +442,15 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                 >
                   <div className="relative">
                     <Loader2 className="w-16 h-16 text-primary animate-spin" />
-                    <motion.div 
+                    <motion.div
                       animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"
                     />
                   </div>
-                  <p className="text-white font-black tracking-tight text-xl">{guide}</p>
+                  <p className="text-white font-black tracking-tight text-xl">
+                    {guide}
+                  </p>
                 </motion.div>
               ) : (
                 <motion.div
@@ -417,10 +464,12 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                   <div className="flex-none p-8 bg-[oklch(0.15_0.02_250/0.5)] border-b border-white/5">
                     <DialogTitle className="text-white font-black text-2xl tracking-tight flex items-center gap-2">
                       <Scan className="w-6 h-6 text-primary" />
-                      {stage === "camera" ? "Biometric Enrollment" : "Verify Identity"}
+                      {stage === "camera"
+                        ? "Biometric Enrollment"
+                        : "Verify Identity"}
                     </DialogTitle>
                     <DialogDescription className="text-white/50 text-sm font-medium mt-1">
-                      {stage === "camera" 
+                      {stage === "camera"
                         ? "Secure your identity with enterprise-grade face recognition."
                         : "Confirm your capture is clear for optimal recognition."}
                     </DialogDescription>
@@ -443,7 +492,7 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                             muted
                             className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
                           />
-                          <FaceScanningHUD 
+                          <FaceScanningHUD
                             active={true}
                             progress={progress}
                             status={qualityOk ? "success" : "scanning"}
@@ -469,23 +518,25 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                               className="w-full h-full object-cover"
                             />
                           )}
-                          
+
                           {/* Success/Error Overlays */}
                           <AnimatePresence>
                             {stage === "enrolling" && (
-                              <motion.div 
+                              <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[oklch(0.1_0.02_250/0.8)] backdrop-blur-md"
                               >
                                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-6" />
-                                <p className="text-white font-black text-2xl tracking-tight">Securing Hash...</p>
+                                <p className="text-white font-black text-2xl tracking-tight">
+                                  Securing Hash...
+                                </p>
                               </motion.div>
                             )}
-                            
+
                             {stage === "done" && (
-                              <motion.div 
+                              <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[oklch(0.6_0.2_150/0.2)] backdrop-blur-xl"
@@ -493,7 +544,9 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                                 <div className="w-24 h-24 rounded-full bg-[oklch(0.7_0.2_150)] flex items-center justify-center shadow-[0_0_40px_oklch(0.7_0.2_150/0.4)]">
                                   <CheckCircle2 className="w-12 h-12 text-white" />
                                 </div>
-                                <p className="text-white text-3xl font-black mt-8 tracking-tighter">Identity Verified</p>
+                                <p className="text-white text-3xl font-black mt-8 tracking-tighter">
+                                  Identity Verified
+                                </p>
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -525,7 +578,9 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                       </div>
                     ) : stage === "done" ? (
                       <div className="text-center py-2 w-full">
-                        <p className="text-white/40 text-sm font-bold tracking-widest uppercase">System Secured</p>
+                        <p className="text-white/40 text-sm font-bold tracking-widest uppercase">
+                          System Secured
+                        </p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center w-full gap-4">
@@ -543,7 +598,9 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                           </AnimatePresence>
                           <div className="flex items-center gap-2 mt-2">
                             <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
-                            <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">Sensors Active</p>
+                            <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">
+                              Sensors Active
+                            </p>
                           </div>
                         </div>
                       </div>

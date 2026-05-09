@@ -159,7 +159,7 @@ const me = async (req, res) => {
       stats = {
         classCount: classes.length,
         studentCount: studentIds.size,
-        faceEnrolled: profile?.faceEnrolled || false,
+        faceEnrolled: profile?.faceEnrolled || (user.role === "teacher" && !!profile?.avatar) || false,
       };
     } else {
       profile = await StudentProfile.findOne({ userId: user._id });
