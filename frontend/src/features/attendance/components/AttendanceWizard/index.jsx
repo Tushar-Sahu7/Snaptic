@@ -68,27 +68,27 @@ export default function AttendanceWizard({
   const [step, setStep] = useState(() => {
     if (!initialSession) return 1;
 
+    // 1. Finalized sessions always go to review
     if (initialSession.status === "finalized") return 4;
+    
+    // 2. If manual mode requested, go to manual mark (even if submitted, as we allow updates)
+    if (manual) return 3;
+
+    // 3. Submitted sessions go to review (if not manual)
     if (initialSession.status === "submitted") return 4;
 
-    if (manual) return 3;
+    // 4. In-progress sessions go to scan
     if (autoStart || initialSession.status === "inprogress") return 2;
 
     return 1;
   });
 
-
-
-  // 3. Time Locking Hook
-  const { timeLeft, endTimeFormatted, isFinalized } = useTimeLock(
-    session,
-    () => {
-      setStep(4); // Move to review step when time expires
-    },
-  );
+  // 3. Time Locking Hook - Now only driven by backend status
+  const { isFinalized } = useTimeLock(session);
 
   // 3.5 Auto-handle Manual Flag
   // We use a ref for handleFinishScan because we call it inside an effect
+
   // that depends on 'step', and we want the latest version of the handler
   // without re-running the effect when the handler itself is recreated.
   const handleFinishScanRef = useRef(handleFinishScan);

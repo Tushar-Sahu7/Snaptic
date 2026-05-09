@@ -24,6 +24,31 @@ export const ScanStep = ({
 
   return (
     <div className="flex flex-col h-full space-y-6 pb-10">
+      {/* Recognition Info */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row items-center gap-6 bg-muted/30 p-6 rounded-3xl border border-border"
+      >
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-primary/10 text-primary">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Recognition</p>
+              <h4 className="text-lg font-bold text-foreground tracking-tight">Active Scan</h4>
+            </div>
+          </div>
+          
+          <div className="hidden sm:block w-px h-8 bg-border" />
+          
+          <p className="text-xs font-medium text-muted-foreground max-w-xs text-center sm:text-left">
+            The system is identifying students in real-time. Switch to manual marking if needed.
+          </p>
+        </div>
+      </motion.div>
+
       {/* Immersive Camera Container */}
       <div className="relative flex-1 rounded-3xl overflow-hidden border border-border bg-black shadow-sm group">
         <AttendanceRecognitionStep
@@ -88,46 +113,27 @@ export const ScanStep = ({
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row items-center justify-between gap-6 bg-muted/30 p-6 rounded-3xl border border-border"
+        className="flex items-center justify-end gap-3 bg-muted/30 p-6 rounded-3xl border border-border"
       >
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-primary/10 text-primary">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Recognition</p>
-              <h4 className="text-lg font-bold text-foreground tracking-tight">Active Scan</h4>
-            </div>
-          </div>
-          
-          <div className="hidden sm:block w-px h-8 bg-border" />
-          
-          <p className="text-xs font-medium text-muted-foreground max-w-xs text-center sm:text-left">
-            The system is identifying students in real-time. Switch to manual marking if needed.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Button
-            variant="ghost"
-            onClick={onComplete}
-            disabled={loading || isFinalized}
-            className="flex-1 md:flex-none rounded-xl h-12 px-6 font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-foreground transition-all"
-          >
-            <SquarePen className="w-4 h-4 mr-2" />
-            Manual
-          </Button>
-          <Button
-            onClick={onComplete}
-            disabled={loading || isFinalized}
-            className="flex-1 md:flex-none rounded-xl h-12 px-8 bg-foreground text-background font-bold uppercase tracking-widest text-[10px] transition-all"
-          >
-            Finish & Review
-            <ChevronRight className="ml-2 w-4 h-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          onClick={onComplete}
+          disabled={loading || isFinalized}
+          className="rounded-xl h-12 px-6 font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-foreground transition-all"
+        >
+          <SquarePen className="w-4 h-4 mr-2" />
+          Manual
+        </Button>
+        <Button
+          onClick={onComplete}
+          disabled={loading || isFinalized}
+          className="rounded-xl h-12 px-8 bg-foreground text-background font-bold uppercase tracking-widest text-[10px] transition-all"
+        >
+          Finish & Review
+          <ChevronRight className="ml-2 w-4 h-4" />
+        </Button>
       </motion.div>
+
     </div>
   );
 };
