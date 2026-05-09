@@ -136,31 +136,6 @@ export default function AttendanceWizard({
 
   const containerRef = useRef(null);
 
-  // 4.5 Immersive Handlers
-  const toggleFullscreen = useCallback(() => {
-    if (containerRef.current && !document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch((err) => {
-        console.warn("Fullscreen request failed:", err);
-      });
-    }
-  }, []);
-
-  const handleSelectClassWithFullscreen = useCallback(
-    (cls, mode) => {
-      toggleFullscreen();
-      onSelectClass?.(cls, mode);
-    },
-    [onSelectClass, toggleFullscreen],
-  );
-
-  const handleContinueWithFullscreen = useCallback(
-    (s) => {
-      if (s === 2) toggleFullscreen();
-      setStep(s);
-    },
-    [toggleFullscreen],
-  );
-
   // 5. Render
   return (
     <div
@@ -199,8 +174,8 @@ export default function AttendanceWizard({
                   classes={classes}
                   todaySessions={todaySessions}
                   studentsCount={students.length}
-                  onSelectClass={handleSelectClassWithFullscreen}
-                  onContinue={handleContinueWithFullscreen}
+                  onSelectClass={onSelectClass}
+                  onContinue={setStep}
                 />
               )}
 

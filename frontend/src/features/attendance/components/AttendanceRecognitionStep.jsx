@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import {
+import { 
   Camera,
   RotateCcw,
   Maximize2,
@@ -58,6 +57,7 @@ export default function RecognitionStep({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDataSynced, setIsDataSynced] = useState(false);
   const [isCameraStarted, setIsCameraStarted] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
   const [initializationProgress, setInitializationProgress] = useState(0);
 
   const labeledDescriptorsRef = useRef([]);
@@ -78,7 +78,7 @@ export default function RecognitionStep({
     setInitializationProgress(p);
 
     if (globalModelsLoaded && isDataSynced) {
-      setTimeout(() => setLoading(false), 800); // Smooth transition
+      setLoading(false);
     }
   }, [globalModelsLoaded, isDataSynced]);
 
@@ -164,6 +164,7 @@ export default function RecognitionStep({
       audio: false,
     };
 
+    setIsCameraLoading(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
@@ -183,6 +184,8 @@ export default function RecognitionStep({
       runTrackingLoop();
     } catch (err) {
       toast.error("Sensor Initialisation Failed");
+    } finally {
+      setIsCameraLoading(false);
     }
   }
 
@@ -304,7 +307,7 @@ export default function RecognitionStep({
       ref={containerRef}
       className={cn(
         "relative w-full overflow-hidden transition-all duration-500",
-        isFullscreen ? "fixed inset-0 z-100 bg-black" : "aspect-video rounded-3xl border border-border/40 bg-zinc-950 shadow-2xl"
+        isFullscreen ? "fixed inset-0 z-100" : "aspect-video rounded-3xl border border-border/40 shadow-2xl"
       )}
     >
       <div
@@ -319,40 +322,40 @@ export default function RecognitionStep({
         onTouchMove={handleTouchMove}
         onTouchEnd={() => (prevPinchDistRef.current = null)}
       >
-        <AnimatePresence mode="wait">
+        <div className="w-full h-full flex flex-col">
           {!isCameraStarted ? (
-            <motion.div 
+            <div 
               key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
               className="absolute inset-0 flex items-center justify-center p-6"
             >
               <Empty className="max-w-md border-none bg-transparent">
                 <EmptyHeader>
-                  <EmptyMedia variant="icon" className="bg-primary/10 text-primary mb-6">
-                    <Scan className="w-8 h-8" />
+                  <EmptyMedia variant="icon" className="bg-primary/10 text-primary mb-4">
+                    <Camera className="" />
                   </EmptyMedia>
-                  <EmptyTitle className="text-2xl font-bold text-white mb-2">Neural Scan Interface</EmptyTitle>
+                  <EmptyTitle className="text-2xl font-bold text-white mb-1">Ready to Scan?</EmptyTitle>
                   <EmptyDescription className="text-zinc-400">
-                    Point the camera towards students. Our biometric engine will automatically recognize and mark attendance in real-time.
+                    Point the camera towards students. The camera will automatically recognize and mark attendance in real-time.
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <div className="flex flex-col sm:flex-row w-full gap-3 mt-8">
+                  <div className="flex flex-col sm:flex-row w-full gap-3 mt-6">
                     <Button 
-                      onClick={() => setIsCameraStarted(true)} 
+                      onClick={() => {
+                        setIsCameraStarted(true);
+                        setIsCameraLoading(true);
+                      }} 
                       size="lg"
                       className="flex-1 rounded-full h-12 bg-white text-black hover:bg-zinc-200"
                     >
                       <Camera className="w-4 h-4 mr-2" />
-                      Initialize Scan
+                      Start Camera
                     </Button>
                     <Button 
                       onClick={onComplete} 
                       variant="outline" 
                       size="lg"
-                      className="flex-1 rounded-full h-12 border-white/10 text-white hover:bg-white/5"
+                      className="flex-1 rounded-full h-12 "
                     >
                       <SquarePen className="w-4 h-4 mr-2" />
                       Manual Entry
@@ -360,15 +363,13 @@ export default function RecognitionStep({
                   </div>
                 </EmptyContent>
               </Empty>
-            </motion.div>
+            </div>
           ) : (
-            <motion.div 
+            <div 
               key="camera"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
               className="relative flex-1 flex flex-col overflow-hidden"
             >
-              <div className="relative flex-1 bg-black overflow-hidden">
+              <div className="relative flex-1 overflow-hidden">
                 <video
                   ref={videoRef}
                   muted
@@ -381,59 +382,14 @@ export default function RecognitionStep({
                   className="absolute inset-0 w-full h-full pointer-events-none opacity-60 z-20"
                 />
 
-                {/* Face Scanning HUD */}
-                <FaceScanningHUD 
-                  active={true}
-                  status="scanning"
-                  guide={activeMatches.length > 0 ? `${activeMatches.length} Detected` : "Searching for Faces..."}
-                  className="z-10"
-                />
 
-                {/* Detected Face Labels */}
-                <div className="absolute inset-0 z-20 pointer-events-none">
-                  <AnimatePresence>
-                    {activeMatches.map((match) => (
-                      <motion.div
-                        key={match.id}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute p-2 pointer-events-none"
-                        style={{
-                          left: `${(match.box.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
-                          top: `${(match.box.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
-                          width: `${(match.box.width / (videoRef.current?.videoWidth || 1)) * 100}%`,
-                        }}
-                      >
-                        <div className="flex flex-col items-center">
-                          <div className="p-1 rounded-full bg-primary/20 border border-primary/50 backdrop-blur-md shadow-lg">
-                            <Avatar className="w-10 h-10 border-2 border-primary">
-                              {match.avatar && <AvatarImage src={match.avatar} />}
-                              <AvatarFallback className="bg-primary/20 text-primary font-bold">
-                                {match.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                          <div className="mt-2 px-3 py-1 rounded-md bg-black/60 border border-white/10 backdrop-blur-md">
-                            <p className="text-[10px] font-bold text-white whitespace-nowrap uppercase tracking-wider">{match.name}</p>
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                              <span className="text-[8px] text-green-400 font-medium uppercase">Verified</span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
 
-                {/* Top Controls Overlay */}
-                <div className="absolute top-6 left-6 right-6 z-30 flex items-center justify-between pointer-events-none">
-                  <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-zinc-950/40 border border-white/10 backdrop-blur-xl">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] font-bold text-white uppercase tracking-widest">Biometric Live</span>
-                    </div>
+                {/* Overlays */}
+                <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between pointer-events-none">
+                  {/* Live Badge */}
+                  <div className="px-4 py-2 rounded-full border border-white/10 bg-zinc-950/40 backdrop-blur-md flex items-center gap-2 pointer-events-auto">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Live</span>
                   </div>
 
                   <div className="flex gap-2 pointer-events-auto">
@@ -455,98 +411,58 @@ export default function RecognitionStep({
                     </Button>
                   </div>
                 </div>
-              </div>
 
-              {/* Bottom Control Bar */}
-              <div className="p-6 bg-zinc-900 border-t border-white/5">
-                <div className="flex items-center justify-between gap-6">
-                  <div className="hidden sm:block">
-                    {capabilities?.zoom && (
-                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Zoom: {zoom.toFixed(1)}x</p>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
-                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                      <Users className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-end mb-1.5">
-                        <span className="text-white font-bold text-lg leading-none">
-                          {markedCount}
-                          <span className="text-zinc-500 text-sm font-medium ml-1">/ {students.length}</span>
-                        </span>
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Marked Present</span>
-                      </div>
-                      <Progress value={(markedCount / students.length) * 100} className="h-1.5 bg-white/5" />
-                    </div>
+                {/* Bottom Overlay */}
+                <div className="absolute bottom-4 left-4 right-4 z-30 flex items-center justify-between pointer-events-none">
+                  <div className="px-6 py-3 rounded-2xl border border-white/10 bg-zinc-950/40 backdrop-blur-md flex items-center gap-3 pointer-events-auto">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-white uppercase tracking-widest">
+                      {markedCount} / {Object.keys(students || {}).length}
+                    </span>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      onClick={onComplete}
-                      className="rounded-full text-zinc-400 hover:text-white hover:bg-white/5"
-                    >
-                      <SquarePen className="w-4 h-4 mr-2" />
-                      Manual
-                    </Button>
-                    <Button
-                      onClick={onComplete}
-                      className="rounded-full px-6 bg-white text-black hover:bg-zinc-200"
-                    >
-                      Finish Scan
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={onComplete}
+                    className="pointer-events-auto rounded-full px-8 h-12 bg-white text-black hover:bg-zinc-200 font-bold uppercase tracking-widest text-[10px] shadow-2xl"
+                  >
+                    Finish Scan
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </div>
               </div>
-            </motion.div>
+
+            </div>
           )}
-        </AnimatePresence>
+        </div>
 
         {/* Global Loading / Init State */}
-        <AnimatePresence>
-          {loading && isCameraStarted && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-950/90 backdrop-blur-xl"
-            >
-              <div className="flex flex-col items-center max-w-xs w-full">
-                <div className="relative mb-8">
-                  <div className="p-6 rounded-3xl bg-primary/10 border border-primary/20 shadow-2xl shadow-primary/20">
-                    {!isDataSynced ? <Database className="w-10 h-10 text-primary animate-pulse" /> : <Cpu className="w-10 h-10 text-primary animate-spin" />}
-                  </div>
-                  <motion.div 
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 bg-primary/20 blur-2xl rounded-full -z-10"
+        {(loading || isCameraLoading) && isCameraStarted && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black">
+            <div className="flex flex-col items-center gap-6 max-w-xs w-full px-6">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-900/50 flex items-center justify-center border border-white/5">
+                <Scan className="w-6 h-6 text-zinc-500" />
+              </div>
+
+              <div className="w-full space-y-4">
+                <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white" 
+                    style={{ width: `${initializationProgress}%` }}
                   />
                 </div>
-
-                <div className="w-full space-y-4">
-                  <div className="flex justify-between items-end">
-                    <span className="text-xs font-bold text-white uppercase tracking-widest">
-                      {!isDataSynced ? "Syncing Biometrics" : "Calibrating Sensors"}
-                    </span>
-                    <span className="text-primary font-mono text-xs">{initializationProgress}%</span>
-                  </div>
-                  <Progress value={initializationProgress} className="h-1.5 bg-white/5" />
-                  <div className="text-center space-y-1">
-                    <p className="text-sm font-medium text-white">
-                      {!isDataSynced ? "Downloading Class Profiles" : "Biometric Engine Ready"}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest">
-                      {!isDataSynced ? "Establishing Secure Data Link..." : "Sensor Calibration Complete"}
-                    </p>
-                  </div>
+                
+                <div className="text-center space-y-1">
+                  <h3 className="text-sm font-medium text-white tracking-tight">
+                    Initializing System
+                  </h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">
+                    Setting up face recognition sensor
+                  </p>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

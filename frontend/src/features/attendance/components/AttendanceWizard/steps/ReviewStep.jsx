@@ -71,7 +71,8 @@ export const ReviewStep = ({
   const presentCount = presentStudents.length;
   const absentCount = absentees.length;
   const totalCount = students.length;
-  const attendanceRate = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+  const attendanceRate =
+    totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
 
   const handleToggle = (studentId) => {
     if (isFinalized || isSubmitted || loading) return;
@@ -104,25 +105,33 @@ export const ReviewStep = ({
                   <div className="p-2.5 rounded-2xl bg-primary/10 shadow-inner">
                     <ShieldCheck className="w-6 h-6" />
                   </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.3em] opacity-70">Step 04 — Final Audit</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] opacity-70">
+                    Step 04 — Final Audit
+                  </span>
                 </div>
                 <h1 className="text-6xl font-black tracking-tighter text-zinc-900 dark:text-zinc-50 italic uppercase leading-none">
                   Verification <br /> Dashboard
                 </h1>
                 <p className="text-zinc-500 dark:text-zinc-400 font-medium max-w-xl leading-relaxed text-xl">
-                  Analyze the session metadata and ensure every record is accurate. Once submitted, these records will be permanently synced to the central database.
+                  Analyze the session metadata and ensure every record is
+                  accurate. Once submitted, these records will be permanently
+                  synced to the central database.
                 </p>
               </div>
 
               <div className="lg:col-span-5 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[48px] p-10 border border-white/20 dark:border-zinc-800/50 shadow-2xl shadow-zinc-200/50 dark:shadow-none relative overflow-hidden group">
                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-colors duration-1000" />
-                
+
                 <div className="relative z-10 space-y-10">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Attendance Rate</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
+                        Attendance Rate
+                      </span>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-6xl font-black text-zinc-900 dark:text-zinc-50 tabular-nums tracking-tighter">{attendanceRate}%</span>
+                        <span className="text-6xl font-black text-zinc-900 dark:text-zinc-50 tabular-nums tracking-tighter">
+                          {attendanceRate}%
+                        </span>
                       </div>
                     </div>
                     <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-500">
@@ -132,12 +141,20 @@ export const ReviewStep = ({
 
                   <div className="grid grid-cols-2 gap-5">
                     <div className="p-6 rounded-[32px] bg-emerald-500/5 border border-emerald-500/10 space-y-1 group/stat transition-all hover:bg-emerald-500/10">
-                      <p className="text-4xl font-black text-emerald-500 tabular-nums tracking-tighter">{presentCount}</p>
-                      <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">Present</p>
+                      <p className="text-4xl font-black text-emerald-500 tabular-nums tracking-tighter">
+                        {presentCount}
+                      </p>
+                      <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">
+                        Present
+                      </p>
                     </div>
                     <div className="p-6 rounded-[32px] bg-rose-500/5 border border-rose-500/10 space-y-1 group/stat transition-all hover:bg-rose-500/10">
-                      <p className="text-4xl font-black text-rose-500 tabular-nums tracking-tighter">{absentCount}</p>
-                      <p className="text-[10px] font-black text-rose-600/60 uppercase tracking-widest">Absent</p>
+                      <p className="text-4xl font-black text-rose-500 tabular-nums tracking-tighter">
+                        {absentCount}
+                      </p>
+                      <p className="text-[10px] font-black text-rose-600/60 uppercase tracking-widest">
+                        Absent
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -154,7 +171,10 @@ export const ReviewStep = ({
                       <UserX className="w-6 h-6" />
                     </div>
                     <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter italic uppercase">
-                      Absentees <span className="text-rose-500 ml-1">({absentCount})</span>
+                      Absentees{" "}
+                      <span className="text-rose-500 ml-1">
+                        ({absentCount})
+                      </span>
                     </h2>
                   </div>
                 </div>
@@ -162,30 +182,44 @@ export const ReviewStep = ({
                 <div className="space-y-4">
                   {absentees.map((s, idx) => {
                     const profile = profiles[s._id] || {};
-                    const name = profile.name || s.name || s.email?.split("@")[0] || "Unknown";
+                    const name =
+                      profile.name ||
+                      s.name ||
+                      s.email?.split("@")[0] ||
+                      "Unknown";
                     return (
                       <motion.button
                         key={s._id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ 
+                        transition={{
                           delay: idx * 0.05,
                           type: "spring",
                           damping: 20,
-                          stiffness: 150
+                          stiffness: 150,
                         }}
                         onClick={() => handleToggle(s._id)}
                         className="w-full flex items-center gap-5 p-5 rounded-[32px] border border-zinc-100 dark:border-zinc-900 bg-white/40 dark:bg-zinc-900/20 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-2xl hover:shadow-zinc-200/40 dark:hover:shadow-none transition-all group relative overflow-hidden"
                       >
                         <div className="relative">
                           <Avatar className="w-14 h-14 rounded-2xl border-2 border-white dark:border-zinc-800 shadow-md transition-transform group-hover:scale-110 duration-500">
-                            <AvatarImage src={profile.avatar} alt={name} className="object-cover" />
-                            <AvatarFallback className="text-sm font-black bg-zinc-100 dark:bg-zinc-800">{name.charAt(0)}</AvatarFallback>
+                            <AvatarImage
+                              src={profile.avatar}
+                              alt={name}
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="text-sm font-black bg-zinc-100 dark:bg-zinc-800">
+                              {name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <p className="text-base font-black text-zinc-900 dark:text-zinc-50 truncate group-hover:text-primary transition-colors">{name}</p>
-                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">{s.email?.split("@")[0]}</p>
+                          <p className="text-base font-black text-zinc-900 dark:text-zinc-50 truncate group-hover:text-primary transition-colors">
+                            {name}
+                          </p>
+                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                            {s.email?.split("@")[0]}
+                          </p>
                         </div>
                         <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 shadow-inner">
                           <RotateCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
@@ -194,7 +228,7 @@ export const ReviewStep = ({
                     );
                   })}
                   {absentCount === 0 && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className="py-24 flex flex-col items-center justify-center text-center space-y-6 rounded-[48px] border-2 border-dashed border-emerald-500/20 bg-emerald-500/2 backdrop-blur-sm"
@@ -206,8 +240,12 @@ export const ReviewStep = ({
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic uppercase tracking-tight">Perfect Session</p>
-                        <p className="text-base font-medium text-emerald-600/60 dark:text-emerald-400/40 max-w-[200px]">All students successfully recognized.</p>
+                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic uppercase tracking-tight">
+                          Perfect Session
+                        </p>
+                        <p className="text-base font-medium text-emerald-600/60 dark:text-emerald-400/40 max-w-[200px]">
+                          All students successfully recognized.
+                        </p>
                       </div>
                     </motion.div>
                   )}
@@ -221,37 +259,54 @@ export const ReviewStep = ({
                     <UserCheck className="w-6 h-6" />
                   </div>
                   <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter italic uppercase">
-                    Present <span className="text-emerald-500 ml-1">({presentCount})</span>
+                    Present{" "}
+                    <span className="text-emerald-500 ml-1">
+                      ({presentCount})
+                    </span>
                   </h2>
                 </div>
 
                 <div className="space-y-4">
                   {presentStudents.map((s, idx) => {
                     const profile = profiles[s._id] || {};
-                    const name = profile.name || s.name || s.email?.split("@")[0] || "Unknown";
+                    const name =
+                      profile.name ||
+                      s.name ||
+                      s.email?.split("@")[0] ||
+                      "Unknown";
                     return (
                       <motion.button
                         key={s._id}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ 
+                        transition={{
                           delay: idx * 0.05,
                           type: "spring",
                           damping: 20,
-                          stiffness: 150
+                          stiffness: 150,
                         }}
                         onClick={() => handleToggle(s._id)}
                         className="w-full flex items-center gap-5 p-5 rounded-[32px] border border-emerald-500/10 bg-emerald-500/3 dark:bg-emerald-500/2 hover:bg-emerald-500/8 dark:hover:bg-emerald-500/5 transition-all group relative overflow-hidden"
                       >
                         <div className="relative">
                           <Avatar className="w-14 h-14 rounded-2xl border-2 border-white dark:border-zinc-900 shadow-md transition-transform group-hover:scale-110 duration-500">
-                            <AvatarImage src={profile.avatar} alt={name} className="object-cover" />
-                            <AvatarFallback className="text-sm font-black bg-zinc-100 dark:bg-zinc-800">{name.charAt(0)}</AvatarFallback>
+                            <AvatarImage
+                              src={profile.avatar}
+                              alt={name}
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="text-sm font-black bg-zinc-100 dark:bg-zinc-800">
+                              {name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <p className="text-base font-black text-zinc-900 dark:text-zinc-50 truncate">{name}</p>
-                          <p className="text-[10px] font-black text-emerald-600/60 dark:text-emerald-400/40 uppercase tracking-[0.2em]">{s.email?.split("@")[0]}</p>
+                          <p className="text-base font-black text-zinc-900 dark:text-zinc-50 truncate">
+                            {name}
+                          </p>
+                          <p className="text-[10px] font-black text-emerald-600/60 dark:text-emerald-400/40 uppercase tracking-[0.2em]">
+                            {s.email?.split("@")[0]}
+                          </p>
                         </div>
                         <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 shadow-inner">
                           <RotateCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
@@ -300,13 +355,19 @@ export const ReviewStep = ({
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-4xl font-black tracking-tighter italic uppercase text-zinc-900 dark:text-zinc-50 leading-none">Confirm Sync?</h3>
+                        <h3 className="text-4xl font-black tracking-tighter italic uppercase text-zinc-900 dark:text-zinc-50 leading-none">
+                          Confirm Sync?
+                        </h3>
                         <p className="text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed text-lg">
-                          This will finalize the records for <b className="text-zinc-900 dark:text-zinc-50 underline decoration-primary/30 underline-offset-4">{session.classId?.name}</b>. Profiles will be updated immediately.
+                          This will finalize the records for{" "}
+                          <b className="text-zinc-900 dark:text-zinc-50 underline decoration-primary/30 underline-offset-4">
+                            {session.classId?.name}
+                          </b>
+                          . Profiles will be updated immediately.
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-4">
                       <AlertDialogCancel className="flex-1 h-16 rounded-[24px] font-black uppercase tracking-[0.2em] text-[10px] border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
                         Review Again
@@ -338,10 +399,15 @@ export const ReviewStep = ({
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[140%] bg-emerald-500/5 dark:bg-emerald-500/3 rounded-full blur-[120px] animate-pulse" />
               </div>
 
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", damping: 15, stiffness: 200, delay: 0.2 }}
+                transition={{
+                  type: "spring",
+                  damping: 15,
+                  stiffness: 200,
+                  delay: 0.2,
+                }}
                 className="w-32 h-32 rounded-[40px] bg-emerald-500 text-white flex items-center justify-center shadow-3xl shadow-emerald-500/40 relative z-10"
               >
                 <CheckCircle2 className="w-16 h-16" strokeWidth={3} />
@@ -360,7 +426,7 @@ export const ReviewStep = ({
             </div>
 
             {session?.classId && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
@@ -375,8 +441,12 @@ export const ReviewStep = ({
                     <LucideIcon name={session.classId.icon} size={48} />
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-70">Official Record For</p>
-                    <p className="text-5xl font-black text-zinc-900 dark:text-zinc-50 italic uppercase tracking-tighter">{session.classId.name}</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-70">
+                      Official Record For
+                    </p>
+                    <p className="text-5xl font-black text-zinc-900 dark:text-zinc-50 italic uppercase tracking-tighter">
+                      {session.classId.name}
+                    </p>
                   </div>
                 </div>
 
@@ -384,37 +454,57 @@ export const ReviewStep = ({
                   <div className="p-8 rounded-[32px] bg-white/50 dark:bg-zinc-950/50 border border-zinc-100 dark:border-zinc-900/50 space-y-3 group/info transition-all hover:bg-white dark:hover:bg-zinc-950">
                     <div className="flex items-center gap-3 text-zinc-400 mb-1">
                       <Clock className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Session Time</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                        Session Time
+                      </span>
                     </div>
                     <p className="font-black text-2xl text-zinc-900 dark:text-zinc-50 tracking-tighter">
-                      {session.classId.schedule?.startTime ? format12Hour(session.classId.schedule.startTime) : "--"} - {session.classId.schedule?.endTime ? format12Hour(session.classId.schedule.endTime) : "--"}
+                      {session.classId.schedule?.startTime
+                        ? format12Hour(session.classId.schedule.startTime)
+                        : "--"}{" "}
+                      -{" "}
+                      {session.classId.schedule?.endTime
+                        ? format12Hour(session.classId.schedule.endTime)
+                        : "--"}
                     </p>
                   </div>
                   <div className="p-8 rounded-[32px] bg-white/50 dark:bg-zinc-950/50 border border-zinc-100 dark:border-zinc-900/50 space-y-3 group/info transition-all hover:bg-white dark:hover:bg-zinc-950">
                     <div className="flex items-center gap-3 text-zinc-400 mb-1">
                       <MapPin className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Location</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                        Location
+                      </span>
                     </div>
                     <p className="font-black text-2xl text-zinc-900 dark:text-zinc-50 tracking-tighter">
-                      {session.classId.schedule?.room ? formatRoom(session.classId.schedule.room) : "No Room Set"}
+                      {session.classId.schedule?.room
+                        ? formatRoom(session.classId.schedule.room)
+                        : "No Room Set"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between px-10 pt-8 border-t border-zinc-100 dark:border-zinc-900/50 relative z-10">
                   <div className="flex flex-col gap-1">
-                    <span className="text-6xl font-black text-emerald-500 tabular-nums tracking-tighter">{presentCount}</span>
-                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">Present</span>
+                    <span className="text-6xl font-black text-emerald-500 tabular-nums tracking-tighter">
+                      {presentCount}
+                    </span>
+                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">
+                      Present
+                    </span>
                   </div>
                   <div className="flex flex-col gap-1 text-right">
-                    <span className="text-6xl font-black text-rose-500 tabular-nums tracking-tighter">{absentCount}</span>
-                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">Absent</span>
+                    <span className="text-6xl font-black text-rose-500 tabular-nums tracking-tighter">
+                      {absentCount}
+                    </span>
+                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">
+                      Absent
+                    </span>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
@@ -441,7 +531,5 @@ export const ReviewStep = ({
         )}
       </AnimatePresence>
     </div>
-
   );
 };
-

@@ -1,4 +1,9 @@
-import { ChevronRight, RotateCcw, ClipboardEdit, AlertCircle } from "lucide-react";
+import {
+  ChevronRight,
+  RotateCcw,
+  ClipboardEdit,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StudentAttendanceCard } from "../shared/StudentAttendanceCard";
 import { motion } from "motion/react";
@@ -15,7 +20,7 @@ export const MarkStep = ({
 }) => {
   return (
     <div className="space-y-10 pb-24">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 bg-card p-8 lg:p-12 rounded-[40px] border border-border relative overflow-hidden"
@@ -25,13 +30,16 @@ export const MarkStep = ({
             <div className="p-2 rounded-xl bg-muted">
               <ClipboardEdit className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Step 03 — Manual Calibration</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+              Step 03 — Manual Calibration
+            </span>
           </div>
           <h3 className="text-4xl font-black tracking-tighter text-foreground leading-tight">
             Calibration <br /> & Review
           </h3>
           <p className="text-muted-foreground font-medium max-w-lg leading-relaxed text-lg">
-            Fine-tune recognized records. Tap student cards to toggle status manually before the final verification dashboard.
+            Fine-tune recognized records. Tap student cards to toggle status
+            manually before the final verification dashboard.
           </p>
         </div>
 
@@ -58,7 +66,7 @@ export const MarkStep = ({
       </motion.div>
 
       {!students?.length ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="py-32 flex flex-col items-center justify-center text-center space-y-8 rounded-[40px] border-2 border-dashed border-border bg-muted/30"
@@ -68,7 +76,9 @@ export const MarkStep = ({
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-black text-2xl text-foreground tracking-tight">Empty Class</h4>
+            <h4 className="font-black text-2xl text-foreground tracking-tight">
+              Empty Class
+            </h4>
             <p className="text-muted-foreground font-medium max-w-sm text-base">
               No students are currently enrolled in this specific class session.
             </p>
@@ -106,10 +116,10 @@ export const MarkStep = ({
                   key={sId}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ 
+                  transition={{
                     delay: idx * 0.03,
                     duration: 0.5,
-                    ease: [0.23, 1, 0.32, 1]
+                    ease: [0.23, 1, 0.32, 1],
                   }}
                 >
                   <StudentAttendanceCard
@@ -134,4 +144,3 @@ export const MarkStep = ({
     </div>
   );
 };
-
