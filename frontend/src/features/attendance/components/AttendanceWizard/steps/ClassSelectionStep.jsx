@@ -18,7 +18,7 @@ export const ClassSelectionStep = ({
   if (session) {
     const baseClass =
       typeof session.classId === "object"
-        ? { ...session.classId, studentCount: studentsCount }
+        ? { ...session.classId, studentCount: session.classId.studentCount ?? studentsCount }
         : { name: "Loading Class Details...", studentCount: studentsCount };
 
   return (
@@ -106,7 +106,6 @@ export const ClassSelectionStep = ({
           {sortedClasses.map((c) => {
             const { onTime } = isClassInSession(c);
             const tSession = todaySessions[c._id];
-            const sCount = c.studentIds?.length || 0;
             const hasActiveSession = tSession?.status === "inprogress";
             const isSubmitted = tSession?.status === "submitted";
             const canStart = onTime || hasActiveSession || isSubmitted;
@@ -116,7 +115,7 @@ export const ClassSelectionStep = ({
                 key={c._id}
                 cls={{
                    ...c,
-                  studentCount: sCount,
+                  studentCount: c.studentCount,
                 }}
                 onClick={() => canStart && onSelectClass?.(c, onTime ? "auto" : "manual")}
                 className={cn(

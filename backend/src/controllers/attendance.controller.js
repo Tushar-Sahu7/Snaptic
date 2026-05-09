@@ -68,7 +68,7 @@ const startSession = async (req, res) => {
 
     // 4. Retrieve final state with population for the UI (outside transaction for cleaner retrieval)
     const finalSession = await AttendanceSession.findById(sessionData._id)
-      .populate("classId", "name icon status");
+      .populate("classId", "name icon status studentCount");
       
     const profiles = await StudentProfile.find({
       userId: { $in: enrolledStudentIds }
