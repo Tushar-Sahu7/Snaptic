@@ -70,7 +70,7 @@ function resolveState(cls, session) {
       variant: "default",
       disabled: false,
       route: (classId) =>
-        `/teacher/classes/${classId}/attendance?autoStart=true`,
+        `/teacher/take-attendance?classId=${classId}&autoStart=true`,
     };
   }
 
@@ -81,7 +81,7 @@ function resolveState(cls, session) {
       icon: SquarePen,
       variant: "default",
       disabled: false,
-      route: (classId) => `/teacher/classes/${classId}/attendance?manual=true`,
+      route: (classId) => `/teacher/take-attendance?classId=${classId}&manual=true`,
     };
   }
 
@@ -95,7 +95,7 @@ function resolveState(cls, session) {
       variant: "default",
       disabled: false,
       route: (classId) =>
-        `/teacher/classes/${classId}/attendance?autoStart=true`,
+        `/teacher/take-attendance?classId=${classId}&autoStart=true`,
     };
   }
 

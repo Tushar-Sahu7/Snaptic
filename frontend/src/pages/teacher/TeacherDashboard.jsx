@@ -125,7 +125,10 @@ export default function TeacherDashboard() {
                     <div 
                       key={s._id} 
                       className="group flex items-center justify-between p-4 rounded-xl border bg-card/50 hover:bg-muted/30 hover:border-foreground/10 cursor-pointer transition-all duration-200"
-                      onClick={() => navigate(`/teacher/attendance/scan/${s._id}`)}
+                      onClick={() => {
+                        const cId = typeof s.classId === 'object' ? s.classId._id : s.classId;
+                        navigate(`/teacher/take-attendance?classId=${cId}&autoStart=true`);
+                      }}
                     >
                       <div className="flex items-center gap-4">
                          <div className="w-1 h-8 rounded-full opacity-60" style={{ backgroundColor: s.classColor || 'oklch(0.7 0 0)' }} />

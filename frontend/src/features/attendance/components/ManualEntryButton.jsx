@@ -48,7 +48,7 @@ export const ManualEntryButton = ({
       if (result === false) return;
     }
 
-    navigate(`/teacher/classes/${cls._id}/attendance?manual=true`);
+    navigate(`/teacher/take-attendance?classId=${cls._id}&manual=true`);
   };
 
   const button = (

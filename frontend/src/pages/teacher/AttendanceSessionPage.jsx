@@ -98,6 +98,19 @@ export default function AttendanceSessionPage() {
   const students = data?.profiles?.map(p => ({ ...p, _id: p.userId })) || [];
   const records = data?.records || [];
 
+  // Derive todaySessions for the wizard's list view
+  const todaySessions = useMemo(() => {
+    if (!data?.session) return {};
+    const s = data.session;
+    const cId = typeof s.classId === "object" ? s.classId._id : s.classId;
+    return { [cId]: s };
+  }, [data?.session]);
+
+  // Filter classes to only show active ones
+  const activeClasses = useMemo(() => {
+    return (classesData?.classes || []).filter((c) => c.status === "active");
+  }, [classesData?.classes]);
+
   return (
     <div className="min-h-full animate-in fade-in duration-700">
       <AttendanceWizard 
@@ -105,10 +118,15 @@ export default function AttendanceSessionPage() {
         students={students}
         profiles={data?.profiles}
         records={records}
-        classes={classesData?.classes}
+        classes={activeClasses}
+        todaySessions={todaySessions}
         isDirect={origin === "detail"}
         autoStart={searchParams.get("autoStart") === "true"}
         manual={searchParams.get("manual") === "true"}
+        onSelectClass={(c, mode) => {
+          const flag = mode === "manual" ? "?manual=true" : "?autoStart=true";
+          navigate(`/teacher/classes/${c._id}/attendance${flag}`);
+        }}
       />
     </div>
   );

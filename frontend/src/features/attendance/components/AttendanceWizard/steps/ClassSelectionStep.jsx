@@ -15,38 +15,6 @@ export const ClassSelectionStep = ({
   onSelectClass,
   onContinue,
 }) => {
-  if (session) {
-    const baseClass =
-      typeof session.classId === "object"
-        ? { ...session.classId, studentCount: session.classId.studentCount ?? studentsCount }
-        : { name: "Loading Class Details...", studentCount: studentsCount };
-
-  return (
-    <div>
-      <div>
-
-          <ClassCard
-            cls={baseClass}
-
-            footer={
-              <PrimaryAttendanceAction
-                cls={baseClass}
-                session={session}
-                className="w-full"
-                onClick={(cls, state) => {
-                  // Intercept navigation — route within the wizard instead
-                  if (session.status === "inprogress") onContinue(2);
-                  else if (session.status === "submitted") onContinue(3);
-                  else if (session.status === "finalized") onContinue(4);
-                  return false; // Prevent self-navigation
-                }}
-              />
-            }
-          />
-        </div>
-      </div>
-    );
-  }
 
   const sortedClasses = [...classes].sort((a, b) => {
     const { onTime: onTimeA } = isClassInSession(a);

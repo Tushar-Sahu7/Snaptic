@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useAttendanceSession } from "./useAttendanceSession";
 import { useTimeLock } from "./useTimeLock";
+import { useNavigate } from "react-router";
 
 import { AttendanceStepper } from "./shared/AttendanceStepper";
 import { ClassSelectionStep } from "./steps/ClassSelectionStep";
@@ -22,6 +23,7 @@ export default function AttendanceWizard({
   autoStart = false,
   manual = false,
 }) {
+  const navigate = useNavigate();
   // 1. Core Logic Hook
   const {
     session,
@@ -109,6 +111,12 @@ export default function AttendanceWizard({
   // 4. Intercept Stepper/Back Navigation
   const handleStepChange = useCallback(
     async (s) => {
+      // If going to step 1, we should clear the class selection via URL
+      if (s === 1) {
+        navigate("/teacher/take-attendance");
+        return;
+      }
+
       // If going to step 3 from step 4 and session is submitted, we must reopen
       if (s === 3 && step === 4 && session?.status === "submitted") {
         const reopened = await handleReopen();
@@ -117,7 +125,7 @@ export default function AttendanceWizard({
         setStep(s);
       }
     },
-    [step, session?.status, isFinalized, handleReopen],
+    [step, session?.status, isFinalized, handleReopen, navigate],
   );
 
   // Pre-process profiles into a lookup map for faster access in child steps
