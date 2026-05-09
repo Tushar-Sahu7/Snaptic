@@ -1,54 +1,48 @@
-import { useState } from "react";
 import { RotateCcw, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { resetAttendanceSession } from "@/features/attendance/api/attendance.api";
+import { useResetSession } from "../hooks/useAttendance";
 import { cn } from "@/lib/utils";
 
 /**
  * AttendanceResetButton
  * 
- * A specialized button that triggers a confirmation dialog to reset an attendance session.
- * Matches the premium destructive dialog design used in ClassDeleteDialog.
+ * A specialized button that triggers a destructive alert dialog to reset an attendance session.
+ * Uses TanStack Query for mutation and follows the premium design from ClassDeleteDialog.
  */
 export const AttendanceResetButton = ({ sessionId, showLabel, disabled, onSuccess, ...props }) => {
-  const [pending, setPending] = useState(false);
-  const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
+  const resetMutation = useResetSession();
 
   const resolvedSize = props.size || (isMobile ? "default" : "xl");
   const buttonSize = showLabel ? "sm" : (resolvedSize === "xl" ? "icon-xl" : resolvedSize === "lg" ? "icon-lg" : resolvedSize === "sm" ? "icon-sm" : "icon");
 
-  const handleReset = async (e) => {
-    e?.stopPropagation();
-    if (!sessionId || pending) return;
+  const handleReset = async () => {
+    if (!sessionId || resetMutation.isPending) return;
     
     try {
-      setPending(true);
-      await resetAttendanceSession(sessionId);
-      window.dispatchEvent(new Event("attendance-updated"));
-      setOpen(false);
+      await resetMutation.mutateAsync(sessionId);
       onSuccess?.();
     } catch (err) {
       console.error("[AttendanceResetButton] Reset failed:", err);
-    } finally {
-      setPending(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
         <Button
           variant="secondary"
           className={cn(
@@ -56,33 +50,33 @@ export const AttendanceResetButton = ({ sessionId, showLabel, disabled, onSucces
             showLabel && "px-4"
           )}
           size={buttonSize}
-          disabled={disabled || pending}
+          disabled={disabled || resetMutation.isPending}
           onClick={(e) => e.stopPropagation()}
           {...props}
         >
-          {pending ? (
+          {resetMutation.isPending ? (
             <Spinner data-icon={showLabel ? "inline-start" : undefined} />
           ) : (
             <RotateCcw className={cn("w-4 h-4", showLabel && "mr-2")} />
           )}
           {showLabel && "Reset Session"}
         </Button>
-      </DialogTrigger>
+      </AlertDialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl">
+      <AlertDialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl">
         <div className="p-8 space-y-8">
           <div className="space-y-3 text-center sm:text-left">
             <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2 mx-auto sm:mx-0">
               <Trash2 className="w-6 h-6 text-destructive" />
             </div>
-            <DialogHeader className="p-0 text-left">
-              <DialogTitle className="text-2xl font-black tracking-tight text-destructive">
+            <AlertDialogHeader className="p-0 text-left">
+              <AlertDialogTitle className="text-2xl font-black tracking-tight text-destructive">
                 Reset Session?
-              </DialogTitle>
-              <DialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
                 You are about to permanently clear all biometric records for this session.
-              </DialogDescription>
-            </DialogHeader>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
           </div>
 
           <div className="p-5 rounded-2xl bg-muted/40 border border-border/50">
@@ -92,33 +86,36 @@ export const AttendanceResetButton = ({ sessionId, showLabel, disabled, onSucces
             </p>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
-            <Button
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={pending}
-              className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReset}
-              disabled={pending}
-              className="h-12 flex-1 rounded-xl font-black tracking-tight text-primary-foreground shadow-lg shadow-destructive/10 active:scale-95 transition-all"
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="mr-2 animate-spin w-4 h-4" />
-                  Resetting...
-                </>
-              ) : (
-                "Reset Permanently"
-              )}
-            </Button>
-          </DialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
+            <AlertDialogCancel asChild>
+              <Button
+                variant="ghost"
+                disabled={resetMutation.isPending}
+                className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
+              >
+                Keep records
+              </Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                variant="destructive"
+                onClick={handleReset}
+                disabled={resetMutation.isPending}
+                className="h-12 flex-1 rounded-xl font-black tracking-tight text-primary-foreground shadow-lg shadow-destructive/10 active:scale-95 transition-all"
+              >
+                {resetMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 animate-spin w-4 h-4" />
+                    Resetting...
+                  </>
+                ) : (
+                  "Reset Permanently"
+                )}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </div>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

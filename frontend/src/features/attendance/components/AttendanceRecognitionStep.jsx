@@ -304,7 +304,7 @@ export default function RecognitionStep({
       ref={containerRef}
       className={cn(
         "relative w-full overflow-hidden transition-all duration-500",
-        isFullscreen ? "fixed inset-0 z-[100] bg-black" : "aspect-video rounded-3xl border border-border/40 bg-zinc-950 shadow-2xl"
+        isFullscreen ? "fixed inset-0 z-100 bg-black" : "aspect-video rounded-3xl border border-border/40 bg-zinc-950 shadow-2xl"
       )}
     >
       <div

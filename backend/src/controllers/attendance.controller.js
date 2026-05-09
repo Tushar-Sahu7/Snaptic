@@ -142,9 +142,9 @@ const submitSession = async (req, res) => {
     const session = await AttendanceSession.findById(sessionId);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    // Can only submit if inprogress
-    if (session.status !== "inprogress") {
-      return res.status(400).json({ message: "Only sessions in progress can be submitted." });
+    // Can only submit if inprogress or already submitted (idempotent)
+    if (session.status !== "inprogress" && session.status !== "submitted") {
+      return res.status(400).json({ message: "Only sessions in progress or already submitted can be processed." });
     }
 
     session.status = "submitted";
