@@ -318,47 +318,66 @@ export const ReviewStep = ({
                     Finish and Sync
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-background">
-                  <div className="p-8 space-y-6">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500 shadow-sm">
-                        <AlertTriangle size={24} />
+                <AlertDialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl bg-background">
+                  <div className="p-8 space-y-8">
+                    <div className="space-y-3 text-center sm:text-left">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-2 mx-auto sm:mx-0">
+                        <AlertTriangle className="w-6 h-6 text-amber-600" />
                       </div>
                       <AlertDialogHeader className="p-0 text-left">
                         <AlertDialogTitle className="text-2xl font-black tracking-tight text-foreground">
                           Save Attendance?
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
-                          This will save the attendance for this class.
+                        <AlertDialogDescription className="text-sm font-medium leading-relaxed text-muted-foreground">
+                          You are about to finalize and sync the attendance records for this session.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                     </div>
 
-                    <div className="p-5 rounded-2xl bg-muted/50 border border-border">
-                      <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-                        Class: <span className="text-foreground font-bold">{session.classId?.name}</span>
-                      </p>
+                    <div className="p-5 rounded-2xl bg-muted/40 border border-border/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-sm">
+                          <LucideIcon name={session.classId.icon} size={20} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            Current Class
+                          </p>
+                          <p className="text-sm font-bold text-foreground">
+                            {session.classId?.name}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <AlertDialogFooter className="p-6 bg-muted/30 border-t border-border sm:justify-end gap-3">
-                    <AlertDialogCancel asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-11 px-6 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all"
-                      >
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-border/40">
+                      <AlertDialogCancel asChild>
+                        <Button
+                          variant="ghost"
+                          disabled={loading}
+                          className="h-12 flex-1 rounded-xl font-bold hover:bg-muted/50 transition-all"
+                        >
                         Cancel
-                      </Button>
-                    </AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                      <Button
-                        onClick={handleSync}
-                        className="h-11 px-8 rounded-xl font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg transition-all active:scale-[0.98]"
-                      >
-                        Confirm & Save
-                      </Button>
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
+                        </Button>
+                      </AlertDialogCancel>
+                      <AlertDialogAction asChild>
+                        <Button
+                          onClick={handleSync}
+                          disabled={loading}
+                          className="h-12 flex-1 rounded-xl font-black tracking-tight bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg active:scale-95 transition-all"
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="mr-2 animate-spin w-4 h-4" />
+                              Saving...
+                            </>
+                          ) : (
+                            "Confirm & Save"
+                          )}
+                        </Button>
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </div>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
@@ -377,7 +396,7 @@ export const ReviewStep = ({
                 <CheckCircle2 className="w-10 h-10 text-emerald-500" strokeWidth={2.5} />
               </EmptyMedia>
               <EmptyHeader>
-                <EmptyTitle className="text-3xl">Attendance Synced</EmptyTitle>
+                <EmptyTitle className="text-3xl">Attendance Saved</EmptyTitle>
                 <EmptyDescription>
                   {isFinalized
                     ? "The attendance record has been safely archived."
