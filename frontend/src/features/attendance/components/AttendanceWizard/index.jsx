@@ -41,6 +41,8 @@ export default function AttendanceWizard({
     records,
   });
 
+  const [isSuccessView, setIsSuccessView] = useState(false);
+
   // 1.5 Biometric Model Pre-loading
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const faceApiRef = useRef(null);
@@ -117,12 +119,16 @@ export default function AttendanceWizard({
         return;
       }
 
-      // If going to step 3 from step 4 and session is submitted, we must reopen
-      if (s === 3 && step === 4 && session?.status === "submitted") {
+      // If going back from step 4 and session is submitted, we must reopen to allow edits
+      if (s < 4 && step === 4 && session?.status === "submitted") {
         const reopened = await handleReopen();
-        if (reopened) setStep(3);
+        if (reopened) {
+          setStep(s);
+          setIsSuccessView(false);
+        }
       } else {
         setStep(s);
+        if (s === 4) setIsSuccessView(false); // Reset success view when going to step 4 via stepper
       }
     },
     [step, session?.status, isFinalized, handleReopen, navigate],
@@ -219,6 +225,8 @@ export default function AttendanceWizard({
                   attendanceState={attendanceState}
                   isFinalized={isFinalized}
                   isSubmitted={isSubmitted}
+                  isSuccessView={isSuccessView}
+                  setIsSuccessView={setIsSuccessView}
                   loading={sessionLoading}
                   onSubmit={handleSubmit}
                   onToggleStatus={handleMarkManual}

@@ -150,7 +150,14 @@ const submitSession = async (req, res) => {
     session.status = "submitted";
     await session.save();
 
-    return res.status(200).json({ message: "Attendance submitted successfully.", session });
+    // Populate classId before returning to ensure frontend has name/icon
+    const populatedSession = await AttendanceSession.findById(sessionId)
+      .populate("classId", "name icon status studentCount");
+
+    return res.status(200).json({ 
+      message: "Attendance submitted successfully.", 
+      session: populatedSession 
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
@@ -193,7 +200,8 @@ const getTodaySession = async (req, res) => {
 
     if (classId) {
       query.classId = classId;
-      const session = await AttendanceSession.findOne(query);
+      const session = await AttendanceSession.findOne(query)
+        .populate("classId", "name icon status");
       return res.status(200).json({ session });
     } else {
       query.teacherId = req.user.userId;
@@ -214,7 +222,8 @@ const getTodaySession = async (req, res) => {
 const getSessionRecords = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const session = await AttendanceSession.findById(sessionId);
+    const session = await AttendanceSession.findById(sessionId)
+      .populate("classId", "name icon status");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
     const records = await AttendanceRecord.find({ sessionId })

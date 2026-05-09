@@ -50,19 +50,20 @@ export const ReviewStep = ({
   attendanceState = {},
   isFinalized,
   isSubmitted: initialIsSubmitted,
+  isSuccessView,
+  setIsSuccessView,
   loading,
   onSubmit,
   onToggleStatus,
   onEdit,
 }) => {
   const navigate = useNavigate();
-  const [submittedLocally, setSubmittedLocally] = useState(false);
 
   useEffect(() => {
-    if (submittedLocally || isFinalized) {
+    if (isSuccessView || isFinalized) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [submittedLocally, isFinalized]);
+  }, [isSuccessView, isFinalized]);
 
   const sortedStudents = [...students].sort((a, b) => {
     const nameA = profiles[a._id]?.name || a.email || "";
@@ -84,7 +85,7 @@ export const ReviewStep = ({
     totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
 
   const handleToggle = (studentId) => {
-    if (isFinalized || submittedLocally || loading) return;
+    if (isFinalized || isSuccessView || loading) return;
 
     const currentState = attendanceState[studentId];
     const isPresent = currentState?.status === "present";
@@ -99,7 +100,7 @@ export const ReviewStep = ({
   const handleSync = async () => {
     try {
       await onSubmit();
-      setSubmittedLocally(true);
+      setIsSuccessView(true);
     } catch (err) {
       console.error("Sync failed:", err);
     }
@@ -108,7 +109,7 @@ export const ReviewStep = ({
   return (
     <div className="pb-24">
       <AnimatePresence mode="wait">
-        {!submittedLocally ? (
+        {!isSuccessView ? (
           <motion.div
             key="review-form"
             initial={{ opacity: 0, y: 20 }}
@@ -315,7 +316,7 @@ export const ReviewStep = ({
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <FileCheck2 className="w-4 h-4 mr-3" />)}
-                    Finish and Sync
+                    Finish and Save
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="sm:max-w-[425px] rounded-[1.5rem] p-0 overflow-hidden border-border/40 shadow-2xl bg-background">
@@ -337,14 +338,14 @@ export const ReviewStep = ({
                     <div className="p-5 rounded-2xl bg-muted/40 border border-border/50">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-sm">
-                          <LucideIcon name={session.classId.icon} size={20} />
+                          <LucideIcon name={session.classId?.icon || "Users"} size={20} />
                         </div>
                         <div>
                           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                             Current Class
                           </p>
                           <p className="text-sm font-bold text-foreground">
-                            {session.classId?.name}
+                            {session.classId?.name || "Current Class"}
                           </p>
                         </div>
                       </div>
@@ -409,14 +410,14 @@ export const ReviewStep = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                        <LucideIcon name={session.classId.icon} size={20} />
+                        <LucideIcon name={session.classId?.icon || "Users"} size={20} />
                       </div>
                       <div className="text-left">
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                           Class
                         </p>
                         <p className="text-sm font-bold text-foreground">
-                          {session.classId.name}
+                          {session.classId?.name || "Class"}
                         </p>
                       </div>
                     </div>
@@ -461,7 +462,7 @@ export const ReviewStep = ({
                   {!isFinalized && (
                     <Button
                       variant="ghost"
-                      onClick={() => setSubmittedLocally(false)}
+                      onClick={() => setIsSuccessView(false)}
                       className="w-full font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-foreground"
                     >
                       Mistake? Re-open Records

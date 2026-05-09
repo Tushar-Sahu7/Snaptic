@@ -389,11 +389,11 @@ export default function RecognitionStep({
                     {activeMatches.map((match) => (
                       <motion.div
                         key={match.id}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, scale: 0.8, y: 0 }}
+                        animate={{ opacity: 1, scale: 1, y: "-115%" }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ delay: 2 }}
-                        className="absolute p-2 pointer-events-none"
+                        transition={{ duration: 0.2 }}
+                        className="absolute pointer-events-none flex flex-col items-center z-30"
                         style={{
                           left: `${(match.box.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
                           top: `${(match.box.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
@@ -401,19 +401,19 @@ export default function RecognitionStep({
                         }}
                       >
                         <div className="flex flex-col items-center">
-                          <div className="p-1 rounded-full bg-primary/20 border border-primary/50 backdrop-blur-md shadow-lg">
-                            <Avatar className="w-10 h-10 border-2 border-primary">
+                          <div className="p-0.5 rounded-full bg-white border-2 border-primary shadow-2xl">
+                            <Avatar className="w-12 h-12 border-2 border-white">
                               {match.avatar && <AvatarImage src={match.avatar} />}
-                              <AvatarFallback className="bg-primary/20 text-primary font-bold">
+                              <AvatarFallback className="bg-primary/10 text-primary font-bold">
                                 {match.name.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                           </div>
-                          <div className="mt-2 px-3 py-1 rounded-md bg-black/60 border border-white/10 backdrop-blur-md">
-                            <p className="text-[10px] font-bold text-white whitespace-nowrap uppercase tracking-wider">{match.name}</p>
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                              <span className="text-[8px] text-green-400 font-medium uppercase">Verified</span>
+                          <div className="mt-1 px-4 py-2 rounded-2xl bg-white border border-zinc-200 shadow-2xl flex flex-col items-center">
+                            <p className="text-[11px] font-black text-zinc-900 whitespace-nowrap uppercase tracking-wider">{match.name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                              <span className="text-[9px] text-green-600 font-bold uppercase tracking-tight">Present</span>
                             </div>
                           </div>
                         </div>

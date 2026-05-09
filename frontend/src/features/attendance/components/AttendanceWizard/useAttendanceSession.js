@@ -127,7 +127,12 @@ export const useAttendanceSession = ({
 
     try {
       const { data } = await submitMutation.mutateAsync(session._id);
-      setSession(data.session);
+      // Merge updates while preserving existing populated classId object if it exists
+      setSession(prev => ({ 
+        ...prev, 
+        ...data.session, 
+        classId: prev.classId || data.session.classId 
+      }));
       toast.success("Attendance submitted!");
     } catch (err) {
       toast.error("Failed to submit session");

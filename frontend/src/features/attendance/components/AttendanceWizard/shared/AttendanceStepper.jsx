@@ -15,15 +15,15 @@ export const AttendanceStepper = ({ step, isFinalized, isSubmitted, onStepClick 
       <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="flex items-center justify-between gap-6 md:gap-12 min-w-max md:min-w-0 max-w-4xl mx-auto">
           {steps.map((s, idx) => {
-            const isStep4Done = s.id === 4 && isSubmitted;
+            const isStep4Done = s.id === 4 && isSubmitted && step === 4;
             const isCompleted = step > s.id || isStep4Done;
-            const isActive = step === s.id && !isStep4Done;
+            const isActive = step === s.id;
             const isClickable =
               !isFinalized &&
-              step !== s.id &&
               (s.id < step ||
                 (s.id === 2 && step === 3) ||
-                (s.id === 3 && step === 4));
+                (s.id === 3 && step === 4) ||
+                (s.id === 4 && isStep4Done)); // Allow clicking step 4 if already on it and submitted
 
             return (
               <div key={s.id} className="flex items-center gap-6 md:gap-12 flex-1 last:flex-none">
@@ -32,20 +32,20 @@ export const AttendanceStepper = ({ step, isFinalized, isSubmitted, onStepClick 
                   onClick={() => onStepClick(s.id)}
                   className={cn(
                     "group flex items-center gap-4 px-4 py-2.5 rounded-xl transition-all duration-500 whitespace-nowrap relative",
-                    isActive 
-                      ? "text-foreground"
-                      : isCompleted
-                        ? "text-emerald-600"
+                    isCompleted
+                      ? "text-emerald-600"
+                      : isActive 
+                        ? "text-foreground"
                         : "text-muted-foreground hover:text-foreground",
                     isClickable && "cursor-pointer active:scale-95"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all duration-500 z-10",
-                    isActive 
-                      ? "bg-foreground text-background"
-                      : isCompleted
-                        ? "bg-emerald-500 text-white"
+                    isCompleted
+                      ? "bg-emerald-500 text-white"
+                      : isActive 
+                        ? "bg-foreground text-background"
                         : "bg-muted border border-border"
                   )}>
                     {isCompleted ? (

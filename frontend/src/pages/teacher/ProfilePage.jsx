@@ -124,7 +124,7 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
       {/* Teacher Identity Hero Card */}
-      <Card className="rounded-3xl overflow-hidden border-none shadow-xl bg-gradient-to-br from-card to-muted/20">
+      <Card className="rounded-3xl overflow-hidden border-none shadow-xl bg-linear-to-br from-card to-muted/20">
         <CardContent className="p-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             <div className="relative group">
