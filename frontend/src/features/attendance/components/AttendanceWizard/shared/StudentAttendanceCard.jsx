@@ -35,7 +35,7 @@ export const StudentAttendanceCard = ({
     >
       <div className="relative z-10 flex items-start gap-5">
         <div className="relative shrink-0">
-          <Avatar className="w-24 h-24 rounded-2xl border-none bg-muted shadow-none transition-transform duration-500 group-hover:scale-105">
+          <Avatar className="w-24 h-24 bg-muted shadow-none transition-transform duration-500 group-hover:scale-105">
             <AvatarImage src={avatar} alt={name} className="object-cover" />
             <AvatarFallback className="bg-zinc-100 dark:bg-zinc-900 text-zinc-500 text-2xl font-bold">
               {name.charAt(0)}

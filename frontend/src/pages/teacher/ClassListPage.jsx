@@ -274,7 +274,7 @@ export default function ClassListPage() {
                             Edit Class
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="rounded-xl py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                            className="rounded-xl py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-500/10"
                             onClick={() => toggleArchive(featuredClass)}
                           >
                             <Archive className="mr-3 w-4 h-4" /> Archive Class
@@ -419,7 +419,7 @@ export default function ClassListPage() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
-                          className="rounded-xl py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                          className="rounded-xl py-2.5 text-orange-600 focus:text-orange-600 focus:bg-orange-500/10"
                           onClick={() => {
                             if (cls.status === "archived") {
                               setUnarchiveClass(cls);
