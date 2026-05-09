@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Camera,
   RotateCcw,
@@ -381,6 +382,45 @@ export default function RecognitionStep({
                   ref={canvasRef}
                   className="absolute inset-0 w-full h-full pointer-events-none opacity-60 z-20"
                 />
+
+                {/* Detected Face Labels */}
+                <div className="absolute inset-0 z-20 pointer-events-none">
+                  <AnimatePresence>
+                    {activeMatches.map((match) => (
+                      <motion.div
+                        key={match.id}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ delay: 2 }}
+                        className="absolute p-2 pointer-events-none"
+                        style={{
+                          left: `${(match.box.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
+                          top: `${(match.box.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
+                          width: `${(match.box.width / (videoRef.current?.videoWidth || 1)) * 100}%`,
+                        }}
+                      >
+                        <div className="flex flex-col items-center">
+                          <div className="p-1 rounded-full bg-primary/20 border border-primary/50 backdrop-blur-md shadow-lg">
+                            <Avatar className="w-10 h-10 border-2 border-primary">
+                              {match.avatar && <AvatarImage src={match.avatar} />}
+                              <AvatarFallback className="bg-primary/20 text-primary font-bold">
+                                {match.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="mt-2 px-3 py-1 rounded-md bg-black/60 border border-white/10 backdrop-blur-md">
+                            <p className="text-[10px] font-bold text-white whitespace-nowrap uppercase tracking-wider">{match.name}</p>
+                            <div className="flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              <span className="text-[8px] text-green-400 font-medium uppercase">Verified</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
 
 
 
