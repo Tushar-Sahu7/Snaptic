@@ -2,7 +2,7 @@ import { CheckCircle2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 
-export const AttendanceStepper = ({ step, isFinalized, onStepClick }) => {
+export const AttendanceStepper = ({ step, isFinalized, isSubmitted, onStepClick }) => {
   const steps = [
     { id: 1, label: "Select Class", short: "Select" },
     { id: 2, label: "Recognition", short: "Scan" },
@@ -15,8 +15,9 @@ export const AttendanceStepper = ({ step, isFinalized, onStepClick }) => {
       <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="flex items-center justify-between gap-6 md:gap-12 min-w-max md:min-w-0 max-w-4xl mx-auto">
           {steps.map((s, idx) => {
-            const isCompleted = step > s.id;
-            const isActive = step === s.id;
+            const isStep4Done = s.id === 4 && isSubmitted;
+            const isCompleted = step > s.id || isStep4Done;
+            const isActive = step === s.id && !isStep4Done;
             const isClickable =
               !isFinalized &&
               step !== s.id &&

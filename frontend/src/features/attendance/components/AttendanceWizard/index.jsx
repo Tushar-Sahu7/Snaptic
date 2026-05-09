@@ -147,6 +147,7 @@ export default function AttendanceWizard({
       <AttendanceStepper
         step={step}
         isFinalized={isFinalized}
+        isSubmitted={isSubmitted}
         onStepClick={handleStepChange}
       />
 

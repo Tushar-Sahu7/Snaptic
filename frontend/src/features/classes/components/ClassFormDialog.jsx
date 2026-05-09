@@ -827,8 +827,8 @@ export default function ClassFormDialog({
                       className={cn(
                         "h-12 flex-1 min-w-[60px] rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-300",
                         isSelected
-                          ? "bg-primary border-transparent text-white shadow-lg shadow-primary/20 -translate-y-1"
-                          : "bg-background border-border text-muted-foreground hover:border-foreground/20",
+                          ? "bg-primary border-transparent text-primary-foreground shadow-lg shadow-primary/20 -translate-y-1"
+                          : "bg-muted border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                       )}
                     >
                       {day.slice(0, 3)}
@@ -857,7 +857,7 @@ export default function ClassFormDialog({
             type="submit"
             disabled={submitting}
             onClick={handleSubmit}
-            className="flex-2 h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
+            className="flex-2 h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
           >
             {submitting
               ? "Processing..."
