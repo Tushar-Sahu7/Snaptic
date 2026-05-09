@@ -20,50 +20,35 @@ export const MarkStep = ({
 }) => {
   return (
     <div className="space-y-10 pb-24">
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 bg-card p-8 lg:p-12 rounded-[40px] border border-border relative overflow-hidden"
-      >
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <div className="p-2 rounded-xl bg-muted">
-              <ClipboardEdit className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-              Step 03 — Manual Calibration
-            </span>
-          </div>
-          <h3 className="text-4xl font-black tracking-tighter text-foreground leading-tight">
-            Calibration <br /> & Review
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-0.5">
+          <h3 className="text-2xl font-bold tracking-tight text-foreground uppercase">
+            Check Attendance
           </h3>
-          <p className="text-muted-foreground font-medium max-w-lg leading-relaxed text-lg">
-            Fine-tune recognized records. Tap student cards to toggle status
-            manually before the final verification dashboard.
+          <p className="text-sm text-muted-foreground font-medium tracking-tight">
+            Verify who is here. Tap a student to change their status manually.
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-4 shrink-0">
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            size="lg"
             onClick={onBackToScan}
             disabled={loading || isFinalized}
-            className="h-14 rounded-2xl border-border font-black uppercase tracking-widest text-[10px] px-8 hover:bg-muted transition-all active:scale-95 group"
+            className="h-12 rounded-2xl border-border font-bold uppercase tracking-widest text-[10px] px-6 hover:bg-muted transition-all active:scale-95 group"
           >
-            <RotateCcw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-700" />
+            <RotateCcw className="w-3.5 h-3.5 mr-2 group-hover:rotate-180 transition-transform duration-700" />
             Recapture
           </Button>
           <Button
-            size="lg"
             onClick={onConfirm}
-            className="h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] px-10 bg-foreground text-background hover:opacity-90 transition-all active:scale-95"
+            className="h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px] px-8 bg-foreground text-background hover:opacity-90 transition-all active:scale-95 group"
           >
-            Proceed to Review
-            <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            Continue to Review
+            <ChevronRight className="ml-2 w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
-      </motion.div>
+      </div>
 
       {!students?.length ? (
         <motion.div
@@ -76,7 +61,7 @@ export const MarkStep = ({
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-black text-2xl text-foreground tracking-tight">
+            <h4 className="font-bold text-2xl text-foreground tracking-tight">
               Empty Class
             </h4>
             <p className="text-muted-foreground font-medium max-w-sm text-base">
@@ -88,7 +73,7 @@ export const MarkStep = ({
             variant="outline"
             size="lg"
             onClick={onBackToScan}
-            className="h-14 rounded-2xl border-border font-black uppercase tracking-widest text-[10px] px-10 hover:bg-foreground hover:text-background transition-all active:scale-95"
+            className="h-14 rounded-2xl border-border font-bold uppercase tracking-widest text-[10px] px-10 hover:bg-foreground hover:text-background transition-all active:scale-95"
           >
             Return to Scanner
           </Button>

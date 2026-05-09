@@ -60,7 +60,7 @@ export const StudentAttendanceCard = ({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h4 className={cn(
-                "font-black text-base tracking-tight truncate transition-colors duration-300",
+                "font-bold text-base tracking-tight truncate transition-colors duration-300",
                 isPresent ? "text-emerald-900 dark:text-emerald-100" : "text-foreground"
               )}>
                 {name}
@@ -90,7 +90,7 @@ export const StudentAttendanceCard = ({
             <Badge
               variant={isPresent ? "default" : "outline"}
               className={cn(
-                "h-6 px-3 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all duration-300",
+                "h-6 px-3 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300",
                 isPresent 
                   ? "bg-emerald-500 hover:bg-emerald-600 border-none" 
                   : "bg-transparent text-muted-foreground border-border"
@@ -100,7 +100,7 @@ export const StudentAttendanceCard = ({
             </Badge>
             
             {isPresent && (
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600/60 dark:text-emerald-400/40 uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-600/60 dark:text-emerald-400/40 uppercase tracking-widest">
                 {state.method === "face" ? (
                   <Scan className="w-3 h-3" />
                 ) : (

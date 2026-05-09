@@ -47,7 +47,7 @@ export const ClassSelectionStep = ({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out">
       <div className="space-y-1">
-        <h3 className="text-3xl font-black tracking-tighter text-foreground uppercase">
+        <h3 className="text-2xl font-bold tracking-tight text-foreground uppercase">
           Select Class
         </h3>
         <p className="text-sm text-muted-foreground font-medium tracking-tight">

@@ -13,6 +13,14 @@ import {
   FileCheck2,
   Trophy,
 } from "lucide-react";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+} from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router";
@@ -41,19 +49,20 @@ export const ReviewStep = ({
   profiles = {},
   attendanceState = {},
   isFinalized,
-  isSubmitted,
+  isSubmitted: initialIsSubmitted,
   loading,
   onSubmit,
   onToggleStatus,
   onEdit,
 }) => {
   const navigate = useNavigate();
+  const [submittedLocally, setSubmittedLocally] = useState(false);
 
   useEffect(() => {
-    if (isSubmitted || isFinalized) {
+    if (submittedLocally || isFinalized) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [isSubmitted, isFinalized]);
+  }, [submittedLocally, isFinalized]);
 
   const sortedStudents = [...students].sort((a, b) => {
     const nameA = profiles[a._id]?.name || a.email || "";
@@ -75,7 +84,7 @@ export const ReviewStep = ({
     totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
 
   const handleToggle = (studentId) => {
-    if (isFinalized || isSubmitted || loading) return;
+    if (isFinalized || submittedLocally || loading) return;
 
     const currentState = attendanceState[studentId];
     const isPresent = currentState?.status === "present";
@@ -87,10 +96,19 @@ export const ReviewStep = ({
     }
   };
 
+  const handleSync = async () => {
+    try {
+      await onSubmit();
+      setSubmittedLocally(true);
+    } catch (err) {
+      console.error("Sync failed:", err);
+    }
+  };
+
   return (
     <div className="pb-24">
       <AnimatePresence mode="wait">
-        {!isSubmitted ? (
+        {!submittedLocally ? (
           <motion.div
             key="review-form"
             initial={{ opacity: 0, y: 20 }}
@@ -98,65 +116,29 @@ export const ReviewStep = ({
             exit={{ opacity: 0, scale: 0.95 }}
             className="space-y-10"
           >
-            {/* Header & Stats Dashboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-              <div className="lg:col-span-7 space-y-6">
-                <div className="flex items-center gap-3 text-primary">
-                  <div className="p-2.5 rounded-2xl bg-primary/10 shadow-inner">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-[0.3em] opacity-70">
-                    Step 04 — Final Audit
-                  </span>
-                </div>
-                <h1 className="text-6xl font-black tracking-tighter text-zinc-900 dark:text-zinc-50 italic uppercase leading-none">
-                  Verification <br /> Dashboard
+            {/* Simplified Header & Stats row */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-0.5">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground uppercase">
+                  Review Attendance
                 </h1>
-                <p className="text-zinc-500 dark:text-zinc-400 font-medium max-w-xl leading-relaxed text-xl">
-                  Analyze the session metadata and ensure every record is
-                  accurate. Once submitted, these records will be permanently
-                  synced to the central database.
+                <p className="text-sm text-muted-foreground font-medium tracking-tight">
+                  Check the list before saving.
                 </p>
               </div>
 
-              <div className="lg:col-span-5 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[48px] p-10 border border-white/20 dark:border-zinc-800/50 shadow-2xl shadow-zinc-200/50 dark:shadow-none relative overflow-hidden group">
-                <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-colors duration-1000" />
-
-                <div className="relative z-10 space-y-10">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
-                        Attendance Rate
-                      </span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-6xl font-black text-zinc-900 dark:text-zinc-50 tabular-nums tracking-tighter">
-                          {attendanceRate}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-20 h-20 rounded-[32px] bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                      <Trophy className="w-10 h-10" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-5">
-                    <div className="p-6 rounded-[32px] bg-emerald-500/5 border border-emerald-500/10 space-y-1 group/stat transition-all hover:bg-emerald-500/10">
-                      <p className="text-4xl font-black text-emerald-500 tabular-nums tracking-tighter">
-                        {presentCount}
-                      </p>
-                      <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">
-                        Present
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-[32px] bg-rose-500/5 border border-rose-500/10 space-y-1 group/stat transition-all hover:bg-rose-500/10">
-                      <p className="text-4xl font-black text-rose-500 tabular-nums tracking-tighter">
-                        {absentCount}
-                      </p>
-                      <p className="text-[10px] font-black text-rose-600/60 uppercase tracking-widest">
-                        Absent
-                      </p>
-                    </div>
-                  </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 h-10 px-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-emerald-600">
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{presentCount} Present</span>
+                </div>
+                <div className="flex items-center gap-2 h-10 px-4 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-600">
+                  <UserX className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{absentCount} Absent</span>
+                </div>
+                <div className="flex items-center gap-2 h-10 px-4 rounded-xl bg-muted border border-border text-muted-foreground">
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{attendanceRate}% Rate</span>
                 </div>
               </div>
             </div>
@@ -165,17 +147,12 @@ export const ReviewStep = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               {/* Absentees Section */}
               <div className="space-y-8">
-                <div className="flex items-center justify-between px-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-2xl bg-rose-500 text-white shadow-2xl shadow-rose-500/20">
-                      <UserX className="w-6 h-6" />
-                    </div>
-                    <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter italic uppercase">
-                      Absentees{" "}
-                      <span className="text-rose-500 ml-1">
-                        ({absentCount})
-                      </span>
-                    </h2>
+                <div className="flex items-center gap-2 px-1">
+                  <h2 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                    Absent
+                  </h2>
+                  <div className="h-5 px-2 rounded-full bg-rose-500/10 text-rose-600 text-[10px] font-bold">
+                    {absentCount}
                   </div>
                 </div>
 
@@ -199,25 +176,25 @@ export const ReviewStep = ({
                           stiffness: 150,
                         }}
                         onClick={() => handleToggle(s._id)}
-                        className="w-full flex items-center gap-5 p-5 rounded-[32px] border border-zinc-100 dark:border-zinc-900 bg-white/40 dark:bg-zinc-900/20 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-2xl hover:shadow-zinc-200/40 dark:hover:shadow-none transition-all group relative overflow-hidden"
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all group relative overflow-hidden"
                       >
                         <div className="relative">
-                          <Avatar className="w-14 h-14 rounded-2xl border-2 border-white dark:border-zinc-800 shadow-md transition-transform group-hover:scale-110 duration-500">
+                          <Avatar className="w-12 h-12 transition-transform group-hover:scale-105 duration-500 ">
                             <AvatarImage
                               src={profile.avatar}
                               alt={name}
                               className="object-cover"
                             />
-                            <AvatarFallback className="text-sm font-black bg-zinc-100 dark:bg-zinc-800">
+                            <AvatarFallback className="text-sm font-bold">
                               {name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <p className="text-base font-black text-zinc-900 dark:text-zinc-50 truncate group-hover:text-primary transition-colors">
+                          <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
                             {name}
                           </p>
-                          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">
                             {s.email?.split("@")[0]}
                           </p>
                         </div>
@@ -240,11 +217,11 @@ export const ReviewStep = ({
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic uppercase tracking-tight">
-                          Perfect Session
+                        <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 italic uppercase tracking-tight">
+                          All Present
                         </p>
                         <p className="text-base font-medium text-emerald-600/60 dark:text-emerald-400/40 max-w-[200px]">
-                          All students successfully recognized.
+                          No students are absent.
                         </p>
                       </div>
                     </motion.div>
@@ -254,16 +231,13 @@ export const ReviewStep = ({
 
               {/* Present Students Section */}
               <div className="space-y-8">
-                <div className="flex items-center gap-4 px-4">
-                  <div className="p-3 rounded-2xl bg-emerald-500 text-white shadow-2xl shadow-emerald-500/20">
-                    <UserCheck className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter italic uppercase">
-                    Present{" "}
-                    <span className="text-emerald-500 ml-1">
-                      ({presentCount})
-                    </span>
+                <div className="flex items-center gap-2 px-1">
+                  <h2 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                    Present
                   </h2>
+                  <div className="h-5 px-2 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold">
+                    {presentCount}
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -286,25 +260,25 @@ export const ReviewStep = ({
                           stiffness: 150,
                         }}
                         onClick={() => handleToggle(s._id)}
-                        className="w-full flex items-center gap-5 p-5 rounded-[32px] border border-emerald-500/10 bg-emerald-500/3 dark:bg-emerald-500/2 hover:bg-emerald-500/8 dark:hover:bg-emerald-500/5 transition-all group relative overflow-hidden"
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border border-emerald-500/10 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all group relative overflow-hidden"
                       >
                         <div className="relative">
-                          <Avatar className="w-14 h-14 rounded-2xl border-2 border-white dark:border-zinc-900 shadow-md transition-transform group-hover:scale-110 duration-500">
+                          <Avatar className="w-12 h-12 transition-transform group-hover:scale-105 duration-500">
                             <AvatarImage
                               src={profile.avatar}
                               alt={name}
                               className="object-cover"
                             />
-                            <AvatarFallback className="text-sm font-black bg-zinc-100 dark:bg-zinc-800">
+                            <AvatarFallback className="text-sm font-bold">
                               {name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <p className="text-base font-black text-zinc-900 dark:text-zinc-50 truncate">
+                          <p className="text-sm font-bold text-foreground truncate">
                             {name}
                           </p>
-                          <p className="text-[10px] font-black text-emerald-600/60 dark:text-emerald-400/40 uppercase tracking-[0.2em]">
+                          <p className="text-[10px] font-bold text-emerald-600/60 dark:text-emerald-400/40 uppercase tracking-[0.2em]">
                             {s.email?.split("@")[0]}
                           </p>
                         </div>
@@ -324,10 +298,10 @@ export const ReviewStep = ({
                 variant="ghost"
                 onClick={onEdit}
                 disabled={loading}
-                className="h-16 rounded-[24px] font-black uppercase tracking-[0.3em] text-[10px] text-zinc-400 hover:text-zinc-900 dark:hover:text-white px-10 transition-all group"
+                className="h-12 rounded-2xl font-bold uppercase tracking-widest text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-white px-8 transition-all group"
               >
                 <ArrowLeft className="w-4 h-4 mr-3 group-hover:-translate-x-1 transition-transform" />
-                Recapture Data
+                Mark Again
               </Button>
 
               <AlertDialog>
@@ -335,51 +309,56 @@ export const ReviewStep = ({
                   <Button
                     size="lg"
                     disabled={loading}
-                    className="h-20 rounded-[32px] font-black uppercase tracking-[0.3em] text-[12px] px-14 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-3xl shadow-zinc-900/30 dark:shadow-white/10 hover:scale-105 transition-all active:scale-95"
+                    className="h-12 rounded-2xl font-bold uppercase tracking-widest text-xs px-10 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl shadow-zinc-900/10 dark:shadow-white/5 hover:scale-105 transition-all active:scale-95"
                   >
                     {loading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      <FileCheck2 className="w-6 h-6 mr-4" />
-                    )}
-                    Finalize & Sync
+                      <FileCheck2 className="w-4 h-4 mr-3" />)}
+                    Finish and Sync
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-[48px] border-none shadow-3xl p-0 overflow-hidden bg-white dark:bg-zinc-950 max-w-lg">
-                  <div className="p-12 space-y-10">
-                    <div className="space-y-6">
-                      <div className="relative inline-block">
-                        <div className="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full scale-150 animate-pulse" />
-                        <div className="relative w-20 h-20 rounded-[28px] bg-amber-500/10 text-amber-500 flex items-center justify-center shadow-inner">
-                          <AlertTriangle className="w-10 h-10" />
-                        </div>
+                <AlertDialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden bg-background">
+                  <div className="p-8 space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-500 shadow-sm">
+                        <AlertTriangle size={24} />
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-4xl font-black tracking-tighter italic uppercase text-zinc-900 dark:text-zinc-50 leading-none">
-                          Confirm Sync?
-                        </h3>
-                        <p className="text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed text-lg">
-                          This will finalize the records for{" "}
-                          <b className="text-zinc-900 dark:text-zinc-50 underline decoration-primary/30 underline-offset-4">
-                            {session.classId?.name}
-                          </b>
-                          . Profiles will be updated immediately.
-                        </p>
-                      </div>
+                      <AlertDialogHeader className="p-0 text-left">
+                        <AlertDialogTitle className="text-2xl font-black tracking-tight text-foreground">
+                          Save Attendance?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
+                          This will save the attendance for this class.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
                     </div>
 
-                    <div className="flex gap-4">
-                      <AlertDialogCancel className="flex-1 h-16 rounded-[24px] font-black uppercase tracking-[0.2em] text-[10px] border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
-                        Review Again
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={onSubmit}
-                        className="flex-1 h-16 rounded-[24px] font-black uppercase tracking-[0.2em] text-[10px] bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xl shadow-zinc-900/20 dark:shadow-white/5 hover:scale-105 transition-all"
-                      >
-                        Sync Now
-                      </AlertDialogAction>
+                    <div className="p-5 rounded-2xl bg-muted/50 border border-border">
+                      <p className="text-xs font-medium leading-relaxed text-muted-foreground">
+                        Class: <span className="text-foreground font-bold">{session.classId?.name}</span>
+                      </p>
                     </div>
                   </div>
+
+                  <AlertDialogFooter className="p-6 bg-muted/30 border-t border-border sm:justify-end gap-3">
+                    <AlertDialogCancel asChild>
+                      <Button
+                        variant="ghost"
+                        className="h-11 px-6 rounded-xl font-bold text-muted-foreground hover:text-foreground transition-all"
+                      >
+                        Cancel
+                      </Button>
+                    </AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Button
+                        onClick={handleSync}
+                        className="h-11 px-8 rounded-xl font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg transition-all active:scale-[0.98]"
+                      >
+                        Confirm & Save
+                      </Button>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
@@ -388,145 +367,90 @@ export const ReviewStep = ({
           /* Success / Submitted View */
           <motion.div
             key="success-view"
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: "spring", damping: 20, stiffness: 100 }}
-            className="max-w-3xl mx-auto space-y-12 py-16"
+            className="max-w-xl mx-auto py-12"
           >
-            <div className="relative flex flex-col items-center text-center space-y-10">
-              <div className="absolute inset-0 -top-40 pointer-events-none">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[140%] bg-emerald-500/5 dark:bg-emerald-500/3 rounded-full blur-[120px] animate-pulse" />
-              </div>
-
-              <motion.div
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{
-                  type: "spring",
-                  damping: 15,
-                  stiffness: 200,
-                  delay: 0.2,
-                }}
-                className="w-32 h-32 rounded-[40px] bg-emerald-500 text-white flex items-center justify-center shadow-3xl shadow-emerald-500/40 relative z-10"
-              >
-                <CheckCircle2 className="w-16 h-16" strokeWidth={3} />
-              </motion.div>
-
-              <div className="space-y-4 relative z-10">
-                <h3 className="text-7xl font-black tracking-tighter text-zinc-900 dark:text-zinc-50 italic uppercase leading-none">
-                  Sync <br /> Complete
-                </h3>
-                <p className="text-zinc-500 dark:text-zinc-400 font-bold text-xl max-w-sm mx-auto leading-relaxed">
+            <Empty>
+              <EmptyMedia variant="icon">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500" strokeWidth={2.5} />
+              </EmptyMedia>
+              <EmptyHeader>
+                <EmptyTitle className="text-3xl">Attendance Synced</EmptyTitle>
+                <EmptyDescription>
                   {isFinalized
-                    ? "This record has been safely archived and synced."
-                    : "Attendance records are now live and student profiles updated."}
-                </p>
-              </div>
-            </div>
+                    ? "The attendance record has been safely archived."
+                    : "Student profiles have been updated with the new attendance data."}
+                </EmptyDescription>
+              </EmptyHeader>
 
-            {session?.classId && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl rounded-[60px] border border-white/20 dark:border-zinc-800/50 p-12 shadow-2xl shadow-zinc-200/50 dark:shadow-none space-y-12 relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-1000">
-                  <Trophy className="w-80 h-80" />
-                </div>
-
-                <div className="flex flex-col items-center gap-8 text-center relative z-10">
-                  <div className="w-24 h-24 rounded-[32px] bg-primary/10 text-primary flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-700">
-                    <LucideIcon name={session.classId.icon} size={48} />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-70">
-                      Official Record For
-                    </p>
-                    <p className="text-5xl font-black text-zinc-900 dark:text-zinc-50 italic uppercase tracking-tighter">
-                      {session.classId.name}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
-                  <div className="p-8 rounded-[32px] bg-white/50 dark:bg-zinc-950/50 border border-zinc-100 dark:border-zinc-900/50 space-y-3 group/info transition-all hover:bg-white dark:hover:bg-zinc-950">
-                    <div className="flex items-center gap-3 text-zinc-400 mb-1">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                        Session Time
-                      </span>
+              <EmptyContent className="w-full max-w-md">
+                <div className="w-full p-6 rounded-3xl border border-border bg-card/50 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <LucideIcon name={session.classId.icon} size={20} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                          Class
+                        </p>
+                        <p className="text-sm font-bold text-foreground">
+                          {session.classId.name}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-black text-2xl text-zinc-900 dark:text-zinc-50 tracking-tighter">
-                      {session.classId.schedule?.startTime
-                        ? format12Hour(session.classId.schedule.startTime)
-                        : "--"}{" "}
-                      -{" "}
-                      {session.classId.schedule?.endTime
-                        ? format12Hour(session.classId.schedule.endTime)
-                        : "--"}
-                    </p>
-                  </div>
-                  <div className="p-8 rounded-[32px] bg-white/50 dark:bg-zinc-950/50 border border-zinc-100 dark:border-zinc-900/50 space-y-3 group/info transition-all hover:bg-white dark:hover:bg-zinc-950">
-                    <div className="flex items-center gap-3 text-zinc-400 mb-1">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                        Location
-                      </span>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        Rate
+                      </p>
+                      <p className="text-sm font-bold text-emerald-500">
+                        {attendanceRate}%
+                      </p>
                     </div>
-                    <p className="font-black text-2xl text-zinc-900 dark:text-zinc-50 tracking-tighter">
-                      {session.classId.schedule?.room
-                        ? formatRoom(session.classId.schedule.room)
-                        : "No Room Set"}
-                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center">
+                      <p className="text-2xl font-bold text-emerald-600">
+                        {presentCount}
+                      </p>
+                      <p className="text-[9px] font-bold text-emerald-600/70 uppercase tracking-widest">
+                        Present
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-center">
+                      <p className="text-2xl font-bold text-rose-600">
+                        {absentCount}
+                      </p>
+                      <p className="text-[9px] font-bold text-rose-600/70 uppercase tracking-widest">
+                        Absent
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between px-10 pt-8 border-t border-zinc-100 dark:border-zinc-900/50 relative z-10">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-6xl font-black text-emerald-500 tabular-nums tracking-tighter">
-                      {presentCount}
-                    </span>
-                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">
-                      Present
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 text-right">
-                    <span className="text-6xl font-black text-rose-500 tabular-nums tracking-tighter">
-                      {absentCount}
-                    </span>
-                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">
-                      Absent
-                    </span>
-                  </div>
+                <div className="w-full pt-4 space-y-4">
+                  <Button
+                    size="lg"
+                    onClick={() => navigate(`/teacher/dashboard`)}
+                    className="w-full h-14 rounded-2xl font-bold uppercase tracking-widest text-[11px]"
+                  >
+                    Go to Dashboard
+                  </Button>
+                  {!isFinalized && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => setSubmittedLocally(false)}
+                      className="w-full font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-foreground"
+                    >
+                      Mistake? Re-open Records
+                    </Button>
+                  )}
                 </div>
-              </motion.div>
-            )}
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="flex flex-col gap-6 relative z-10"
-            >
-              <Button
-                size="lg"
-                onClick={() => navigate(`/teacher/dashboard`)}
-                className="h-20 rounded-[32px] font-black uppercase tracking-[0.3em] text-[12px] bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-3xl shadow-zinc-900/30 dark:shadow-white/10 hover:scale-[1.02] transition-all"
-              >
-                Return to Dashboard
-              </Button>
-              {isSubmitted && !isFinalized && (
-                <Button
-                  variant="link"
-                  onClick={onEdit}
-                  className="font-black uppercase tracking-[0.3em] text-[10px] text-zinc-400 hover:text-primary transition-colors underline underline-offset-8 decoration-primary/20"
-                >
-                  Mistake? Re-open Records
-                </Button>
-              )}
-            </motion.div>
+              </EmptyContent>
+            </Empty>
           </motion.div>
         )}
       </AnimatePresence>

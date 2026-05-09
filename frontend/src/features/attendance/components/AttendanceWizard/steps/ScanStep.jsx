@@ -27,7 +27,7 @@ export const ScanStep = ({
       {/* Header matching Step 1 */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
         <div className="space-y-0.5">
-          <h3 className="text-2xl font-black tracking-tighter text-foreground uppercase">
+          <h3 className="text-2xl font-bold tracking-tight text-foreground uppercase">
             Face Scanning
           </h3>
           <p className="text-sm text-muted-foreground font-medium tracking-tight">
@@ -38,9 +38,9 @@ export const ScanStep = ({
         <Button 
           onClick={onComplete}
           disabled={loading}
-          className="h-12 rounded-2xl px-6 font-black uppercase tracking-widest text-[10px] bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+          className="h-12 rounded-2xl px-6 font-bold uppercase tracking-widest text-[10px] bg-primary text-primary-foreground shadow-lg shadow-primary/20"
         >
-          Finish & Review
+          Finish Scan
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
