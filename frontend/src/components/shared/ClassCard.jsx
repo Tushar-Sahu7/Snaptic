@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import {
   MapPin,
@@ -26,7 +27,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
  */
 const ClassCard = memo(
   ({ cls, onClick, actions, footer, badge, className, layout = "grid" }) => {
+    const { user } = useAuth();
     const isList = layout === "list";
+    const isStudent = user?.role === "student";
     const { onTime } = isClassInSession(cls);
     const isArchived = cls.status === "archived";
 
@@ -178,7 +181,7 @@ const ClassCard = memo(
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Stats & Identity */}
           <div
             className={cn(
               "flex items-center gap-3",
@@ -188,35 +191,53 @@ const ClassCard = memo(
             )}
           >
             <div className="flex items-center gap-3">
-              <div className="flex -space-x-3">
-                {cls.previewStudents?.length > 0 || cls.students?.length > 0 ? (
-                  (cls.previewStudents || cls.students).slice(0, 3).map((student) => (
-                    <Avatar key={student._id} className="w-10 h-10 border-2 border-background shadow-sm">
-                      <AvatarImage src={student.avatar} />
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
-                        {student.name?.slice(0, 2).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))
-                ) : cls.studentCount > 0 ? (
-                  [...Array(Math.min(cls.studentCount, 3))].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center shadow-sm"
-                    >
-                      <Users size={14} className="text-muted-foreground/40" />
+              {!isList && !isStudent && (
+                <div className="flex -space-x-3">
+                  {cls.previewStudents?.length > 0 || cls.students?.length > 0 ? (
+                    (cls.previewStudents || cls.students).slice(0, 3).map((student) => (
+                      <Avatar key={student._id} className="w-10 h-10 border-2 border-background shadow-sm">
+                        <AvatarImage src={student.avatar} />
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
+                          {student.name?.slice(0, 2).toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))
+                  ) : cls.studentCount > 0 ? (
+                    [...Array(Math.min(cls.studentCount, 3))].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center shadow-sm"
+                      >
+                        <Users size={14} className="text-muted-foreground/40" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="w-10 h-10 rounded-full border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center">
+                      <Users size={14} className="text-muted-foreground/30" />
                     </div>
-                  ))
-                ) : (
-                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center">
-                    <Users size={14} className="text-muted-foreground/30" />
-                  </div>
-                )}
-              </div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                <span className="text-foreground">{cls.studentCount || 0}</span>{" "}
-                Students
-              </p>
+                  )}
+                </div>
+              )}
+              
+              {!isStudent ? (
+                <div className="flex flex-col">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-foreground">{cls.studentCount || 0}</span>{" "}
+                    Students
+                  </p>
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                    <span className="text-foreground">{cls.attendancePercentage != null ? `${cls.attendancePercentage}%` : '--%'}</span>{" "}
+                    Class Average
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                    <span className="text-foreground text-sm">{cls.attendancePercentage != null ? `${cls.attendancePercentage}%` : '--%'}</span>{" "}
+                    Attendance
+                  </p>
+                </div>
+              )}
             </div>
 
             {!isList && (
@@ -240,13 +261,25 @@ const ClassCard = memo(
         </div>
 
         {/* External Footer Action (Attendance) - Only in Grid View or integrated differently */}
-        {footer && !isList && (
+        {((footer && !isList) || (isStudent && !isList && cls.teacher?.name)) && (
           <div
             className="px-4 pb-4 bg-background"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pt-2 border-t border-border/40">
-              {footer}
+              {isStudent && !footer ? (
+                <div className="flex items-center gap-3 pt-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={cls.teacher?.avatar} />
+                    <AvatarFallback className="text-xs">{cls.teacher?.name?.slice(0, 2).toUpperCase() || "?"}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    by <span className="text-foreground font-bold">{cls.teacher.name}</span>
+                  </span>
+                </div>
+              ) : (
+                footer
+              )}
             </div>
           </div>
         )}
