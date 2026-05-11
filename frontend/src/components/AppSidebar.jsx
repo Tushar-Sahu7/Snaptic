@@ -52,7 +52,7 @@ const teacherNavItems = [
   { title: "Dashboard", url: "/teacher/dashboard", icon: LayoutDashboard },
   { title: "My Classes", url: "/teacher/classes", icon: BookOpen },
   {
-    title: "Quick Mark",
+    title: "Take Attendance",
     url: "/teacher/take-attendance",
     icon: UserCheck,
   },
@@ -60,7 +60,7 @@ const teacherNavItems = [
 ];
 
 const studentNavItems = [
-  { title: "Dashboard", url: "/student/dashboard", icon: Laptop },
+  { title: "Dashboard", url: "/student/dashboard", icon: LayoutDashboard },
   { title: "My Classes", url: "/student/classes", icon: BookOpen },
   { title: "Face ID", url: "/student/face-enrollment", icon: ScanFace },
 ];

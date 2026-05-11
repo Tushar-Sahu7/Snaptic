@@ -10,16 +10,15 @@ import {
   History,
   Camera,
   Keyboard,
+  ArrowRight,
   ArrowUpRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 
 export default function AttendanceLedger({ history, stats, studentName, classId, isTeacher = true }) {
-  const navigate = useNavigate();
 
   if (!history || history.length === 0) {
     return (
@@ -36,54 +35,58 @@ export default function AttendanceLedger({ history, stats, studentName, classId,
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-10 animate-in fade-in duration-500">
       {/* Summary Header */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="rounded-3xl border-none bg-primary/5 shadow-sm overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <TrendingUp className="w-12 h-12 text-primary" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-primary/60">Attendance Rate</CardDescription>
-            <CardTitle className="text-4xl font-black text-primary">{Math.round(stats.attendancePercentage)}%</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="w-full bg-primary/10 h-1.5 rounded-full overflow-hidden">
-              <div 
-                className="bg-primary h-full transition-all duration-1000 ease-out" 
-                style={{ width: `${stats.attendancePercentage}%` }} 
-              />
+        <Card className="hover:translate-y-[-2px] transition-all duration-300 shadow-sm hover:shadow-md border-border/60">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2.5 rounded-xl ring-1 ring-foreground/5 bg-primary/10 text-primary">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-2xl font-semibold block tracking-tight">
+                {Math.round(stats.attendancePercentage)}%
+              </span>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Attendance Rate</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-none bg-emerald-500/5 shadow-sm overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-emerald-600/60">Sessions Present</CardDescription>
-            <CardTitle className="text-4xl font-black text-emerald-600">{stats.presentCount}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-bold text-emerald-600/80">
-              Out of {stats.totalSessions} total sessions
-            </p>
+        <Card className="hover:translate-y-[-2px] transition-all duration-300 shadow-sm hover:shadow-md border-border/60">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2.5 rounded-xl ring-1 ring-foreground/5 bg-emerald-500/10 text-emerald-600">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-2xl font-semibold block tracking-tight">
+                {stats.presentCount}
+              </span>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sessions Present</p>
+              <p className="text-[10px] text-muted-foreground/60 font-medium mt-1">Out of {stats.totalSessions} sessions</p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-none bg-destructive/5 shadow-sm overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <XCircle className="w-12 h-12 text-destructive" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-destructive/60">Sessions Absent</CardDescription>
-            <CardTitle className="text-4xl font-black text-destructive">{stats.absentCount}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-bold text-destructive/80">
-              {stats.absentCount === 0 ? "Perfect record!" : "Needs attention"}
-            </p>
+        <Card className="hover:translate-y-[-2px] transition-all duration-300 shadow-sm hover:shadow-md border-border/60">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2.5 rounded-xl ring-1 ring-foreground/5 bg-destructive/10 text-destructive">
+                <XCircle className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-2xl font-semibold block tracking-tight">
+                {stats.absentCount}
+              </span>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sessions Absent</p>
+              <p className="text-[10px] text-muted-foreground/60 font-medium mt-1">
+                {stats.absentCount === 0 ? "Perfect record!" : "Needs attention"}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -92,8 +95,8 @@ export default function AttendanceLedger({ history, stats, studentName, classId,
       <div className="space-y-4">
         <h3 className="text-lg font-black flex items-center gap-2 px-2">
           <History className="w-5 h-5 text-primary" />
-          Detailed History
-        </h3>
+            Detailed History
+          </h3>
         
         <div className="space-y-3">
           {history.map((record, index) => {
@@ -102,18 +105,17 @@ export default function AttendanceLedger({ history, stats, studentName, classId,
               <Card 
                 key={record.recordId} 
                 className={cn(
-                  "rounded-2xl border-border/40 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer",
-                  isPresent ? "hover:border-emerald-500/20" : "hover:border-destructive/20"
+                  "rounded-2xl border-border/40 shadow-sm transition-all duration-300 group",
+                  isPresent ? "hover:border-emerald-500/10" : "hover:border-destructive/10"
                 )}
-                onClick={() => navigate(isTeacher ? `/teacher/classes/${classId}/sessions/${record.session._id}` : `/student/classes/${classId}/sessions/${record.session._id}`)}
               >
                 <CardContent className="p-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-5">
                     <div className={cn(
-                      "size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                      "size-12 rounded-2xl flex items-center justify-center transition-transform",
                       isPresent 
-                        ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]" 
-                        : "bg-destructive/10 text-destructive border border-destructive/20 shadow-[0_0_15px_-5px_rgba(239,68,68,0.3)]"
+                        ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" 
+                        : "bg-destructive/10 text-destructive border border-destructive/20"
                     )}>
                       {isPresent ? <CheckCircle2 className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
                     </div>
@@ -125,12 +127,12 @@ export default function AttendanceLedger({ history, stats, studentName, classId,
                         </p>
                         <span className="text-[10px] text-muted-foreground">•</span>
                         <p className="text-xs text-muted-foreground font-bold">
-                          {format(new Date(record.session.startTime), "h:mm a")}
+                        {format(new Date(record.session.startTime), "h:mm a")}
                         </p>
                       </div>
                       
                       <div className="flex items-center gap-4 flex-wrap">
-                        {record.method && (
+                      {record.method && (
                           <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/80">
                             {record.method === 'face' ? <Camera className="w-3.5 h-3.5" /> : <Keyboard className="w-3.5 h-3.5" />}
                             <span className="capitalize">{record.method} scan</span>
@@ -141,26 +143,23 @@ export default function AttendanceLedger({ history, stats, studentName, classId,
                             <Clock className="w-3.5 h-3.5" />
                             <span>Marked at {format(new Date(record.markedAt), "h:mm a")}</span>
                           </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-4">
-                    <Badge className={cn(
+                <div className="flex items-center gap-4">
+                  <Badge className={cn(
                       "px-4 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest border-none shadow-sm",
-                      isPresent 
+                    isPresent 
                         ? "bg-emerald-500 text-white hover:bg-emerald-600" 
                         : "bg-destructive text-white hover:bg-destructive/90"
-                    )}>
-                      {isPresent ? "Present" : "Absent"}
-                    </Badge>
-                    <div className="p-2 rounded-xl bg-muted/50 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ArrowUpRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  )}>
+                    {isPresent ? "Present" : "Absent"}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
             );
           })}
         </div>

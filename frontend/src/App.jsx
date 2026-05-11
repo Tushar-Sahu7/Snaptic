@@ -19,7 +19,7 @@ import AttendanceSelectionPage from "@/pages/teacher/AttendanceSelectionPage";
 import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
 
 // Student Specific Pages
-import StudentClassHistoryPage from "@/pages/student/StudentClassHistoryPage";
+
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -95,10 +95,7 @@ export default function App() {
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="classes" element={<ClassListPage />} />
               <Route path="classes/:id" element={<ClassDetailPage />} />
-              <Route
-                path="classes/:id/records"
-                element={<StudentClassHistoryPage />}
-              />
+
               <Route
                 path="classes/:id/records/:sessionId"
                 element={<SessionRecordPage />}
