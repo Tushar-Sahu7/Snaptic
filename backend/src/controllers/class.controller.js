@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Class = require("../models/Class");
 const User = require("../models/User");
 const Enrollment = require("../models/Enrollment");
@@ -6,6 +7,7 @@ const StudentProfile = require("../models/StudentProfile");
 const sessionManager = require("../services/sessionManager");
 const { formatIST, getNowIST } = require("../utils/dateUtils");
 const { RRule } = require("rrule");
+const AttendanceRecord = require("../models/AttendanceRecord");
 
 // Helper: Just-In-Time Archiving
 const ensureArchivedIfExpired = async (classDoc) => {
@@ -86,7 +88,7 @@ const getMyClasses = async (req, res) => {
     const studentCounts = await Enrollment.aggregate([
       { 
         $match: { 
-          classId: { $in: classes.map(c => c._id) }, 
+          classId: { $in: classes.map(c => new mongoose.Types.ObjectId(c._id)) }, 
           status: "active" 
         } 
       },
@@ -97,9 +99,37 @@ const getMyClasses = async (req, res) => {
       studentCounts.map(item => [item._id.toString(), item.count])
     );
 
+    // Bulk Attendance Calculation
+    let attendanceMap = {};
+    if (classes.length > 0) {
+      const attendanceStats = await AttendanceRecord.aggregate([
+        { 
+          $match: { 
+            classId: { $in: classes.map(c => new mongoose.Types.ObjectId(c._id)) },
+            ...(isStudent ? { studentId: new mongoose.Types.ObjectId(req.user.userId) } : {})
+          } 
+        },
+        {
+          $group: {
+            _id: "$classId",
+            total: { $sum: 1 },
+            present: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } }
+          }
+        }
+      ]);
+
+      attendanceMap = Object.fromEntries(
+        attendanceStats.map(item => [
+          item._id.toString(), 
+          item.total > 0 ? (item.present / item.total) * 100 : 0
+        ])
+      );
+    }
+
     const result = await Promise.all(classes.map(async (c) => {
       await ensureArchivedIfExpired(c);
       const studentCount = countMap[c._id.toString()] || 0;
+      const attendance = attendanceMap[c._id.toString()] || 0;
       
       let teacherInfo = null;
       if (isStudent) {
@@ -121,7 +151,14 @@ const getMyClasses = async (req, res) => {
         };
       }));
 
-      return { ...c, studentCount, teacher: teacherInfo, previewStudents };
+      return { 
+        ...c, 
+        studentCount, 
+        teacher: teacherInfo, 
+        previewStudents,
+        attendancePercentage: isStudent ? attendance : undefined,
+        averageAttendance: !isStudent ? attendance : undefined
+      };
     }));
 
     return res.status(200).json({ classes: result });
@@ -147,8 +184,33 @@ const getClassById = async (req, res) => {
       .populate("studentId", "name email avatar")
       .lean();
 
+    // 3. Attendance Calculation per student
+    const attendanceStats = await AttendanceRecord.aggregate([
+      { $match: { classId: classDoc._id } },
+      {
+        $group: {
+          _id: "$studentId",
+          presentCount: { $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] } },
+          totalRecords: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const statsMap = Object.fromEntries(
+      attendanceStats.map(stat => [
+        stat._id.toString(),
+        {
+          presentCount: stat.presentCount,
+          totalRecords: stat.totalRecords,
+          percentage: stat.totalRecords > 0 ? Math.round((stat.presentCount / stat.totalRecords) * 100) : 0
+        }
+      ])
+    );
+
     const students = await Promise.all(enrollments.map(async (e) => {
       const profile = await StudentProfile.findOne({ userId: e.studentId?._id }).select("name avatar faceEnrolled").lean();
+      const stats = statsMap[e.studentId?._id?.toString()] || { presentCount: 0, totalRecords: 0, percentage: 0 };
+
       return {
         _id: e.studentId?._id,
         email: e.studentId?.email,
@@ -157,6 +219,9 @@ const getClassById = async (req, res) => {
         faceEnrolled: profile?.faceEnrolled || false,
         enrollmentId: e._id,
         status: e.status,
+        attendancePercentage: stats.percentage,
+        presentCount: stats.presentCount,
+        totalSessions: stats.totalRecords
       };
     }));
 

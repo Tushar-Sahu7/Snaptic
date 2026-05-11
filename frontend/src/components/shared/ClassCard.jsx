@@ -187,7 +187,7 @@ const ClassCard = memo(
                 <p className="text-sm font-bold text-foreground/90">
                   {isStudent
                     ? `${Math.round(cls.attendancePercentage || 0)}%`
-                    : `${cls.averageAttendance || 0}%`}
+                    : `${Math.round(cls.averageAttendance || 0)}%`}
                 </p>
               </div>
             </div>

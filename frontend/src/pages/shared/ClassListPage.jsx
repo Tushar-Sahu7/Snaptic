@@ -391,11 +391,11 @@ export default function ClassListPage() {
                         <DropdownMenuItem
                           className="rounded-xl py-2.5"
                           onClick={() =>
-                            navigate(`${basePath}/classes/${cls._id}?tab=history`)
+                            navigate(`${basePath}/classes/${cls._id}?tab=records`)
                           }
                         >
                           <History className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
-                          View History
+                          View Records
                         </DropdownMenuItem>
                         {cls.status !== "archived" && (
                           <DropdownMenuItem

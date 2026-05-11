@@ -205,7 +205,7 @@ export function AppSidebar({ onInvite }) {
                         </AvatarFallback>
                       </Avatar>
                       {user?.faceEnrolled && (
-                        <div className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm transition-all group-data-[collapsible=icon]:size-3 group-data-[collapsible=icon]:-bottom-0 group-data-[collapsible=icon]:-right-0">
+                        <div className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm transition-all group-data-[collapsible=icon]:size-3 group-data-[collapsible=icon]:bottom-0 group-data-[collapsible=icon]:right-0">
                           <Check className="size-2.5 stroke-4 group-data-[collapsible=icon]:size-2" />
                         </div>
                       )}
