@@ -5,24 +5,40 @@ import { useSessionRecord } from "@/features/records/hooks/useRecords";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  User, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  User,
   MapPin,
   Fingerprint,
   QrCode,
-  Layout
+  GraduationCap,
+  TrendingUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { formatClassTimeRange, formatRoom } from "@/lib/date-utils";
+import { Separator } from "@/components/ui/separator";
+import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 
 const MethodIcon = ({ method }) => {
   switch (method?.toLowerCase()) {
@@ -43,27 +59,28 @@ export default function SessionRecordPage() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
   const { setDynamicLabels } = useOutletContext();
-  
+
   const { data, isLoading, error } = useSessionRecord(sessionId);
 
   useEffect(() => {
     if (data?.session) {
       const className = data.session.classId?.name;
-      const sessionDate = data.session.date 
+      const sessionDate = data.session.date
         ? format(new Date(data.session.date), "MMM d, yyyy")
         : "Session";
-      
-      setDynamicLabels((prev) => ({ 
-        ...prev, 
+
+      setDynamicLabels((prev) => ({
+        ...prev,
         2: className,
-        4: sessionDate 
+        4: sessionDate,
       }));
     }
-    return () => setDynamicLabels((prev) => ({ 
-      ...prev, 
-      2: undefined,
-      4: undefined 
-    }));
+    return () =>
+      setDynamicLabels((prev) => ({
+        ...prev,
+        2: undefined,
+        4: undefined,
+      }));
   }, [data, setDynamicLabels]);
 
   if (isLoading) {
@@ -86,10 +103,15 @@ export default function SessionRecordPage() {
         <div className="space-y-2">
           <h2 className="text-2xl font-bold">Failed to load record</h2>
           <p className="text-muted-foreground max-w-xs">
-            We couldn't find the requested session record. It might have been deleted or moved.
+            We couldn't find the requested session record. It might have been
+            deleted or moved.
           </p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)} className="rounded-xl font-bold">
+        <Button
+          variant="outline"
+          onClick={() => navigate(-1)}
+          className="rounded-xl font-bold"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
         </Button>
       </div>
@@ -99,59 +121,86 @@ export default function SessionRecordPage() {
   const { session, records, record, teacher } = data;
   const isPresent = !isTeacher ? record?.status === "present" : null;
 
+  const presentCount =
+    records?.filter((r) => r.status === "present").length || 0;
+  const totalCount = records?.length || 0;
+  const attendancePercentage =
+    totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => navigate(-1)} 
-          className="w-fit -ml-2 rounded-lg font-bold text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back
-        </Button>
-
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-2 h-8 rounded-full" 
-                  style={{ backgroundColor: session.classId?.color || "var(--primary)" }} 
-                />
-                <h1 className="text-4xl font-black tracking-tight">Session Record</h1>
-              </div>
-              <p className="text-lg text-muted-foreground font-medium">
-                {session.classId?.name}
-              </p>
+    <div className="container mx-auto px-4 py-8 max-w-7xl space-y-10">
+      {/* Hero Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-xl h-10 w-10 shrink-0"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div
+            className="p-4 rounded-2xl border border-border/50 shadow-sm transition-transform duration-300 hover:scale-105 relative overflow-hidden"
+            style={{
+              backgroundColor: `color-mix(in oklch, ${session.classId?.color || "oklch(0.4 0.02 160)"}, transparent 92%)`,
+              color: session.classId?.color || "oklch(0.4 0.02 160)",
+            }}
+          >
+            <div className="absolute inset-0 bg-white/40 dark:bg-black/20 backdrop-blur-[2px]" />
+            <LucideIcon
+              name={session.classId?.icon}
+              size={32}
+              strokeWidth={1.5}
+              className="relative z-10 drop-shadow-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+                Session Record
+              </h1>
+              <Badge
+                variant="outline"
+                className="hidden sm:flex bg-emerald-500/5 text-emerald-600 border-emerald-500/20 font-black text-[10px] uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm"
+              >
+                Finalized
+              </Badge>
             </div>
-
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-bold text-muted-foreground">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground font-medium">
+              <div className="flex items-center gap-2 text-sm">
+                <GraduationCap className="w-4 h-4 text-primary/60" />
+                <span className="text-foreground">
+                  {session.classId?.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4 text-primary/60" />
                 <span>{format(new Date(session.date), "MMMM d, yyyy")}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-primary/60" />
                 <span>{formatClassTimeRange(session)}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm">
                 <MapPin className="w-4 h-4 text-primary/60" />
                 <span>{formatRoom(session.location)}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col items-start md:items-end gap-3">
-            <Badge 
-              variant="outline" 
-              className="bg-emerald-500/5 text-emerald-600 border-emerald-500/20 font-black text-xs uppercase tracking-widest px-4 py-1.5 rounded-xl shadow-sm"
-            >
-              Finalized
-            </Badge>
-            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-              Taken at {format(new Date(session.updatedAt), "h:mm a")}
+        <div className="flex flex-wrap items-center gap-3 lg:pl-16">
+          <Badge
+            variant="outline"
+            className="sm:hidden bg-emerald-500/5 text-emerald-600 border-emerald-500/20 font-black text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-xl shadow-sm"
+          >
+            Finalized
+          </Badge>
+          <div className="px-4 py-2 rounded-2xl bg-muted/30 border border-border/50 backdrop-blur-sm">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+              Record finalized at{" "}
+              {format(new Date(session.updatedAt), "h:mm a")}
             </p>
           </div>
         </div>
@@ -160,25 +209,49 @@ export default function SessionRecordPage() {
       {isTeacher ? (
         <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-card/50">
           <CardHeader className="p-8 pb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-1">
-                <CardTitle className="text-2xl font-black">Student Attendance</CardTitle>
+                <CardTitle className="text-2xl font-black tracking-tight">
+                  Student Attendance
+                </CardTitle>
                 <CardDescription className="text-base font-medium">
                   Detailed breakdown of all enrolled students for this session.
                 </CardDescription>
               </div>
-              <div className="flex gap-4">
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Present</p>
-                  <p className="text-2xl font-black text-emerald-600">
-                    {records.filter(r => r.status === "present").length}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Absent</p>
-                  <p className="text-2xl font-black text-destructive">
-                    {records.filter(r => r.status === "absent").length}
-                  </p>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-8 px-8 py-5 rounded-3xl bg-muted/30 border border-border/10 backdrop-blur-sm">
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.15em] mb-2">
+                      Present
+                    </p>
+                    <p className="text-3xl font-black text-emerald-600 tracking-tighter">
+                      {records.filter((r) => r.status === "present").length}
+                    </p>
+                  </div>
+                  <Separator
+                    orientation="vertical"
+                    className="h-12 bg-border/50"
+                  />
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.15em] mb-2">
+                      Absent
+                    </p>
+                    <p className="text-3xl font-black text-destructive tracking-tighter">
+                      {records.filter((r) => r.status === "absent").length}
+                    </p>
+                  </div>
+                  <Separator
+                    orientation="vertical"
+                    className="h-12 bg-border/50"
+                  />
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.15em] mb-2">
+                      Attendance
+                    </p>
+                    <p className="text-3xl font-black text-primary tracking-tighter">
+                      {attendancePercentage}%
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -187,15 +260,26 @@ export default function SessionRecordPage() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="pl-8 py-4 font-black uppercase text-[10px] tracking-widest">Student</TableHead>
-                  <TableHead className="py-4 font-black uppercase text-[10px] tracking-widest">Status</TableHead>
-                  <TableHead className="py-4 font-black uppercase text-[10px] tracking-widest">Method</TableHead>
-                  <TableHead className="pr-8 py-4 text-right font-black uppercase text-[10px] tracking-widest">Marked At</TableHead>
+                  <TableHead className="pl-8 py-4 font-black uppercase text-[10px] tracking-widest">
+                    Student
+                  </TableHead>
+                  <TableHead className="py-4 font-black uppercase text-[10px] tracking-widest">
+                    Status
+                  </TableHead>
+                  <TableHead className="py-4 font-black uppercase text-[10px] tracking-widest">
+                    Method
+                  </TableHead>
+                  <TableHead className="pr-8 py-4 text-right font-black uppercase text-[10px] tracking-widest">
+                    Marked At
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {records.map((r) => (
-                  <TableRow key={r.recordId} className="group hover:bg-muted/30 transition-colors border-border/5">
+                  <TableRow
+                    key={r.recordId}
+                    className="group hover:bg-muted/30 transition-colors border-border/5"
+                  >
                     <TableCell className="pl-8 py-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10 border-2 border-background shadow-sm">
@@ -205,19 +289,23 @@ export default function SessionRecordPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="font-bold text-foreground truncate">{r.studentName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                          <p className="font-bold text-foreground truncate">
+                            {r.studentName}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {r.email}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="py-4">
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className={cn(
                           "rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest",
-                          r.status === "present" 
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/10" 
-                            : "bg-destructive/10 text-destructive border-destructive/10"
+                          r.status === "present"
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/10"
+                            : "bg-destructive/10 text-destructive border-destructive/10",
                         )}
                       >
                         {r.status}
@@ -232,7 +320,9 @@ export default function SessionRecordPage() {
                           {r.markingMethod}
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40 italic font-medium">—</span>
+                        <span className="text-xs text-muted-foreground/40 italic font-medium">
+                          Not Set
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="pr-8 py-4 text-right">
@@ -241,7 +331,9 @@ export default function SessionRecordPage() {
                           {format(new Date(r.markedAt), "h:mm a")}
                         </p>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40 italic font-medium">—</span>
+                        <span className="text-xs text-muted-foreground/40 italic font-medium">
+                          —
+                        </span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -252,50 +344,88 @@ export default function SessionRecordPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="md:col-span-2 rounded-3xl border-none shadow-sm overflow-hidden bg-card/50">
+          <Card className="md:col-span-2 rounded-3xl border-none shadow-sm overflow-hidden bg-card/50 group">
             <CardHeader className="p-8 pb-0">
-              <CardTitle className="text-2xl font-black">Your Attendance</CardTitle>
-              <CardDescription className="text-base font-medium">
-                Your personal mark for this session.
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-2xl font-black">
+                    Your Attendance
+                  </CardTitle>
+                  <CardDescription className="text-base font-medium">
+                    Your personal mark for this session.
+                  </CardDescription>
+                </div>
+                <div
+                  className="p-3 rounded-xl border border-border/50 shadow-sm transition-transform group-hover:scale-110"
+                  style={{
+                    backgroundColor: `color-mix(in oklch, ${session.classId?.color || "oklch(0.4 0.02 160)"}, transparent 90%)`,
+                    color: session.classId?.color || "oklch(0.4 0.02 160)",
+                  }}
+                >
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="p-8 pt-12 flex flex-col items-center justify-center text-center gap-8">
-              <div className={cn(
-                "w-32 h-32 rounded-full flex items-center justify-center border-8 shadow-inner animate-in zoom-in duration-500",
-                isPresent 
-                  ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-600" 
-                  : "bg-destructive/5 border-destructive/20 text-destructive"
-              )}>
-                {isPresent ? <CheckCircle2 className="w-16 h-16" /> : <XCircle className="w-16 h-16" />}
+              <div
+                className={cn(
+                  "w-36 h-36 rounded-full flex items-center justify-center border-8 shadow-inner animate-in zoom-in duration-700 ease-out relative",
+                  isPresent
+                    ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-600"
+                    : "bg-destructive/5 border-destructive/20 text-destructive",
+                )}
+              >
+                {isPresent ? (
+                  <CheckCircle2 className="w-20 h-20" />
+                ) : (
+                  <XCircle className="w-20 h-20" />
+                )}
+
+                {/* Decorative pulse effect for present status */}
+                {isPresent && (
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping opacity-20" />
+                )}
               </div>
-              
-              <div className="space-y-2">
-                <h3 className={cn(
-                  "text-4xl font-black tracking-tight",
-                  isPresent ? "text-emerald-600" : "text-destructive"
-                )}>
+
+              <div className="space-y-3">
+                <Badge
+                  className={cn(
+                    "px-4 py-1 rounded-full font-black text-xs uppercase tracking-[0.2em] mb-2",
+                    isPresent
+                      ? "bg-emerald-500 text-white"
+                      : "bg-destructive text-white",
+                  )}
+                >
                   {isPresent ? "Present" : "Absent"}
+                </Badge>
+                <h3 className="text-4xl font-black tracking-tight text-foreground">
+                  {isPresent ? "Success!" : "Not Recorded"}
                 </h3>
-                <p className="text-muted-foreground font-medium max-w-xs">
-                  {isPresent 
-                    ? `Successfully marked via ${record.markingMethod} at ${format(new Date(record.markedAt), "h:mm a")}.`
-                    : "No attendance was recorded for you in this session."
-                  }
+                <p className="text-muted-foreground font-medium max-w-sm">
+                  {isPresent
+                    ? `You were marked present via ${record.markingMethod} identification. Great job attending this session!`
+                    : "Unfortunately, no attendance record was found for you in this session. Please contact your instructor if this is an error."}
                 </p>
               </div>
 
               {isPresent && (
-                <div className="grid grid-cols-2 gap-4 w-full mt-4">
-                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/10">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Method</p>
-                    <div className="flex items-center justify-center gap-2 font-bold text-foreground">
-                      <MethodIcon method={record.markingMethod} />
+                <div className="grid grid-cols-2 gap-6 w-full mt-6">
+                  <div className="p-5 rounded-2xl bg-muted/40 border border-border/10 shadow-sm">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">
+                      Method
+                    </p>
+                    <div className="flex items-center justify-center gap-2 font-bold text-foreground text-lg">
+                      <div className="p-1.5 rounded-lg bg-background shadow-sm">
+                        <MethodIcon method={record.markingMethod} />
+                      </div>
                       <span className="capitalize">{record.markingMethod}</span>
                     </div>
                   </div>
-                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/10">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Time</p>
-                    <p className="font-bold text-foreground">
+                  <div className="p-5 rounded-2xl bg-muted/40 border border-border/10 shadow-sm">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">
+                      Timestamp
+                    </p>
+                    <p className="font-bold text-foreground text-lg">
                       {format(new Date(record.markedAt), "h:mm a")}
                     </p>
                   </div>
@@ -306,7 +436,12 @@ export default function SessionRecordPage() {
 
           <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-card/50">
             <CardHeader className="p-8 pb-4">
-              <CardTitle className="text-xl font-black">Instructor</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <User className="w-4 h-4" />
+                </div>
+                <CardTitle className="text-xl font-black">Instructor</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="p-8 pt-0 space-y-6">
               <div className="flex items-center gap-4">
@@ -317,19 +452,34 @@ export default function SessionRecordPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="text-xl font-black text-foreground truncate">{teacher?.name}</p>
-                  <p className="text-sm font-bold text-primary">Class Teacher</p>
+                  <p className="text-xl font-black text-foreground truncate">
+                    {teacher?.name}
+                  </p>
+                  <p className="text-sm font-bold text-primary">
+                    Class Teacher
+                  </p>
                 </div>
               </div>
               <Separator className="bg-border/40" />
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Class Status</span>
-                  <Badge variant="secondary" className="rounded-lg bg-emerald-500/10 text-emerald-600 font-bold">Active</Badge>
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    Class Status
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className="rounded-lg bg-emerald-500/10 text-emerald-600 font-bold"
+                  >
+                    Active
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Location</span>
-                  <span className="text-sm font-bold text-foreground">{formatRoom(session.location)}</span>
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                    Location
+                  </span>
+                  <span className="text-sm font-bold text-foreground">
+                    {formatRoom(session.location)}
+                  </span>
                 </div>
               </div>
             </CardContent>

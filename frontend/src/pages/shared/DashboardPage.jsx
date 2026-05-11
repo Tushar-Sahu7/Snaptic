@@ -74,7 +74,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground/90">
-            {isTeacher ? "Overview" : `Welcome back, ${user?.name || "Student"}!`}
+            Welcome back, {user?.name }
           </h1>
           <p className="text-muted-foreground text-base">
             {isTeacher 

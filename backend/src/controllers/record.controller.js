@@ -120,11 +120,11 @@ const getStudentClassRecord = async (req, res) => {
       if (!queryStudentId) {
         return res.status(400).json({ message: "studentId query parameter is required for teachers" });
       }
-      
+
       // Verify teacher owns the class
       const classDoc = await Class.findOne({ _id: classId, teacherId: userId, deletedAt: null });
       if (!classDoc) return res.status(404).json({ message: "Class not found or access denied" });
-      
+
       targetStudentId = queryStudentId;
     }
 

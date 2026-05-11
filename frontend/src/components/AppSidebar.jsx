@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import {
   BookOpen,
   LogOut,
@@ -203,12 +203,8 @@ export function AppSidebar({ onInvite }) {
                         <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-tighter">
                           {initials}
                         </AvatarFallback>
+                        
                       </Avatar>
-                      {user?.faceEnrolled && (
-                        <div className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm transition-all group-data-[collapsible=icon]:size-3 group-data-[collapsible=icon]:bottom-0 group-data-[collapsible=icon]:right-0">
-                          <Check className="size-2.5 stroke-4 group-data-[collapsible=icon]:size-2" />
-                        </div>
-                      )}
                     </div>
                     <div className="flex flex-1 flex-col overflow-hidden text-left leading-none group-data-[collapsible=icon]:hidden">
                       <span className="truncate text-sm font-bold tracking-tight text-foreground">

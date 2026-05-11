@@ -75,9 +75,15 @@ export default function DashboardLayout() {
         label = dynamicLabels[i];
       }
 
+      let href = currentPath;
+      if (segment === "records" && i > 1) {
+        const parentPath = segments.slice(0, i).join("/");
+        href = `/${parentPath}?tab=records`;
+      }
+
       crumbsArray.push({
         label,
-        href: currentPath,
+        href,
         isCurrent: i === segments.length - 1,
       });
     }
