@@ -26,7 +26,7 @@ export default function DashboardLayout() {
   const { user, generateInviteLink } = useAuth();
   const location = useLocation();
   const { id } = useParams();
-  const [dynamicLabel, setDynamicLabel] = useState("");
+  const [dynamicLabels, setDynamicLabels] = useState({});
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const isTeacher = user?.role === "teacher";
@@ -70,9 +70,9 @@ export default function DashboardLayout() {
       else if (segment === "labels") label = "Global Labels";
       else if (segment === "new") label = "Create New";
 
-      // Use dynamic label for IDs (usually the 3rd segment)
-      if (i === 2 && dynamicLabel) {
-        label = dynamicLabel;
+      // Use dynamic labels for IDs or specific segments
+      if (dynamicLabels[i]) {
+        label = dynamicLabels[i];
       }
 
       crumbsArray.push({
@@ -142,7 +142,7 @@ export default function DashboardLayout() {
           </div>
         </header>
         <main className="flex-1 px-6  max-w-[1440px] mx-auto w-full">
-          <Outlet context={{ setDynamicLabel }} />
+          <Outlet context={{ setDynamicLabels }} />
         </main>
       </SidebarInset>
 

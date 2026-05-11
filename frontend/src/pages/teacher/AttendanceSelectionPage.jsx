@@ -10,7 +10,7 @@ import AttendanceWizard from "@/features/attendance/components/AttendanceWizard"
 export default function AttendanceSelectionPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setDynamicLabel } = useOutletContext();
+  const { setDynamicLabels } = useOutletContext();
 
   const classId = searchParams.get("classId");
   const autoStart = searchParams.get("autoStart") === "true";
@@ -44,11 +44,12 @@ export default function AttendanceSelectionPage() {
   useEffect(() => {
     const className = sessionData?.session?.classId?.name;
     if (className) {
-      setDynamicLabel(className);
+      setDynamicLabels((prev) => ({ ...prev, 1: `Attendance: ${className}` }));
     } else {
-      setDynamicLabel("Attendance");
+      setDynamicLabels((prev) => ({ ...prev, 1: "Attendance" }));
     }
-  }, [sessionData?.session?.classId?.name, setDynamicLabel]);
+    return () => setDynamicLabels((prev) => ({ ...prev, 1: undefined }));
+  }, [sessionData?.session?.classId?.name, setDynamicLabels]);
 
   // 4. Render States
   if (loading) {

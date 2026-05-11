@@ -1,4 +1,5 @@
-import { useParams, useNavigate } from "react-router";
+import { useEffect } from "react";
+import { useParams, useNavigate, useOutletContext } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useSessionRecord } from "@/features/records/hooks/useRecords";
 import { Spinner } from "@/components/ui/spinner";
@@ -41,8 +42,29 @@ export default function SessionRecordPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
+  const { setDynamicLabels } = useOutletContext();
   
   const { data, isLoading, error } = useSessionRecord(sessionId);
+
+  useEffect(() => {
+    if (data?.session) {
+      const className = data.session.classId?.name;
+      const sessionDate = data.session.date 
+        ? format(new Date(data.session.date), "MMM d, yyyy")
+        : "Session";
+      
+      setDynamicLabels((prev) => ({ 
+        ...prev, 
+        2: className,
+        4: sessionDate 
+      }));
+    }
+    return () => setDynamicLabels((prev) => ({ 
+      ...prev, 
+      2: undefined,
+      4: undefined 
+    }));
+  }, [data, setDynamicLabels]);
 
   if (isLoading) {
     return (

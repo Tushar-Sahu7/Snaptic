@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useMemo, useEffect } from "react";
+import { useParams, useNavigate, useOutletContext } from "react-router";
 import { useAttendanceSessionDetail } from "@/features/attendance/hooks/useAttendance";
 import { 
   CheckCircle2, 
@@ -17,8 +17,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function AttendanceSummaryPage() {
   const { id: sessionId } = useParams();
   const navigate = useNavigate();
+  const { setDynamicLabels } = useOutletContext();
   
   const { data, isLoading, error } = useAttendanceSessionDetail(sessionId);
+
+  useEffect(() => {
+    const className = data?.session?.classId?.name;
+    if (className) {
+      setDynamicLabels((prev) => ({ 
+        ...prev, 
+        2: className 
+      }));
+    }
+    return () => setDynamicLabels((prev) => ({ 
+      ...prev, 
+      2: undefined 
+    }));
+  }, [data?.session?.classId?.name, setDynamicLabels]);
 
   const stats = useMemo(() => {
     if (!data?.records) return { present: 0, absent: 0, total: 0 };

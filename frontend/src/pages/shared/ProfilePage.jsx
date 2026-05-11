@@ -128,7 +128,7 @@ export default function ProfilePage() {
         <CardContent className="p-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             <div className="relative group">
-              <Avatar className="w-32 h-32 border-4 border-background shadow-2xl transition-transform group-hover:scale-105">
+              <Avatar className="w-32 h-32 border-4 border-background shadow-2xl transition-transform group-hover:scale-105" size="2xl">
                 {user?.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
                 <AvatarFallback className="text-4xl font-black bg-primary text-primary-foreground">
                   {initials}

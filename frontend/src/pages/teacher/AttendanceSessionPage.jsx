@@ -11,7 +11,7 @@ export default function AttendanceSessionPage() {
   const { id: classId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setDynamicLabel } = useOutletContext();
+  const { setDynamicLabels } = useOutletContext();
   
   const searchParams = new URLSearchParams(location.search);
   const origin = searchParams.get("origin");
@@ -30,9 +30,10 @@ export default function AttendanceSessionPage() {
   useEffect(() => {
     const className = data?.session?.classId?.name;
     if (className) {
-      setDynamicLabel(className);
+      setDynamicLabels((prev) => ({ ...prev, 2: className }));
     }
-  }, [data?.session?.classId?.name, setDynamicLabel]);
+    return () => setDynamicLabels((prev) => ({ ...prev, 2: undefined }));
+  }, [data?.session?.classId?.name, setDynamicLabels]);
 
   // Handle Loading States
   if (isPending || classesLoading || (!data && !error)) {

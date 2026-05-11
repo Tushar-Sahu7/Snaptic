@@ -97,7 +97,7 @@ export default function ClassDetailPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const { setDynamicLabel } = useOutletContext();
+  const { setDynamicLabels } = useOutletContext();
   const searchInputRef = useRef(null);
 
   // TanStack Queries & Mutations
@@ -159,9 +159,11 @@ export default function ClassDetailPage() {
   const [selectedStudents, setSelectedStudents] = useState([]);
 
   useEffect(() => {
-    if (classData?.name) setDynamicLabel(classData.name);
-    return () => setDynamicLabel("");
-  }, [classData?.name, setDynamicLabel]);
+    if (classData?.name) {
+      setDynamicLabels((prev) => ({ ...prev, 2: classData.name }));
+    }
+    return () => setDynamicLabels((prev) => ({ ...prev, 2: undefined }));
+  }, [classData?.name, setDynamicLabels]);
 
   useEffect(() => {
     if (location.search.includes("action=add-student")) {

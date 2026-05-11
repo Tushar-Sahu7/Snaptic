@@ -21,16 +21,23 @@ import { format } from "date-fns";
 export default function StudentClassHistoryPage() {
   const { id: classId, studentId } = useParams();
   const navigate = useNavigate();
-  const { setDynamicLabel } = useOutletContext();
+  const { setDynamicLabels } = useOutletContext();
   
   const { data: classData, isLoading: classLoading } = useClassDetail(classId);
   const { data: records, isLoading: recordsLoading, error } = useClassStudentHistory(classId, studentId);
 
   useEffect(() => {
     if (classData?.name) {
-      setDynamicLabel(`${classData.name} Records`);
+      setDynamicLabels((prev) => ({ 
+        ...prev, 
+        2: classData.name 
+      }));
     }
-  }, [classData?.name, setDynamicLabel]);
+    return () => setDynamicLabels((prev) => ({ 
+      ...prev, 
+      2: undefined 
+    }));
+  }, [classData?.name, setDynamicLabels]);
 
   const stats = useMemo(() => {
     if (!records) return { present: 0, absent: 0, total: 0, rate: 0 };
