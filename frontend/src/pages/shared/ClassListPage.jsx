@@ -490,7 +490,7 @@ export default function ClassListPage() {
                 : search
                   ? `We couldn't find any classes matching "${search}".`
                   : tab === "archived"
-                    ? "Classes you archive will appear here."
+                    ? "Archived classes will appear here."
                     : "You don't have any active classes right now."}
             </EmptyDescription>
           </EmptyHeader>

@@ -204,7 +204,7 @@ export default function ClassDetailPage() {
     <div className="container mx-auto px-4 py-8 max-w-7xl space-y-10">
       {/* Hero Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex items-start gap-5">
+        <div className="flex items-center gap-5">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -295,14 +295,25 @@ export default function ClassDetailPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-6 h-12 rounded-xl w-full sm:w-auto overflow-x-auto flex justify-start p-1 bg-muted/50">
-          <TabsTrigger value="students" className="rounded-lg h-10 px-6 font-bold flex gap-2">
-            <Users className="w-4 h-4" /> Students
-          </TabsTrigger>
-          <TabsTrigger value="records" className="rounded-lg h-10 px-6 font-bold flex gap-2">
-            <CalendarDays className="w-4 h-4" /> Records
-          </TabsTrigger>
-        </TabsList>
+        {/* Navigation Bar Section */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-2 rounded-2xl bg-muted/40 border border-border/50 backdrop-blur-sm shadow-sm transition-all duration-500 mb-10">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+            <TabsList className="h-11 w-full bg-transparent p-0 gap-2">
+              <TabsTrigger 
+                value="students" 
+                className="px-8 font-bold flex gap-2 flex-1 h-full rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              >
+                <Users className="w-4 h-4" /> Students
+              </TabsTrigger>
+              <TabsTrigger 
+                value="records" 
+                className="px-8 font-bold flex gap-2 flex-1 h-full rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              >
+                <CalendarDays className="w-4 h-4" /> Records
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
         
         <TabsContent value="students" className="mt-0">
           <div className="grid grid-cols-1 gap-12">

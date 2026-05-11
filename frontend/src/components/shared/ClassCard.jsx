@@ -50,7 +50,7 @@ const ClassCard = memo(
         onKeyDown={handleKeyDown}
         className={cn(
           "group relative flex overflow-hidden transition-all duration-500",
-          isList ? "flex-col sm:flex-row items-center p-4 gap-4" : "flex-col",
+          isList ? "flex-col sm:flex-row sm:flex-wrap items-center p-4 gap-4" : "flex-col",
           "bg-background border border-border/50 shadow-sm",
           "hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] hover:-translate-y-1.5 active:scale-[0.98]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
@@ -68,9 +68,9 @@ const ClassCard = memo(
         <div
           className={cn(
             "flex flex-1 gap-8",
-            isList
-              ? "flex-col sm:flex-row items-center p-0 gap-4 sm:gap-8"
-              : "flex-col p-7",
+          isList
+            ? "flex-col sm:flex-row sm:flex-wrap items-center p-0 gap-4 sm:gap-8"
+            : "flex-col p-7",
           )}
         >
           {/* Top Section: Icon & Identity */}
@@ -198,7 +198,7 @@ const ClassCard = memo(
             className={cn(
               "flex items-center gap-3",
               isList
-                ? "flex"
+                ? "flex flex-wrap"
                 : "mt-auto pt-6 border-t border-border/40 justify-between",
             )}
           >

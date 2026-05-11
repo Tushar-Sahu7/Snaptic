@@ -43,7 +43,7 @@ export default function ClassListHeader({
         <div className="space-y-1.5">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
             {isStudent
-              ? "Enrolled Classes"
+              ? "My Classes"
               : hideTabs
                 ? "Class Records"
                 : "My Classes"}
