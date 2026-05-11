@@ -31,6 +31,7 @@ import {
   LayoutDashboard,
   UserCheck,
   UserPlus,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
@@ -51,16 +52,18 @@ const teacherNavItems = [
   { title: "Dashboard", url: "/teacher/dashboard", icon: LayoutDashboard },
   { title: "My Classes", url: "/teacher/classes", icon: BookOpen },
   {
-    title: "Take Attendance",
+    title: "Quick Mark",
     url: "/teacher/take-attendance",
     icon: UserCheck,
   },
+  { title: "Records", url: "/teacher/records", icon: ClipboardList },
   { title: "Face ID", url: "/teacher/face-enrollment", icon: ScanFace },
 ];
 
 const studentNavItems = [
   { title: "Dashboard", url: "/student/dashboard", icon: Laptop },
   { title: "My Classes", url: "/student/classes", icon: BookOpen },
+  { title: "Records", url: "/student/records", icon: ClipboardList },
   { title: "Face ID", url: "/student/face-enrollment", icon: ScanFace },
 ];
 

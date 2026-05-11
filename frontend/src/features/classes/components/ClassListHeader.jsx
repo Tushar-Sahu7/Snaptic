@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/input-group";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ClassListHeader({
   tab,
@@ -32,21 +33,30 @@ export default function ClassListHeader({
   hideTabs = false,
   hideCreate = false,
 }) {
+  const { user } = useAuth();
+  const isStudent = user?.role === "student";
+
   return (
     <header className="flex flex-col gap-10">
       {/* Title & Primary Action Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
         <div className="space-y-1.5">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
-            {hideTabs ? "Enrolled Classes" : "My Classes"}
+            {isStudent
+              ? "Enrolled Classes"
+              : hideTabs
+                ? "Class Records"
+                : "My Classes"}
           </h1>
           <p className="text-muted-foreground font-medium tracking-tight">
-            Manage your teaching sessions and students.
+            {isStudent
+              ? "View your enrolled classes and track your attendance."
+              : "Manage your teaching sessions and students."}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {!hideCreate && tab === "active" && (
+          {!isStudent && !hideCreate && tab === "active" && (
             <Button
               onClick={onCreateClick}
               size="xl"
@@ -62,7 +72,7 @@ export default function ClassListHeader({
             </Button>
           )}
 
-          {tab === "archived" && canBulkAction && (
+          {tab === "archived" && !isStudent && canBulkAction && (
             <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500">
               <Button
                 variant="outline"

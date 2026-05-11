@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useParams, useNavigate, useLocation, useOutletContext } from "react-router";
+import { useParams, useNavigate, useLocation, useOutletContext, useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { 
   useClassDetail, 
   useUpdateClass, 
@@ -8,6 +9,11 @@ import {
   useRemoveStudent, 
   useSearchStudents 
 } from "@/features/classes/hooks/useClasses";
+import { 
+  useClassRecord, 
+  useClassSessions, 
+  useStudentClassRecord 
+} from "@/features/records/hooks/useRecords";
 import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -38,7 +44,8 @@ import {
   Check,
   Plus,
   MapPin,
-  Clock
+  Clock,
+  ArrowLeft
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,20 +54,30 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import ClassFormDialog from "@/features/classes/components/ClassFormDialog";
 import ClassDeleteDialog from "@/features/classes/components/ClassDeleteDialog";
 import ClassScheduleDisplay from "@/features/classes/components/ClassScheduleDisplay";
 import ClassStudentDataTable from "@/features/classes/components/ClassStudentDataTable";
 import ClassImportStudentsModal from "@/features/classes/components/ClassImportStudentsModal";
+import SessionList from "@/features/records/components/SessionList";
+import AttendanceLedger from "@/features/records/components/AttendanceLedger";
 import { useDebounce } from "@/hooks/use-debounce";
 import { isClassInSession, formatClassValidity, formatRoom, formatDays, formatClassTimeRange } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
+/**
+ * Shared Class Detail Page for both Teachers and Students.
+ * Adapts UI based on the user's role.
+ */
 export default function ClassDetailPage() {
+  const { user } = useAuth();
+  const isStudent = user?.role === "student";
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { setDynamicLabel } = useOutletContext();
   const searchInputRef = useRef(null);
@@ -70,6 +87,44 @@ export default function ClassDetailPage() {
   const updateClassMutation = useUpdateClass();
   const addStudentMutation = useAddStudent(id);
   const removeStudentMutation = useRemoveStudent(id);
+
+  // Records data
+  const selectedStudentId = searchParams.get("student");
+  
+  // Teacher-specific records data
+  const { data: classRecord } = useClassRecord(!isStudent ? id : null);
+  const { data: sessions, isLoading: sessionsLoading } = useClassSessions(!isStudent ? id : null);
+  
+  // Student-specific records data
+  const { data: studentPersonalRecord, isLoading: studentRecordLoading } = useStudentClassRecord(isStudent ? id : null);
+
+  // Determine which record to show in the "Ledger" view
+  const activeLedgerRecord = useMemo(() => {
+    if (isStudent && studentPersonalRecord) {
+      return {
+        name: user.name,
+        history: studentPersonalRecord.history,
+        attendancePercentage: studentPersonalRecord.summary?.attendancePercentage,
+        presentCount: studentPersonalRecord.summary?.presentCount,
+        totalSessions: studentPersonalRecord.summary?.totalSessions,
+      };
+    }
+    
+    if (!isStudent && selectedStudentId && classRecord?.studentRecords) {
+      const record = classRecord.studentRecords.find(r => r.studentId === selectedStudentId);
+      if (record) {
+        return {
+          name: record.name,
+          history: record.history,
+          attendancePercentage: record.attendancePercentage,
+          presentCount: record.presentCount,
+          totalSessions: record.totalSessions,
+        };
+      }
+    }
+    return null;
+  }, [isStudent, studentPersonalRecord, classRecord, selectedStudentId, user?.name]);
+
   const { todaySessions } = useTodayAttendance();
   
   const activeSession = useMemo(() => todaySessions[id], [todaySessions, id]);
@@ -97,7 +152,13 @@ export default function ClassDetailPage() {
     }
   }, [location.search]);
 
-
+  const activeTab = searchParams.get("tab") || "students";
+  const handleTabChange = (val) => {
+    setSearchParams((prev) => {
+      prev.set("tab", val);
+      return prev;
+    });
+  };
 
   const handleToggleArchive = async () => {
     const newStatus = classData.status === "archived" ? "active" : "archived";
@@ -132,7 +193,9 @@ export default function ClassDetailPage() {
       <div className="container mx-auto px-4 py-24 text-center space-y-6">
         <AlertCircle className="w-16 h-16 text-destructive mx-auto" />
         <h2 className="text-2xl font-bold">Class not found</h2>
-        <Button onClick={() => navigate("/teacher/classes")}>Back to Classes</Button>
+        <Button onClick={() => navigate(isStudent ? "/student/classes" : "/teacher/classes")}>
+          Back to Classes
+        </Button>
       </div>
     );
   }
@@ -142,6 +205,14 @@ export default function ClassDetailPage() {
       {/* Hero Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-start gap-5">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mt-1 rounded-xl h-10 w-10 shrink-0" 
+            onClick={() => navigate(isStudent ? "/student/classes" : "/teacher/classes")}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
           <div 
             className="p-4 rounded-2xl border border-border/50 shadow-sm transition-transform duration-300 hover:scale-105 relative overflow-hidden"
             style={{
@@ -162,6 +233,12 @@ export default function ClassDetailPage() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground font-medium">
+              {isStudent && (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="w-4 h-4 text-primary/60" />
+                  <span>By <span className="text-foreground font-bold">{classData.teacher?.name || "Teacher"}</span></span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-primary/60" />
                 <span>{formatDays(classData.schedule)} • {formatClassTimeRange(classData)}</span>
@@ -178,8 +255,8 @@ export default function ClassDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {classData.status !== "archived" && (
+        <div className="flex flex-wrap items-center gap-3 lg:pl-16">
+          {!isStudent && classData.status !== "archived" && (
             <PrimaryAttendanceAction 
               cls={classData} 
               session={activeSession} 
@@ -187,37 +264,51 @@ export default function ClassDetailPage() {
             />
           )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl">
-              {classData.status !== "archived" && (
-                <DropdownMenuItem onClick={() => setEditOpen(true)} className="rounded-lg">
-                  <Pencil className="mr-2 w-4 h-4" /> Edit Class Details
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={handleToggleArchive} className="rounded-lg">
-                {classData.status === "archived" ? (
-                  <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive Class</>
-                ) : (
-                  <><Archive className="mr-2 w-4 h-4" /> Archive Class</>
+          {!isStudent && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                {classData.status !== "archived" && (
+                  <DropdownMenuItem onClick={() => setEditOpen(true)} className="rounded-lg">
+                    <Pencil className="mr-2 w-4 h-4" /> Edit Class Details
+                  </DropdownMenuItem>
                 )}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive focus:text-destructive rounded-lg">
-                <Trash2 className="mr-2 w-4 h-4" /> Delete Permanently
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem onClick={handleToggleArchive} className="rounded-lg">
+                  {classData.status === "archived" ? (
+                    <><ArchiveRestore className="mr-2 w-4 h-4" /> Unarchive Class</>
+                  ) : (
+                    <><Archive className="mr-2 w-4 h-4" /> Archive Class</>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive focus:text-destructive rounded-lg">
+                  <Trash2 className="mr-2 w-4 h-4" /> Delete Permanently
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-12">
-      {/* Enrollment & Search Section */}
-      {classData.status !== "archived" && (
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="mb-6 h-12 rounded-xl w-full sm:w-auto overflow-x-auto flex justify-start p-1 bg-muted/50">
+          <TabsTrigger value="students" className="rounded-lg h-10 px-6 font-bold flex gap-2">
+            <Users className="w-4 h-4" /> Students
+          </TabsTrigger>
+          <TabsTrigger value="records" className="rounded-lg h-10 px-6 font-bold flex gap-2">
+            <CalendarDays className="w-4 h-4" /> Records
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="students" className="mt-0">
+          <div className="grid grid-cols-1 gap-12">
+
+      {/* Enrollment & Search Section (Teacher Only) */}
+      {!isStudent && classData.status !== "archived" && (
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-1.5">
@@ -376,21 +467,29 @@ export default function ClassDetailPage() {
               <div className="space-y-2">
                 <p className="text-2xl font-bold tracking-tight">No students enrolled</p>
                 <p className="text-muted-foreground font-medium max-w-sm mx-auto text-base">
-                  Start by searching for students above or importing them from another class.
+                  {isStudent 
+                    ? "It looks like no students are enrolled in this class yet." 
+                    : "Start by searching for students above or importing them from another class."}
                 </p>
               </div>
-              <Button variant="outline" className="rounded-xl font-bold gap-2 px-8 h-11" onClick={() => searchInputRef.current?.focus()}>
-                <Search className="w-4 h-4" /> Search Directory
-              </Button>
+              {!isStudent && (
+                <Button variant="outline" className="rounded-xl font-bold gap-2 px-8 h-11" onClick={() => searchInputRef.current?.focus()}>
+                  <Search className="w-4 h-4" /> Search Directory
+                </Button>
+              )}
             </div>
           ) : (
             <ClassStudentDataTable
               data={activeStudents}
               loading={isLoading}
-              selectable={classData.status !== "archived"}
+              selectable={!isStudent && classData.status !== "archived"}
               onSelectionChange={setSelectedStudents}
+              onRowClick={(student) => {
+                if (isStudent) return; // Students can't click to view other students' records
+                navigate(`/teacher/classes/${id}?student=${student._id}&tab=records`);
+              }}
               toolbarActions={
-                selectedStudents.length > 0 && (
+                !isStudent && selectedStudents.length > 0 && (
                   <Button
                     variant="destructive"
                     size="sm"
@@ -409,19 +508,33 @@ export default function ClassDetailPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="rounded-xl w-48 p-1.5">
-                    <DropdownMenuItem onClick={() => navigate(`/teacher/profile?id=${student._id}`)} className="rounded-lg font-medium">
+                    <DropdownMenuItem 
+                      onClick={() => navigate(isStudent ? `/student/profile?id=${student._id}` : `/teacher/profile?id=${student._id}`)} 
+                      className="rounded-lg font-medium"
+                    >
                       <User className="mr-2 w-4 h-4 text-muted-foreground" /> View Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(`/teacher/classes/${id}?student=${student._id}&tab=history`)} className="rounded-lg font-medium">
-                      <CalendarDays className="mr-2 w-4 h-4 text-muted-foreground" /> Attendance History
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => removeStudentMutation.mutate([student._id])} 
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg font-medium"
-                    >
-                      <Trash2 className="mr-2 w-4 h-4" /> Remove from Class
-                    </DropdownMenuItem>
+                    
+                    {!isStudent && (
+                      <DropdownMenuItem 
+                        onClick={() => navigate(`/teacher/classes/${id}?student=${student._id}&tab=records`)} 
+                        className="rounded-lg font-medium"
+                      >
+                        <CalendarDays className="mr-2 w-4 h-4 text-muted-foreground" /> View Records
+                      </DropdownMenuItem>
+                    )}
+
+                    {!isStudent && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => removeStudentMutation.mutate([student._id])} 
+                          className="text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg font-medium"
+                        >
+                          <Trash2 className="mr-2 w-4 h-4" /> Remove from Class
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -429,20 +542,90 @@ export default function ClassDetailPage() {
           )}
         </CardContent>
       </Card>
-      </div>
+          </div>
+        </TabsContent>
 
-      <ClassFormDialog open={editOpen} onOpenChange={setEditOpen} classData={classData} />
-      <ClassDeleteDialog open={deleteOpen} onOpenChange={setDeleteOpen} classData={classData} onDeleted={() => navigate("/teacher/classes")} />
-      <ClassImportStudentsModal 
-        open={importOpen} 
-        onOpenChange={setImportOpen} 
-        currentClassId={id} 
-        existingStudents={activeStudents} 
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["classes"] });
-          queryClient.invalidateQueries({ queryKey: ["class", id] });
-        }}
-      />
+        <TabsContent value="records" className="mt-0">
+          {activeLedgerRecord ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between px-2">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black flex items-center gap-2">
+                    <UserCheck className="w-6 h-6 text-primary" />
+                    {isStudent ? "My Attendance Ledger" : `${activeLedgerRecord.name}'s Ledger`}
+                  </h2>
+                  <p className="text-muted-foreground font-medium">
+                    {isStudent ? "Your personal attendance record for this class." : "Detailed student attendance record."}
+                  </p>
+                </div>
+                {!isStudent && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-xl font-bold gap-2"
+                    onClick={() => setSearchParams(prev => { prev.delete("student"); return prev; })}
+                  >
+                    <X className="w-4 h-4" /> View All Sessions
+                  </Button>
+                )}
+              </div>
+              
+              <AttendanceLedger 
+                history={activeLedgerRecord.history} 
+                stats={{
+                  attendancePercentage: activeLedgerRecord.attendancePercentage,
+                  presentCount: activeLedgerRecord.presentCount,
+                  absentCount: activeLedgerRecord.totalSessions - activeLedgerRecord.presentCount,
+                  totalSessions: activeLedgerRecord.totalSessions
+                }}
+                studentName={activeLedgerRecord.name}
+                classId={id}
+                isTeacher={!isStudent}
+              />
+            </div>
+          ) : (
+            <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-card/50">
+              <CardHeader className="p-8 pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl font-black">Class Records</CardTitle>
+                    <CardDescription className="text-base font-medium">View and manage past attendance sessions.</CardDescription>
+                  </div>
+                  <Badge variant="secondary" className="h-7 px-3 rounded-full font-bold bg-primary/10 text-primary border-primary/20">
+                    {sessions?.length || 0} Sessions
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8 pt-4">
+                {sessionsLoading || studentRecordLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+                  </div>
+                ) : (
+                  <SessionList sessions={sessions || []} classId={id} isTeacher={!isStudent} />
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {!isStudent && (
+        <>
+          <ClassFormDialog open={editOpen} onOpenChange={setEditOpen} classData={classData} />
+          <ClassDeleteDialog open={deleteOpen} onOpenChange={setDeleteOpen} classData={classData} onDeleted={() => navigate("/teacher/classes")} />
+          <ClassImportStudentsModal 
+            open={importOpen} 
+            onOpenChange={setImportOpen} 
+            currentClassId={id} 
+            existingStudents={activeStudents} 
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["classes"] });
+              queryClient.invalidateQueries({ queryKey: ["class", id] });
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

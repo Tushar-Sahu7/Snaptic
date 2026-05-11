@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
+import { useAuth } from "@/context/AuthContext";
 import { useClasses } from "@/features/classes/hooks/useClasses";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -76,6 +77,10 @@ export default function ClassListPage() {
     bulkUnarchiveAll,
     bulkDeleteAll,
   } = useClasses();
+
+  const { user } = useAuth();
+  const isStudent = user?.role === "student";
+  const basePath = isStudent ? "/student" : "/teacher";
 
   const { todaySessions } = useTodayAttendance();
 
@@ -234,7 +239,7 @@ export default function ClassListPage() {
                 <div className="lg:col-span-8 group">
                   <ClassCard
                     cls={featuredClass}
-                    onClick={(id) => navigate(`/teacher/classes/${id}`)}
+                    onClick={(id) => navigate(`${basePath}/classes/${id}`)}
                     className="h-full border-primary/20 shadow-2xl shadow-primary/5 hover:shadow-primary/10 transition-all duration-700"
                     actions={
                       <DropdownMenu>
@@ -255,12 +260,12 @@ export default function ClassListPage() {
                             className="rounded-xl py-2.5"
                             onClick={() =>
                               navigate(
-                                `/teacher/classes/${featuredClass._id}?tab=history`,
+                                `${basePath}/classes/${featuredClass._id}?tab=records`,
                               )
                             }
                           >
                             <History className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
-                            View History
+                            View Records
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="opacity-50" />
                           <DropdownMenuItem
@@ -367,7 +372,7 @@ export default function ClassListPage() {
                   key={cls._id}
                   cls={cls}
                   layout={viewType}
-                  onClick={(id) => navigate(`/teacher/classes/${id}`)}
+                  onClick={(id) => navigate(`${basePath}/classes/${id}`)}
                   actions={
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -386,7 +391,7 @@ export default function ClassListPage() {
                         <DropdownMenuItem
                           className="rounded-xl py-2.5"
                           onClick={() =>
-                            navigate(`/teacher/classes/${cls._id}?tab=history`)
+                            navigate(`${basePath}/classes/${cls._id}?tab=history`)
                           }
                         >
                           <History className="mr-3 w-4 h-4 text-muted-foreground" />{" "}
@@ -397,7 +402,7 @@ export default function ClassListPage() {
                             className="rounded-xl py-2.5"
                             onClick={() =>
                               navigate(
-                                `/teacher/classes/${cls._id}?action=add-student`,
+                                `${basePath}/classes/${cls._id}?action=add-student`,
                               )
                             }
                           >

@@ -65,7 +65,7 @@ const getClassRecord = async (req, res) => {
 };
 
 /**
- * GET /api/reports/student/history
+ * GET /api/records/student/history
  * Returns the attendance history for the logged-in student.
  */
 const getStudentHistory = async (req, res) => {
@@ -91,7 +91,7 @@ const getStudentHistory = async (req, res) => {
         status: r.sessionId.status
       },
       status: r.status,
-      method: r.method,
+      markingMethod: r.method,
       markedAt: r.markedAt
     }));
 
@@ -130,7 +130,7 @@ const getStudentClassRecord = async (req, res) => {
         updatedAt: r.sessionId.updatedAt
       },
       status: r.status,
-      method: r.method,
+      markingMethod: r.method,
       markedAt: r.markedAt
     }));
 
@@ -148,8 +148,121 @@ const getStudentClassRecord = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/records/session/:sessionId
+ * Returns the record for a specific session.
+ * For teacher: returns all student records.
+ * For student: returns only their own record + teacher info.
+ */
+const getSessionRecord = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.userId;
+    const role = req.user.role;
+
+    const session = await AttendanceSession.findById(sessionId)
+      .populate("classId", "name icon status color");
+      
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (role === "teacher") {
+      // Verify ownership
+      if (session.teacherId.toString() !== userId.toString()) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const records = await AttendanceRecord.find({ sessionId })
+        .populate("studentId", "name email")
+        .sort({ studentId: 1 });
+
+      const populatedRecords = await Promise.all(records.map(async (record) => {
+        const profile = await StudentProfile.findOne({ userId: record.studentId._id });
+        return {
+          recordId: record._id,
+          studentId: record.studentId._id,
+          studentName: profile?.name || record.studentId.name,
+          email: record.studentId.email,
+          avatar: profile?.avatar || null,
+          status: record.status,
+          markingMethod: record.method,
+          markedAt: record.markedAt
+        };
+      }));
+
+      return res.status(200).json({ session, records: populatedRecords });
+
+    } else if (role === "student") {
+      const record = await AttendanceRecord.findOne({ sessionId, studentId: userId });
+      if (!record) return res.status(404).json({ message: "Record not found for this student" });
+
+      const User = require("../models/User");
+      const TeacherProfile = require("../models/TeacherProfile");
+      
+      const teacherUser = await User.findById(session.teacherId).select("name email");
+      const teacherProfile = await TeacherProfile.findOne({ userId: session.teacherId });
+
+      return res.status(200).json({
+        session,
+        record: {
+          recordId: record._id,
+          status: record.status,
+          markingMethod: record.method,
+          markedAt: record.markedAt
+        },
+        teacher: {
+          name: teacherUser?.name,
+          avatar: teacherProfile?.avatar || null
+        }
+      });
+    } else {
+      return res.status(403).json({ message: "Access denied" });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/records/class/:classId/sessions
+ * Returns all finalized sessions for a specific class
+ */
+const getClassSessions = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const userId = req.user.userId;
+
+    // Verify ownership
+    const classDoc = await Class.findOne({ _id: classId, teacherId: userId, deletedAt: null });
+    if (!classDoc) return res.status(404).json({ message: "Class not found" });
+
+    const sessions = await AttendanceSession.find({ classId, status: "finalized" })
+      .sort({ date: -1, startTime: -1 });
+
+    // For each session, we might want to get the quick stats (present/absent)
+    const sessionsWithStats = await Promise.all(sessions.map(async (session) => {
+      const records = await AttendanceRecord.find({ sessionId: session._id });
+      const presentCount = records.filter(r => r.status === "present").length;
+      const totalCount = records.length;
+      return {
+        ...session.toObject(),
+        stats: {
+          present: presentCount,
+          absent: totalCount - presentCount,
+          total: totalCount
+        }
+      };
+    }));
+
+    return res.status(200).json({ sessions: sessionsWithStats });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getClassRecord,
   getStudentHistory,
-  getStudentClassRecord
+  getStudentClassRecord,
+  getSessionRecord,
+  getClassSessions
 };

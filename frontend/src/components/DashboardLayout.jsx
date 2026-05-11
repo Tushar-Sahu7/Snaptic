@@ -64,6 +64,7 @@ export default function DashboardLayout() {
       let label =
         segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
       if (segment === "classes") label = "My Classes";
+      else if (segment === "records") label = "Records";
       else if (segment === "take-attendance") label = "Attendance";
       else if (segment === "face-enrollment") label = "Face ID";
       else if (segment === "labels") label = "Global Labels";

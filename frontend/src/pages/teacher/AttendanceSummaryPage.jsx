@@ -7,7 +7,8 @@ import {
   Calendar,
   Users,
   Clock,
-  AlertCircle
+  AlertCircle,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -174,10 +175,10 @@ export default function AttendanceSummaryPage() {
          <Button 
            size="lg" 
            className="rounded-full px-8 gap-2 h-12"
-           onClick={() => navigate("/teacher/dashboard")}
+           onClick={() => navigate(`/teacher/classes/${session.classId?._id || session.classId}/records/${sessionId}`)}
          >
-           <LayoutDashboard className="w-5 h-5" />
-           Back to Dashboard
+           <ClipboardList className="w-5 h-5" />
+           View Record
          </Button>
       </div>
     </div>

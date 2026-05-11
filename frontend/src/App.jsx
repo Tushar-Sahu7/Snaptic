@@ -4,16 +4,23 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import DashboardLayout from "@/components/DashboardLayout";
-import ClassListPage from "@/pages/teacher/ClassListPage";
-import ClassDetailPage from "@/pages/teacher/ClassDetailPage";
+
+// Shared Pages
+import DashboardPage from "@/pages/shared/DashboardPage";
+import ClassListPage from "@/pages/shared/ClassListPage";
+import ClassDetailPage from "@/pages/shared/ClassDetailPage";
+import ProfilePage from "@/pages/shared/ProfilePage";
+import FaceEnrollmentPage from "@/pages/shared/FaceEnrollmentPage";
+import SessionRecordPage from "@/pages/shared/SessionRecordPage";
+
+// Teacher Specific Pages
 import AttendanceSessionPage from "@/pages/teacher/AttendanceSessionPage";
 import AttendanceSelectionPage from "@/pages/teacher/AttendanceSelectionPage";
 import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
-import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
-import ProfilePage from "@/pages/teacher/ProfilePage";
-import StudentDashboard from "@/pages/student/StudentDashboard";
-import StudentClassListPage from "@/pages/student/StudentClassListPage";
-import FaceEnrollmentPage from "@/pages/student/FaceEnrollmentPage";
+
+// Student Specific Pages
+import StudentClassHistoryPage from "@/pages/student/StudentClassHistoryPage";
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -26,7 +33,9 @@ export default function App() {
       <div className="h-screen w-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm font-bold animate-pulse uppercase tracking-widest text-muted-foreground">Initializing Snaptic...</p>
+          <p className="text-sm font-bold animate-pulse uppercase tracking-widest text-muted-foreground">
+            Initializing Snaptic...
+          </p>
         </div>
       </div>
     );
@@ -49,13 +58,27 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<TeacherDashboard />} />
-            <Route path="classes" element={<ClassListPage />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="classes" element={<ClassListPage />} />
               <Route path="classes/:id" element={<ClassDetailPage />} />
-              <Route path="classes/:id/attendance" element={<AttendanceSessionPage />} />
-              <Route path="take-attendance" element={<AttendanceSelectionPage />} />
-              <Route path="attendance/:id/summary" element={<AttendanceSummaryPage />} />
+              <Route
+                path="classes/:id/attendance"
+                element={<AttendanceSessionPage />}
+              />
+              <Route
+                path="classes/:id/records/:sessionId"
+                element={<SessionRecordPage />}
+              />
+              <Route
+                path="take-attendance"
+                element={<AttendanceSelectionPage />}
+              />
+              <Route path="records" element={<ClassListPage />} />
+              <Route
+                path="attendance/:id/summary"
+                element={<AttendanceSummaryPage />}
+              />
               <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
@@ -70,16 +93,20 @@ export default function App() {
               }
             >
               <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<StudentDashboard />} />
-              <Route path="classes" element={<StudentClassListPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="classes" element={<ClassListPage />} />
+              <Route path="classes/:id" element={<ClassDetailPage />} />
+              <Route
+                path="classes/:id/records"
+                element={<StudentClassHistoryPage />}
+              />
+              <Route
+                path="classes/:id/records/:sessionId"
+                element={<SessionRecordPage />}
+              />
               <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>
-
-            <Route
-              path="/student/dashboard"
-              element={<Navigate to="/student" replace />}
-            />
 
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>

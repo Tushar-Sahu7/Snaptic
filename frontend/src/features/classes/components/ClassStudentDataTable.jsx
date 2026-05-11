@@ -1,4 +1,5 @@
 import React from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   flexRender,
   getCoreRowModel,
@@ -79,6 +80,7 @@ export default function StudentDataTable({
   loading = false,
   hideToolbar = false,
   syncUrl = true,
+  onRowClick,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -151,6 +153,9 @@ export default function StudentDataTable({
       onSelectionChange(selectedStudents);
     }
   }, [rowSelection, data]);
+
+  const { user } = useAuth();
+  const isStudent = user?.role === "student";
 
   const columns = React.useMemo(() => {
     const cols = [
@@ -227,18 +232,34 @@ export default function StudentDataTable({
         },
       },
       {
-        id: "actions",
-        header: "",
+        accessorKey: "attendancePercentage",
+        header: "Attendance %",
         cell: ({ row }) => {
-          return actionsRender ? actionsRender(row.original) : null;
+          const val = row.original.attendancePercentage;
+          return (
+            <span className="font-bold text-sm text-foreground">
+              {val != null ? `${val}%` : "--%"}
+            </span>
+          );
         },
-        enableHiding: false,
       },
     ];
 
-    let finalCols = cols;
+    // Only add actions column if not a student and actionsRender is provided
+    if (!isStudent && actionsRender) {
+      cols.push({
+        id: "actions",
+        header: "",
+        cell: ({ row }) => {
+          return actionsRender(row.original);
+        },
+        enableHiding: false,
+      });
+    }
 
-    if (selectable) {
+    let finalCols = [...cols];
+
+    if (selectable && !isStudent) {
       finalCols.unshift({
         id: "select",
         header: ({ table }) => (
@@ -270,7 +291,8 @@ export default function StudentDataTable({
     }
 
     return finalCols;
-  }, [actionsRender, selectable]);
+  }, [actionsRender, selectable, isStudent]);
+
 
   const table = useReactTable({
     data,
@@ -399,7 +421,13 @@ export default function StudentDataTable({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="group hover:bg-primary/2 transition-colors duration-200 border-b border-border/40 last:border-0"
+                    className={cn(
+                      "group hover:bg-primary/2 transition-colors duration-200 border-b border-border/40 last:border-0",
+                      (onRowClick && !isStudent) && "cursor-pointer"
+                    )}
+                    onClick={() => {
+                      if (onRowClick && !isStudent) onRowClick(row.original);
+                    }}
                   >
                     {row.getVisibleCells().map((cell) => {
                       const isFaceStatus = cell.column.id === "faceEnrolled";
