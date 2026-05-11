@@ -29,7 +29,7 @@ export default function AttendanceLedger({ history, stats, studentName, classId,
         </div>
         <h3 className="text-xl font-bold text-foreground">No records for this student</h3>
         <p className="text-muted-foreground max-w-xs mx-auto mt-2 font-medium">
-          Once attendance sessions are finalized, the history will appear here.
+          Once attendance sessions are submitted, the history will appear here.
         </p>
       </div>
     );

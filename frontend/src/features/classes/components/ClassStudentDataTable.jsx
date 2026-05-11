@@ -25,6 +25,8 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -38,6 +40,9 @@ import {
   ChevronDown,
   Search,
   Check,
+  Filter,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import {
   Pagination,
@@ -81,6 +86,7 @@ export default function StudentDataTable({
   hideToolbar = false,
   syncUrl = true,
   onRowClick,
+  hideAttendance = false,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -101,6 +107,7 @@ export default function StudentDataTable({
     initialSort.length ? initialSort : [{ id: "name", desc: false }],
   );
   const [columnVisibility, setColumnVisibility] = React.useState({});
+  const [columnFilters, setColumnFilters] = React.useState([]);
   const [globalFilter, setGlobalFilter] = React.useState(initialSearch);
   const [pagination, setPagination] = React.useState({
     pageIndex: initialPage - 1,
@@ -205,7 +212,54 @@ export default function StudentDataTable({
 
       {
         accessorKey: "faceEnrolled",
-        header: "Face status",
+        header: ({ column }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-3 h-8 data-[state=open]:bg-accent font-bold uppercase tracking-wider"
+              >
+                <span>Face status</span>
+                {column.getFilterValue() !== undefined ? (
+                  <Filter className="ml-2 h-3.5 w-3.5 text-primary" />
+                ) : (
+                  <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 rounded-xl p-1.5">
+              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 px-2 py-1.5">
+                Filter by Enrollment
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer"
+                onClick={() => column.setFilterValue(undefined)}
+              >
+                All Students
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="opacity-50" />
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer flex items-center justify-between"
+                onClick={() => column.setFilterValue(true)}
+              >
+                <span>Enrolled</span>
+                {column.getFilterValue() === true && (
+                  <Check className="h-4 w-4 text-emerald-500" />
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer flex items-center justify-between"
+                onClick={() => column.setFilterValue(false)}
+              >
+                <span>Not Enrolled</span>
+                {column.getFilterValue() === false && (
+                  <Check className="h-4 w-4 text-orange-500" />
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         cell: ({ row }) => {
           const isEnrolled = row.original.faceEnrolled;
           return (
@@ -233,17 +287,104 @@ export default function StudentDataTable({
       },
       {
         accessorKey: "attendancePercentage",
-        header: "Attendance %",
+        header: ({ column }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-3 h-8 data-[state=open]:bg-accent font-bold uppercase tracking-wider"
+              >
+                <span>Attendance %</span>
+                {column.getIsSorted() === "asc" ? (
+                  <ArrowUp className="ml-2 h-3.5 w-3.5 text-primary" />
+                ) : column.getIsSorted() === "desc" ? (
+                  <ArrowDown className="ml-2 h-3.5 w-3.5 text-primary" />
+                ) : column.getFilterValue() === "gt75" ? (
+                  <Filter className="ml-2 h-3.5 w-3.5 text-primary" />
+                ) : (
+                  <ChevronDown className="ml-2 h-3.5 w-3.5" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 rounded-xl p-1.5">
+              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 px-2 py-1.5">
+                Sort Order
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer flex items-center justify-between"
+                onClick={() => column.toggleSorting(false)}
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowUp className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Low to High</span>
+                </div>
+                {column.getIsSorted() === "asc" && (
+                  <Check className="h-4 w-4 text-primary" />
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer flex items-center justify-between"
+                onClick={() => column.toggleSorting(true)}
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>High to Low</span>
+                </div>
+                {column.getIsSorted() === "desc" && (
+                  <Check className="h-4 w-4 text-primary" />
+                )}
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="opacity-50" />
+
+              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 px-2 py-1.5">
+                Quick Filters
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer flex items-center justify-between"
+                onClick={() => column.setFilterValue(undefined)}
+              >
+                <span>Clear All Filters</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="rounded-lg font-medium cursor-pointer flex items-center justify-between"
+                onClick={() => column.setFilterValue("gt75")}
+              >
+                <span>Attendance {">"} 75%</span>
+                {column.getFilterValue() === "gt75" && (
+                  <Check className="h-4 w-4 text-emerald-500" />
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
         cell: ({ row }) => {
           const val = row.original.attendancePercentage;
           return (
             <span className="font-bold text-sm text-foreground">
-              {val != null ? `${val}%` : "--%"}
+              {val != null ? `${val}%` : "0%"}
             </span>
           );
         },
+        filterFn: (row, columnId, filterValue) => {
+          const value = row.getValue(columnId) ?? 0;
+          if (filterValue === "gt75") {
+            return value > 75;
+          }
+          return true;
+        },
       },
     ];
+
+    if (hideAttendance) {
+      const attendanceIndex = cols.findIndex(
+        (c) => c.accessorKey === "attendancePercentage",
+      );
+      if (attendanceIndex !== -1) {
+        cols.splice(attendanceIndex, 1);
+      }
+    }
 
     // Only add actions column if not a student and actionsRender is provided
     if (!isStudent && actionsRender) {
@@ -293,7 +434,6 @@ export default function StudentDataTable({
     return finalCols;
   }, [actionsRender, selectable, isStudent]);
 
-
   const table = useReactTable({
     data,
     columns,
@@ -301,10 +441,12 @@ export default function StudentDataTable({
       rowSelection,
       sorting,
       columnVisibility,
+      columnFilters,
       globalFilter,
       pagination,
     },
     onRowSelectionChange: setRowSelection,
+    onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
@@ -423,7 +565,7 @@ export default function StudentDataTable({
                     data-state={row.getIsSelected() && "selected"}
                     className={cn(
                       "group hover:bg-primary/2 transition-colors duration-200 border-b border-border/40 last:border-0",
-                      (onRowClick && !isStudent) && "cursor-pointer"
+                      onRowClick && !isStudent && "cursor-pointer",
                     )}
                     onClick={() => {
                       if (onRowClick && !isStudent) onRowClick(row.original);

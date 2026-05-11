@@ -383,6 +383,7 @@ export default function ClassDetailPage() {
                     loading={searching}
                     hideToolbar
                     syncUrl={false}
+                    hideAttendance={true}
                     actionsRender={(student) => {
                       const alreadyIn = activeStudents.some(s => s._id === student._id);
                       return alreadyIn ? (
@@ -519,13 +520,6 @@ export default function ClassDetailPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="rounded-xl w-48 p-1.5">
-                    <DropdownMenuItem 
-                      onClick={() => navigate(isStudent ? `/student/profile?id=${student._id}` : `/teacher/profile?id=${student._id}`)} 
-                      className="rounded-lg font-medium"
-                    >
-                      <User className="mr-2 w-4 h-4 text-muted-foreground" /> View Profile
-                    </DropdownMenuItem>
-                    
                     {!isStudent && (
                       <DropdownMenuItem 
                         onClick={() => navigate(`/teacher/classes/${id}?student=${student._id}&tab=records`)} 
