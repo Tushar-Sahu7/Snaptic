@@ -25,19 +25,19 @@ const getClassRecord = async (req, res) => {
     const records = await AttendanceRecord.find({ classId });
     const totalPresent = records.filter(r => r.status === "present").length;
     const totalAbsent = records.filter(r => r.status === "absent").length;
-    
-    const attendancePercentage = totalSessions > 0 
-      ? (totalPresent / (totalPresent + totalAbsent)) * 100 
+
+    const attendancePercentage = totalSessions > 0
+      ? (totalPresent / (totalPresent + totalAbsent)) * 100
       : 0;
 
     // 4. Student-specific breakdowns
     const enrollments = await Enrollment.find({ classId, status: "active" }).populate("studentId", "name email");
-    
+
     const studentBreakdown = await Promise.all(enrollments.map(async (e) => {
       const studentRecords = records.filter(r => r.studentId.toString() === e.studentId._id.toString());
       const presentCount = studentRecords.filter(r => r.status === "present").length;
       const totalCount = studentRecords.length;
-      
+
       const profile = await StudentProfile.findOne({ userId: e.studentId._id });
 
       return {
@@ -162,7 +162,7 @@ const getSessionRecord = async (req, res) => {
 
     const session = await AttendanceSession.findById(sessionId)
       .populate("classId", "name icon status color");
-      
+
     if (!session) return res.status(404).json({ message: "Session not found" });
 
     if (role === "teacher") {
@@ -197,7 +197,7 @@ const getSessionRecord = async (req, res) => {
 
       const User = require("../models/User");
       const TeacherProfile = require("../models/TeacherProfile");
-      
+
       const teacherUser = await User.findById(session.teacherId).select("name email");
       const teacherProfile = await TeacherProfile.findOne({ userId: session.teacherId });
 

@@ -74,7 +74,6 @@ export default function App() {
                 path="take-attendance"
                 element={<AttendanceSelectionPage />}
               />
-              <Route path="records" element={<ClassListPage />} />
               <Route
                 path="attendance/:id/summary"
                 element={<AttendanceSummaryPage />}

@@ -508,7 +508,9 @@ export default function StudentDataTable({
                         }
                       >
                         {column.id === "faceEnrolled"
-                          ? "Face Enrollment Status"
+                          ? "Face Status"
+                          : column.id === "attendancePercentage"
+                          ? "Attendance %"
                           : column.id.charAt(0).toUpperCase() +
                             column.id.slice(1)}
                       </DropdownMenuCheckboxItem>
