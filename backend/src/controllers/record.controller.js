@@ -235,7 +235,7 @@ const getClassSessions = async (req, res) => {
     const classDoc = await Class.findOne({ _id: classId, teacherId: userId, deletedAt: null });
     if (!classDoc) return res.status(404).json({ message: "Class not found" });
 
-    const sessions = await AttendanceSession.find({ classId, status: "finalized" })
+    const sessions = await AttendanceSession.find({ classId, status: { $in: ["finalized", "submitted"] } })
       .sort({ date: -1, startTime: -1 });
 
     // For each session, we might want to get the quick stats (present/absent)

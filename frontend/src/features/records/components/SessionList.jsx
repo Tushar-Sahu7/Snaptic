@@ -48,7 +48,7 @@ export default function SessionList({ sessions, classId, isTeacher = true }) {
           onClick={() => navigate(isTeacher ? `/teacher/classes/${classId}/records/${session._id}` : `/student/classes/${classId}/records/${session._id}`)}
         >
           {/* Subtle background glow on hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
           <CardContent className="p-6 relative z-10">
             <div className="flex items-start justify-between mb-6">
