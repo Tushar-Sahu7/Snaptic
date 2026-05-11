@@ -115,15 +115,17 @@ export default function ClassDetailPage() {
     !isStudent ? id : null,
   );
 
-  // Student-specific records data
+  // Student-specific records data (also used by teachers to view specific student ledger)
   const { data: studentPersonalRecord, isLoading: studentRecordLoading } =
-    useStudentClassRecord(isStudent ? id : null);
+    useStudentClassRecord(id, !isStudent ? selectedStudentId : null, {
+      isStudent,
+    });
 
   // Determine which record to show in the "Ledger" view
   const activeLedgerRecord = useMemo(() => {
-    if (isStudent && studentPersonalRecord) {
+    if (studentPersonalRecord) {
       return {
-        name: user.name,
+        name: isStudent ? user.name : (studentPersonalRecord.student?.name || "Student"),
         history: studentPersonalRecord.history,
         attendancePercentage:
           studentPersonalRecord.summary?.attendancePercentage,
@@ -132,26 +134,10 @@ export default function ClassDetailPage() {
       };
     }
 
-    if (!isStudent && selectedStudentId && classRecord?.studentRecords) {
-      const record = classRecord.studentRecords.find(
-        (r) => r.studentId === selectedStudentId,
-      );
-      if (record) {
-        return {
-          name: record.name,
-          history: record.history,
-          attendancePercentage: record.attendancePercentage,
-          presentCount: record.presentCount,
-          totalSessions: record.totalSessions,
-        };
-      }
-    }
     return null;
   }, [
     isStudent,
     studentPersonalRecord,
-    classRecord,
-    selectedStudentId,
     user?.name,
   ]);
 

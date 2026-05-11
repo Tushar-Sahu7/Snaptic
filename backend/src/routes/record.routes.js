@@ -67,7 +67,7 @@ router.get("/class/:classId/sessions", restrictTo("teacher"), getClassSessions);
  *         schema:
  *           type: string
  */
-router.get("/class/:classId/student", restrictTo("student"), getStudentClassRecord);
+router.get("/class/:classId/student", restrictTo("student", "teacher"), getStudentClassRecord);
 
 /**
  * @swagger

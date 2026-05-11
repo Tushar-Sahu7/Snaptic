@@ -13,7 +13,10 @@ export const fetchClassSessions = (classId) => api.get(`/api/records/class/${cla
 /**
  * Fetch personal attendance records for a specific class (Student only)
  */
-export const fetchStudentClassRecord = (classId) => api.get(`/api/records/class/${classId}/student`);
+export const fetchStudentClassRecord = (classId, studentId) => {
+  const url = `/api/records/class/${classId}/student${studentId ? `?studentId=${studentId}` : ""}`;
+  return api.get(url);
+};
 
 /**
  * Fetch attendance history for the logged-in student

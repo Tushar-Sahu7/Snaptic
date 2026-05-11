@@ -41,14 +41,15 @@ export const useClassSessions = (classId) => {
 /**
  * Hook to fetch personal attendance records for a specific class (Student)
  */
-export const useStudentClassRecord = (classId) => {
+export const useStudentClassRecord = (classId, studentId, options = {}) => {
   return useQuery({
-    queryKey: recordKeys.studentClass(classId),
+    queryKey: [...recordKeys.studentClass(classId), studentId],
     queryFn: async () => {
-      const { data } = await recordsApi.fetchStudentClassRecord(classId);
+      const { data } = await recordsApi.fetchStudentClassRecord(classId, studentId);
       return data;
     },
-    enabled: !!classId,
+    enabled: !!classId && (options.isStudent || !!studentId),
+    ...options
   });
 };
 

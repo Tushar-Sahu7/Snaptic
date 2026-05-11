@@ -454,10 +454,13 @@ export const ReviewStep = ({
                 <div className="w-full pt-4 space-y-4">
                   <Button
                     size="lg"
-                    onClick={() => navigate(`/teacher/dashboard`)}
+                    onClick={() => {
+                      const classId = session.classId?._id || session.classId;
+                      navigate(`/teacher/classes/${classId}/records/${session._id}`);
+                    }}
                     className="w-full h-14 rounded-2xl font-bold uppercase tracking-widest text-[11px]"
                   >
-                    Go to Dashboard
+                    View Record
                   </Button>
                   {!isFinalized && (
                     <Button

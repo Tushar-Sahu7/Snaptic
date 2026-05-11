@@ -92,7 +92,7 @@ export default function DashboardLayout() {
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border/40 bg-background/60 px-6 backdrop-blur-xl transition-all duration-300">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="-ml-2 h-8 w-8 rounded-lg transition-all hover:bg-accent/40 active:scale-95" />
-            <Separator orientation="vertical" className="h-4 bg-border/50" />
+            <Separator orientation="vertical" className="h-8 bg-border/50" />
             <Breadcrumb>
               <BreadcrumbList className="gap-2 sm:gap-3">
                 {crumbs.map((crumb, idx) => (

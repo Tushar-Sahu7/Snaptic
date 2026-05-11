@@ -103,14 +103,32 @@ const getStudentHistory = async (req, res) => {
 
 /**
  * GET /api/records/class/:classId/student
- * Returns the attendance history for the logged-in student in a specific class.
+ * Returns the attendance history for a student in a specific class.
+ * For students: returns their own record.
+ * For teachers: returns a specific student's record (via studentId query param) if they own the class.
  */
 const getStudentClassRecord = async (req, res) => {
   try {
     const { classId } = req.params;
-    const studentId = req.user.userId;
+    const { studentId: queryStudentId } = req.query;
+    const userId = req.user.userId;
+    const role = req.user.role;
 
-    const records = await AttendanceRecord.find({ classId, studentId })
+    let targetStudentId = userId;
+
+    if (role === "teacher") {
+      if (!queryStudentId) {
+        return res.status(400).json({ message: "studentId query parameter is required for teachers" });
+      }
+      
+      // Verify teacher owns the class
+      const classDoc = await Class.findOne({ _id: classId, teacherId: userId, deletedAt: null });
+      if (!classDoc) return res.status(404).json({ message: "Class not found or access denied" });
+      
+      targetStudentId = queryStudentId;
+    }
+
+    const records = await AttendanceRecord.find({ classId, studentId: targetStudentId })
       .populate("sessionId", "date startTime endTime status updatedAt")
       .sort({ createdAt: -1 });
 
@@ -134,6 +152,17 @@ const getStudentClassRecord = async (req, res) => {
       markedAt: r.markedAt
     }));
 
+    // Get student info if teacher
+    let studentInfo = null;
+    if (role === "teacher") {
+      const profile = await StudentProfile.findOne({ userId: targetStudentId });
+      const userDoc = await require("../models/User").findById(targetStudentId).select("name email");
+      studentInfo = {
+        name: profile?.name || userDoc?.name,
+        email: userDoc?.email
+      };
+    }
+
     return res.status(200).json({
       summary: {
         totalSessions,
@@ -141,7 +170,8 @@ const getStudentClassRecord = async (req, res) => {
         absentCount,
         attendancePercentage
       },
-      history: formattedHistory
+      history: formattedHistory,
+      student: studentInfo
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });
