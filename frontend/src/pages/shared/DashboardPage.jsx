@@ -28,8 +28,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+
+import { formatTime } from "@/lib/date-utils";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -51,19 +52,63 @@ export default function DashboardPage() {
       const activeClasses = classes.filter(c => c.status === "active");
       const totalStudents = activeClasses.reduce((acc, c) => acc + (c.studentCount || 0), 0);
       const sessionsTodayCount = Object.keys(todaySessions).length;
-      
+
+      // Calculate teacher attendance rate (average across all active classes)
+      let attendanceRate = 0;
+      let totalPresent = 0;
+      let totalPossible = 0;
+      activeClasses.forEach(cls => {
+        if (cls.attendanceStats) {
+          totalPresent += cls.attendanceStats.present || 0;
+          totalPossible += cls.attendanceStats.total || 0;
+        }
+      });
+      if (totalPossible > 0) {
+        attendanceRate = Math.round((totalPresent / totalPossible) * 100);
+      }
+
       return [
         { label: "Active Classes", value: activeClasses.length, icon: LayoutDashboard, color: "text-primary", bg: "bg-primary/10" },
-        { label: "Total Students", value: totalStudents, icon: Users, color: "text-indigo-500", bg: "bg-indigo-500/10" },
-        { label: "Attendance Rate", value: "94%", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-        { label: "Sessions Today", value: sessionsTodayCount, icon: Calendar, color: "text-orange-500", bg: "bg-orange-500/10" },
+        { label: "Total Students", value: totalStudents, icon: Users, color: "text-chart-1", bg: "bg-chart-1/10" },
+        { label: "Attendance Rate", value: `${attendanceRate}%`, icon: TrendingUp, color: "text-chart-2", bg: "bg-chart-2/10" },
+        { label: "Sessions Today", value: sessionsTodayCount, icon: Calendar, color: "text-chart-3", bg: "bg-chart-3/10" },
       ];
     } else {
       // Student Stats
+      const enrolledClasses = user?.enrollments || [];
+      const enrolledCount = enrolledClasses.length;
+      // Calculate student attendance rate
+      let studentAttendanceRate = 0;
+      let attended = 0;
+      let total = 0;
+      enrolledClasses.forEach(cls => {
+        if (cls.attendanceStats) {
+          attended += cls.attendanceStats.present || 0;
+          total += cls.attendanceStats.total || 0;
+        }
+      });
+      if (total > 0) {
+        studentAttendanceRate = Math.round((attended / total) * 100);
+      }
+      // Find next class (by soonest startTime today or future)
+      let nextClass = null;
+      let soonest = Infinity;
+      enrolledClasses.forEach(cls => {
+        if (cls.nextSession && cls.nextSession.startTime) {
+          const start = new Date(cls.nextSession.startTime).getTime();
+          if (start > Date.now() && start < soonest) {
+            soonest = start;
+            nextClass = cls;
+          }
+        }
+      });
+      let nextClassLabel = nextClass ? nextClass.name : "No upcoming class";
+      let nextClassTime = nextClass && nextClass.nextSession ? formatTime(nextClass.nextSession.startTime) : "-";
+
       return [
-        { label: "Enrolled Classes", value: user?.classCount || 0, icon: BookOpen, color: "text-primary", bg: "bg-primary/10" },
-        { label: "Attendance Rate", value: "0%", icon: GraduationCap, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-        { label: "Next Class", value: "Advanced Math", icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10", subValue: "Today at 2:30 PM" },
+        { label: "Enrolled Classes", value: enrolledCount, icon: BookOpen, color: "text-primary", bg: "bg-primary/10" },
+        { label: "Attendance Rate", value: `${studentAttendanceRate}%`, icon: GraduationCap, color: "text-chart-2", bg: "bg-chart-2/10" },
+        { label: "Next Class", value: nextClassLabel, icon: Clock, color: "text-chart-3", bg: "bg-chart-3/10", subValue: nextClassTime },
       ];
     }
   }, [isTeacher, classes, todaySessions, user]);
@@ -178,7 +223,11 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">Today's Schedule</p>
-                    <p className="text-xs text-muted-foreground">3 Classes remaining</p>
+                    {isTeacher ? (
+                      <p className="text-xs text-muted-foreground">{Object.keys(todaySessions).length} Sessions today</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{user?.enrollments ? user.enrollments.length : 0} Classes remaining</p>
+                    )}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed italic">
@@ -227,11 +276,11 @@ export default function DashboardPage() {
                       }}
                     >
                       <div className="flex items-center gap-4">
-                         <div className="w-1 h-8 rounded-full opacity-60" style={{ backgroundColor: s.classColor || 'oklch(0.7 0 0)' }} />
+                         <div className="w-1 h-8 rounded-full opacity-60" style={{ backgroundColor: s.classColor || 'var(--color-primary)' }} />
                          <div>
                             <p className="font-semibold text-sm">{s.className}</p>
                             <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                              <Clock className="w-3 h-3 opacity-50" /> {s.startTime} · {s.location || 'No Location'}
+                              <Clock className="w-3 h-3 opacity-50" /> {formatTime(s.startTime)} · {s.location || 'No Location'}
                             </p>
                          </div>
                       </div>
