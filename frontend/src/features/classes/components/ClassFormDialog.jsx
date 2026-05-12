@@ -321,9 +321,14 @@ export default function ClassFormDialog({
             duration: finalDuration,
           },
         };
-        await createMutation.mutateAsync(payload);
+        const { data } = await createMutation.mutateAsync(payload);
         toast.success("Class created successfully");
+        onOpenChange(false);
+        onSuccess?.(data?.class);
+        return;
       }
+      await updateMutation.mutateAsync({ classId: classData._id, payload });
+      toast.success("Class updated successfully");
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {

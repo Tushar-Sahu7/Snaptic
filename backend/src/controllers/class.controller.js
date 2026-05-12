@@ -25,6 +25,7 @@ const ensureArchivedIfExpired = async (classDoc) => {
 
 // POST /api/classes
 const createClass = async (req, res) => {
+  const dbSession = await mongoose.startSession();
   try {
     const { name, description, icon, color, schedule, location } = req.body;
     const teacherId = req.user.userId;
@@ -42,22 +43,30 @@ const createClass = async (req, res) => {
       }
     }
 
-    const newClass = await Class.create({
-      name,
-      description,
-      icon: icon || "BookOpen",
-      color: color || "oklch(0.6 0.2 250)",
-      schedule, 
-      location,
-      teacherId,
+    let resultClass;
+    await dbSession.withTransaction(async () => {
+      const newClassArray = await Class.create([{
+        name,
+        description,
+        icon: icon || "BookOpen",
+        color: color || "oklch(0.6 0.2 250)",
+        schedule, 
+        location,
+        teacherId,
+      }], { session: dbSession });
+
+      resultClass = newClassArray[0];
+
+      // Generate sessions using RRULE logic
+      await sessionManager.syncClassSessions(resultClass, dbSession);
     });
 
-    // Generate sessions using RRULE logic
-    await sessionManager.syncClassSessions(newClass);
-
-    return res.status(201).json({ class: newClass });
+    return res.status(201).json({ class: resultClass });
   } catch (err) {
+    console.error("[ClassController] createClass Error:", err);
     return res.status(500).json({ message: err.message });
+  } finally {
+    dbSession.endSession();
   }
 };
 
@@ -238,75 +247,104 @@ const getClassById = async (req, res) => {
 };
 
 const updateClass = async (req, res) => {
+  const dbSession = await mongoose.startSession();
   try {
     const { name, description, icon, color, schedule, location, status } = req.body;
-    const classDoc = await Class.findById(req.params.id);
+    
+    let classDoc;
+    await dbSession.withTransaction(async () => {
+      classDoc = await Class.findById(req.params.id).session(dbSession);
 
-    if (!classDoc || classDoc.deletedAt) return res.status(404).json({ message: "Class not found" });
-    if (classDoc.teacherId.toString() !== req.user.userId) return res.status(403).json({ message: "Unauthorized" });
-
-    if (name) classDoc.name = name;
-    if (description !== undefined) classDoc.description = description;
-    if (icon) classDoc.icon = icon;
-    if (color) classDoc.color = color;
-    if (status) classDoc.status = status;
-    if (location !== undefined) classDoc.location = location;
-
-    // Update schedule if provided
-    if (schedule) {
-      if (schedule.rrule) {
-        const newRule = RRule.fromString(schedule.rrule);
-        const newDtStart = newRule.options.dtstart;
-
-        // If schedule already existed, only validate if dtstart changed
-        let shouldValidatePast = true;
-        if (classDoc.schedule?.rrule) {
-          try {
-            const oldRule = RRule.fromString(classDoc.schedule.rrule);
-            if (oldRule.options.dtstart.getTime() === newDtStart.getTime()) {
-              shouldValidatePast = false;
-            }
-          } catch (e) {
-            // If old rule is unparseable, we fallback to validation
-          }
-        }
-
-        if (shouldValidatePast) {
-          const now = new Date();
-          if (newDtStart < now) {
-            return res.status(400).json({ message: "Start time cannot be in the past" });
-          }
-        }
+      if (!classDoc || classDoc.deletedAt) {
+        throw new Error("CLASS_NOT_FOUND");
       }
-      classDoc.schedule = schedule;
-    }
+      if (classDoc.teacherId.toString() !== req.user.userId) {
+        throw new Error("UNAUTHORIZED");
+      }
 
-    await classDoc.save();
+      if (name) classDoc.name = name;
+      if (description !== undefined) classDoc.description = description;
+      if (icon) classDoc.icon = icon;
+      if (color) classDoc.color = color;
+      if (status) classDoc.status = status;
+      if (location !== undefined) classDoc.location = location;
 
-    // Regenerate future sessions using the updated schedule
-    await sessionManager.syncClassSessions(classDoc);
+      // Update schedule if provided
+      if (schedule) {
+        if (schedule.rrule) {
+          const newRule = RRule.fromString(schedule.rrule);
+          const newDtStart = newRule.options.dtstart;
+
+          // If schedule already existed, only validate if dtstart changed
+          let shouldValidatePast = true;
+          if (classDoc.schedule?.rrule) {
+            try {
+              const oldRule = RRule.fromString(classDoc.schedule.rrule);
+              if (oldRule.options.dtstart.getTime() === newDtStart.getTime()) {
+                shouldValidatePast = false;
+              }
+            } catch (e) {
+              // If old rule is unparseable, we fallback to validation
+            }
+          }
+
+          if (shouldValidatePast) {
+            const now = new Date();
+            if (newDtStart < now) {
+              throw new Error("START_TIME_PAST");
+            }
+          }
+        }
+        classDoc.schedule = schedule;
+      }
+
+      await classDoc.save({ session: dbSession });
+
+      // Regenerate future sessions using the updated schedule
+      await sessionManager.syncClassSessions(classDoc, dbSession);
+    });
 
     return res.status(200).json({ class: classDoc });
   } catch (err) {
+    if (err.message === "CLASS_NOT_FOUND") return res.status(404).json({ message: "Class not found" });
+    if (err.message === "UNAUTHORIZED") return res.status(403).json({ message: "Unauthorized" });
+    if (err.message === "START_TIME_PAST") return res.status(400).json({ message: "Start time cannot be in the past" });
+    
+    console.error("[ClassController] updateClass Error:", err);
     return res.status(500).json({ message: err.message });
+  } finally {
+    dbSession.endSession();
   }
 };
 
 // DELETE /api/classes/:id
 const deleteClass = async (req, res) => {
+  const dbSession = await mongoose.startSession();
   try {
-    const classDoc = await Class.findById(req.params.id);
-    if (!classDoc || classDoc.deletedAt) return res.status(404).json({ message: "Class not found" });
-    if (classDoc.teacherId.toString() !== req.user.userId) return res.status(403).json({ message: "Unauthorized" });
+    await dbSession.withTransaction(async () => {
+      const classDoc = await Class.findById(req.params.id).session(dbSession);
+      if (!classDoc || classDoc.deletedAt) {
+        throw new Error("CLASS_NOT_FOUND");
+      }
+      if (classDoc.teacherId.toString() !== req.user.userId) {
+        throw new Error("UNAUTHORIZED");
+      }
 
-    classDoc.deletedAt = new Date();
-    await classDoc.save();
+      classDoc.deletedAt = new Date();
+      await classDoc.save({ session: dbSession });
 
-    await sessionManager.purgeFutureSessions(classDoc._id);
+      await sessionManager.purgeFutureSessions(classDoc._id, dbSession);
+    });
 
     return res.status(200).json({ message: "Class deleted successfully" });
   } catch (err) {
+    if (err.message === "CLASS_NOT_FOUND") return res.status(404).json({ message: "Class not found" });
+    if (err.message === "UNAUTHORIZED") return res.status(403).json({ message: "Unauthorized" });
+    
+    console.error("[ClassController] deleteClass Error:", err);
     return res.status(500).json({ message: err.message });
+  } finally {
+    dbSession.endSession();
   }
 };
 
@@ -339,24 +377,31 @@ const bulkUpdateStatus = async (req, res) => {
 
 // DELETE /api/classes/bulk
 const bulkDeleteClasses = async (req, res) => {
+  const dbSession = await mongoose.startSession();
   try {
     const { classIds } = req.body;
     if (!classIds || !Array.isArray(classIds)) {
       return res.status(400).json({ message: "classIds must be an array" });
     }
 
-    await Class.updateMany(
-      { _id: { $in: classIds }, teacherId: req.user.userId },
-      { deletedAt: new Date() }
-    );
+    await dbSession.withTransaction(async () => {
+      await Class.updateMany(
+        { _id: { $in: classIds }, teacherId: req.user.userId },
+        { deletedAt: new Date() },
+        { session: dbSession }
+      );
 
-    for (const classId of classIds) {
-      await sessionManager.purgeFutureSessions(classId);
-    }
+      for (const classId of classIds) {
+        await sessionManager.purgeFutureSessions(classId, dbSession);
+      }
+    });
 
     return res.status(200).json({ message: `Deleted ${classIds.length} classes` });
   } catch (err) {
+    console.error("[ClassController] bulkDeleteClasses Error:", err);
     return res.status(500).json({ message: err.message });
+  } finally {
+    dbSession.endSession();
   }
 };
 

@@ -38,6 +38,14 @@ const startSession = async (req, res) => {
 
       // 2. Transition to inprogress if it was scheduled
       if (session.status === "scheduled") {
+        if (now < session.startTime) {
+          throw new Error("SESSION_TOO_EARLY");
+        }
+        
+        if (now > session.endTime) {
+          throw new Error("SESSION_ALREADY_PASSED");
+        }
+
         session.status = "inprogress";
         await session.save({ session: dbSession });
       }
@@ -46,8 +54,8 @@ const startSession = async (req, res) => {
       const enrollments = await Enrollment.find({ classId, status: "active" }).session(dbSession).lean();
       enrolledStudentIds = enrollments.map(e => e.studentId);
 
-      const existingRecordsCount = await AttendanceRecord.countDocuments({ 
-        sessionId: session._id 
+      const existingRecordsCount = await AttendanceRecord.countDocuments({
+        sessionId: session._id
       }).session(dbSession);
 
       if (existingRecordsCount === 0 && enrolledStudentIds.length > 0) {
@@ -68,14 +76,14 @@ const startSession = async (req, res) => {
 
     // 4. Retrieve final state with population for the UI (outside transaction for cleaner retrieval)
     const finalSession = await AttendanceSession.findById(sessionData._id)
-      .populate("classId", "name icon status studentCount");
-      
+      .populate("classId", "name icon color location status studentCount");
+
     const profiles = await StudentProfile.find({
       userId: { $in: enrolledStudentIds }
     }).select("userId name avatar embedding faceEnrolled").lean();
 
-    const finalRecords = await AttendanceRecord.find({ 
-      sessionId: sessionData._id 
+    const finalRecords = await AttendanceRecord.find({
+      sessionId: sessionData._id
     }).lean();
 
     return res.status(200).json({
@@ -89,9 +97,17 @@ const startSession = async (req, res) => {
       return res.status(404).json({ message: "No active session found for this time today." });
     }
     
+    if (err.message === "SESSION_TOO_EARLY") {
+      return res.status(400).json({ message: "This session has not started yet. Please wait for the scheduled time." });
+    }
+
+    if (err.message === "SESSION_ALREADY_PASSED") {
+      return res.status(400).json({ message: "This session's scheduled time has already passed." });
+    }
+    
     console.error("[AttendanceController] startSession Error:", err);
-    return res.status(500).json({ 
-      message: err.message || "Failed to initialize attendance session" 
+    return res.status(500).json({
+      message: err.message || "Failed to initialize attendance session"
     });
   } finally {
     dbSession.endSession();
@@ -152,11 +168,11 @@ const submitSession = async (req, res) => {
 
     // Populate classId before returning to ensure frontend has name/icon
     const populatedSession = await AttendanceSession.findById(sessionId)
-      .populate("classId", "name icon status studentCount");
+      .populate("classId", "name icon color location status studentCount");
 
-    return res.status(200).json({ 
-      message: "Attendance submitted successfully.", 
-      session: populatedSession 
+    return res.status(200).json({
+      message: "Attendance submitted successfully.",
+      session: populatedSession
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -201,16 +217,16 @@ const getTodaySession = async (req, res) => {
     if (classId) {
       query.classId = classId;
       const session = await AttendanceSession.findOne(query)
-        .populate("classId", "name icon status");
+        .populate("classId", "name icon color location status");
       return res.status(200).json({ session });
     } else {
       query.teacherId = req.user.userId;
       const sessions = await AttendanceSession.find(query)
-        .populate("classId", "name icon status");
-      
+        .populate("classId", "name icon color location status");
+
       // Filter out sessions where class no longer exists (orphaned sessions)
       const validSessions = sessions.filter(s => s.classId);
-      
+
       return res.status(200).json({ sessions: validSessions });
     }
   } catch (err) {
@@ -223,7 +239,7 @@ const getSessionRecords = async (req, res) => {
   try {
     const { sessionId } = req.params;
     const session = await AttendanceSession.findById(sessionId)
-      .populate("classId", "name icon status");
+      .populate("classId", "name icon color location status");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
     const records = await AttendanceRecord.find({ sessionId })

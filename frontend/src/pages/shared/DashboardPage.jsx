@@ -21,12 +21,13 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const isTeacher = user?.role === "teacher";
 
-  const { classes, loading: classesLoading } = useClasses();
+  const { classes, loading: classesLoading, refresh } = useClasses();
 
   // Only fetch today's sessions for teachers (route is teacher-restricted)
   const {
     data: attendanceQueryData,
     isLoading: sessionsLoading,
+    refetch,
   } = useTodayAttendance();
 
   // Sorted sessions: live → upcoming → done (teacher only)
@@ -58,6 +59,10 @@ export default function DashboardPage() {
         sessions={sessions}
         loading={classesLoading || sessionsLoading}
         navigate={navigate}
+        refresh={() => {
+          refresh();
+          refetch();
+        }}
       />
     );
   }

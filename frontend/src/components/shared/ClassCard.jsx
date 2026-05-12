@@ -122,7 +122,8 @@ const ClassCard = memo(
                   )}
                   {badge && <div className="shrink-0">{badge}</div>}
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
+                <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
+                  <MapPin size={12} className="shrink-0 opacity-70" />
                   <span className="truncate">
                     {cls.location ? formatRoom(cls.location) : "Online Session"}
                   </span>
