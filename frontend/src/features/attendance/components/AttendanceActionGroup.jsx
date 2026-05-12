@@ -1,5 +1,6 @@
 import { ButtonGroup } from "@/components/ui/button-group";
 import { isClassInSession } from "@/lib/date-utils";
+import { useNow } from "@/hooks/use-now";
 import { PrimaryAttendanceAction } from "./PrimaryAttendanceAction";
 import { ManualEntryButton } from "./ManualEntryButton";
 import { ViewRecordButton } from "./ViewRecordButton";
@@ -34,6 +35,7 @@ export const AttendanceActionGroup = ({
   size,
   className,
 }) => {
+  const now = useNow();
   if (!cls) return null;
 
   const status = session?.status;
@@ -111,7 +113,7 @@ export const AttendanceActionGroup = ({
   }
 
   // No session yet — check schedule
-  const { onTime } = isClassInSession(cls);
+  const { onTime } = isClassInSession(cls, now);
 
   // Off-schedule: just show the disabled primary alone
   if (!onTime) {

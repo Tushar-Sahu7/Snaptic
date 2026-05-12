@@ -6,6 +6,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNow } from "@/hooks/use-now";
 import { isClassInSession } from "@/lib/date-utils";
 import {
   ScanFace,
@@ -35,7 +36,7 @@ import {
  * │ (no students)│ any          │ Assign Students    │ class detail page            │
  * └─────────────┴──────────────┴────────────────────┴──────────────────────────────┘
  */
-function resolveState(cls, session) {
+function resolveState(cls, session, now) {
   const studentCount =
     cls.studentCount || cls.students?.length || cls.studentIds?.length || 0;
 
@@ -86,7 +87,7 @@ function resolveState(cls, session) {
   }
 
   // No session yet — check schedule
-  const { onTime, message } = isClassInSession(cls);
+  const { onTime, message } = isClassInSession(cls, now);
 
   if (onTime) {
     return {
@@ -141,10 +142,11 @@ export const PrimaryAttendanceAction = ({
 }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const now = useNow();
 
   if (!cls) return null;
 
-  const state = resolveState(cls, session);
+  const state = resolveState(cls, session, now);
   const resolvedSize = size || (isMobile ? "default" : "xl");
 
   // When showText is false, use icon-only button sizing

@@ -1,10 +1,12 @@
 import { CalendarDays } from "lucide-react";
+import { useNavigate } from "react-router";
 import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import { PrimaryAttendanceAction } from "@/features/attendance/components/PrimaryAttendanceAction";
 import { Badge } from "@/components/ui/badge";
 import { isClassInSession } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 
 export const ClassSelectionStep = ({
@@ -15,6 +17,7 @@ export const ClassSelectionStep = ({
   onSelectClass,
   onContinue,
 }) => {
+  const navigate = useNavigate();
 
   const sortedClasses = [...classes].sort((a, b) => {
     const { onTime: onTimeA } = isClassInSession(a);
@@ -81,14 +84,24 @@ export const ClassSelectionStep = ({
             return (
               <ClassCard
                 key={c._id}
-                cls={{
-                   ...c,
-                  studentCount: c.studentCount,
+                cls={c}
+                onClick={() => {
+                  if ((c.studentCount || 0) === 0) {
+                    toast.error("Assign student in the class", {
+                      description: "Please enroll at least one student before starting attendance.",
+                      action: {
+                        label: "Assign Now",
+                        onClick: () => navigate(`/teacher/classes/${c._id}`)
+                      }
+                    });
+                    return;
+                  }
+                  if (canStart) onSelectClass?.(c, onTime ? "auto" : "manual");
                 }}
-                onClick={() => canStart && onSelectClass?.(c, onTime ? "auto" : "manual")}
                 className={cn(
                   "h-full transition-all duration-500",
-                  !canStart && "opacity-60 grayscale-[0.5] pointer-events-none"
+                  !canStart && "opacity-60 grayscale-[0.5]",
+                  !canStart && (c.studentCount || 0) > 0 && "pointer-events-none"
                 )}
                 badge={
                   hasActiveSession ? (

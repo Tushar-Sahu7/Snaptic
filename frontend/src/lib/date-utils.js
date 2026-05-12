@@ -113,13 +113,13 @@ export const WEEKDAYS_SHORT = Array.from({ length: 7 }).map((_, i) =>
 /**
  * Checks if a class is currently in session.
  */
-export function isClassInSession(cls) {
+export function isClassInSession(cls, nowOverride) {
   if (!cls || cls.status === "archived") return { onTime: false, message: "Class is archived" };
 
   const parsed = parseSchedule(cls.schedule);
   if (!parsed) return { onTime: false, message: "Invalid schedule" };
 
-  const now = getNowIST();
+  const now = nowOverride || getNowIST();
   const currentDay = (now.getDay() + 6) % 7; // Map JS (0=Sun) to RRule (0=Mon)
 
   const [startH, startM] = parsed.startTime.split(":").map(Number);
