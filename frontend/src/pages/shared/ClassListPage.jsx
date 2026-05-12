@@ -59,7 +59,7 @@ import { CalendarIcon } from "lucide-react";
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
-import { isClassInSession, getNowIST, getTodayISTStr, formatIST } from "@/lib/date-utils";
+import { isClassInSession, getNowIST, getTodayISTStr, formatIST, parseSchedule } from "@/lib/date-utils";
 import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
 
 // Decomposed Page Components
@@ -103,17 +103,22 @@ export default function ClassListPage() {
 
   // Memoized Filtering & Sorting
   const filteredClasses = useMemo(() => {
-    const filtered = (classes || []).filter((cls) => {
-      const isCorrectTab =
-        tab === "active" ? cls.status === "active" : cls.status === "archived";
-      if (!isCorrectTab) return false;
+    const filtered = (classes || [])
+      .map((c) => ({
+        ...c,
+        _parsedSchedule: parseSchedule(c.schedule),
+      }))
+      .filter((cls) => {
+        const isCorrectTab =
+          tab === "active" ? cls.status === "active" : cls.status === "archived";
+        if (!isCorrectTab) return false;
 
-      if (debouncedSearch) {
-        const query = debouncedSearch.toLowerCase();
-        return cls.name.toLowerCase().includes(query);
-      }
-      return true;
-    });
+        if (debouncedSearch) {
+          const query = debouncedSearch.toLowerCase();
+          return cls.name.toLowerCase().includes(query);
+        }
+        return true;
+      });
 
     return filtered.sort((a, b) => {
       const { onTime: onTimeA } = isClassInSession(a);
@@ -122,8 +127,9 @@ export default function ClassListPage() {
       const getPriority = (c, onTime) => {
         if (onTime) return 3;
 
-        const currentDay = getNowIST().getDay(); // 0-6 (Sun-Sat)
-        const hasToday = c.schedule?.daysOfWeek?.includes(currentDay);
+        const now = getNowIST();
+        const currentDay = (now.getDay() + 6) % 7;
+        const hasToday = c._parsedSchedule?.daysOfWeek?.includes(currentDay);
 
         if (hasToday) return 2;
         return 1;
@@ -134,14 +140,18 @@ export default function ClassListPage() {
 
       if (prioA !== prioB) return prioB - prioA;
 
-      // Tie-break: Name
+      // Tie-break: Start Time
+      const timeA = a._parsedSchedule?.startTime || "99:99";
+      const timeB = b._parsedSchedule?.startTime || "99:99";
+      if (timeA !== timeB) return timeA.localeCompare(timeB);
+
       return a.name.localeCompare(b.name);
     });
   }, [classes, tab, debouncedSearch]);
 
   // Featured Class: The one that is either "Live Now" or coming up next today
   const featuredClass = useMemo(() => {
-    if (tab !== "active" || debouncedSearch || filteredClasses.length < 2)
+    if (tab !== "active" || debouncedSearch || filteredClasses.length === 0)
       return null;
 
     // Find first one that is Live or Today
@@ -149,8 +159,9 @@ export default function ClassListPage() {
       const { onTime } = isClassInSession(c);
       if (onTime) return true;
 
-      const currentDay = getNowIST().getDay();
-      return c.schedule?.daysOfWeek?.includes(currentDay);
+      const now = getNowIST();
+      const currentDay = (now.getDay() + 6) % 7;
+      return c._parsedSchedule?.daysOfWeek?.includes(currentDay);
     });
   }, [filteredClasses, tab, debouncedSearch]);
 

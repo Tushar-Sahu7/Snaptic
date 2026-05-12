@@ -6,3 +6,5 @@
 .agents/
 skills-lock.json
 .agent/
+docs/*
+.gemini/
