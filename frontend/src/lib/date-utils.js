@@ -48,7 +48,7 @@ export const generateRRuleString = ({ startDate, startTime, endDate, daysOfWeek,
   const untilUTC = new Date(endUTC.getTime() + duration * 60000);
 
   const mappedDays = daysOfWeek.map(jsDay => {
-    switch(jsDay) {
+    switch (jsDay) {
       case 0: return RRule.MO;
       case 1: return RRule.TU;
       case 2: return RRule.WE;
@@ -78,7 +78,7 @@ export const parseSchedule = (schedule) => {
   try {
     const rule = RRule.fromString(schedule.rrule);
     const startIST = toLocal(rule.options.dtstart);
-    
+
     // Extract days of week (0-6)
     const daysOfWeek = rule.options.byweekday?.map(day => {
       return typeof day === "number" ? day : day.weekday;
@@ -102,11 +102,11 @@ export const parseSchedule = (schedule) => {
 /**
  * Dynamic Weekdays Array using date-fns (0=Sunday, 1=Monday...)
  */
-export const WEEKDAYS = Array.from({ length: 7 }).map((_, i) => 
+export const WEEKDAYS = Array.from({ length: 7 }).map((_, i) =>
   format(addDays(startOfWeek(getNowIST(), { weekStartsOn: 1 }), i), "EEEE")
 );
 
-export const WEEKDAYS_SHORT = Array.from({ length: 7 }).map((_, i) => 
+export const WEEKDAYS_SHORT = Array.from({ length: 7 }).map((_, i) =>
   format(addDays(startOfWeek(getNowIST(), { weekStartsOn: 1 }), i), "EEE")
 );
 
@@ -115,13 +115,13 @@ export const WEEKDAYS_SHORT = Array.from({ length: 7 }).map((_, i) =>
  */
 export function isClassInSession(cls) {
   if (!cls || cls.status === "archived") return { onTime: false, message: "Class is archived" };
-  
+
   const parsed = parseSchedule(cls.schedule);
   if (!parsed) return { onTime: false, message: "Invalid schedule" };
-  
+
   const now = getNowIST();
   const currentDay = (now.getDay() + 6) % 7; // Map JS (0=Sun) to RRule (0=Mon)
-  
+
   const [startH, startM] = parsed.startTime.split(":").map(Number);
   const startDate = new Date(now);
   startDate.setHours(startH, startM, 0, 0);
@@ -146,11 +146,11 @@ export function isClassInSession(cls) {
     // Find the next occurrence after NOW
     // rule.after expects a Date. Since our rule uses UTC, we should pass UTC now.
     const nextDateUTC = rule.after(fromZonedTime(now, APP_TIMEZONE));
-    
+
     if (!nextDateUTC) {
       return { onTime: false, message: "Course Completed" };
     }
-    
+
     const nextDateIST = toLocal(nextDateUTC);
     const todayStr = format(now, "yyyy-MM-dd");
     const tomorrowStr = format(addDays(now, 1), "yyyy-MM-dd");
@@ -164,7 +164,7 @@ export function isClassInSession(cls) {
     if (nextStr === tomorrowStr) {
       return { onTime: false, message: `Next Session: Tomorrow` };
     }
-    
+
     return { onTime: false, message: `Next Session: ${format(nextDateIST, "EEEE")}` };
   } catch (e) {
     console.error("isClassInSession Error:", e);
@@ -185,7 +185,7 @@ export function format12Hour(timeStr) {
 }
 
 export function formatRoom(room) {
-  return room || "No location set";
+  return room || "Not Set";
 }
 
 export function formatDays(input) {
@@ -201,9 +201,9 @@ export function formatDays(input) {
 
   if (days.length === 0) return "No days";
   if (days.length === 7) return "Daily";
-  
+
   const sortedDays = [...new Set(days)].sort((a, b) => a - b);
-  
+
   if (sortedDays.length === 5 && sortedDays[0] === 0 && sortedDays[4] === 4) {
     return "Weekdays";
   }
@@ -228,17 +228,28 @@ export function formatDays(input) {
   }).join(", ");
 }
 
-export function formatClassTimeRange(cls) {
-  if (!cls) return "Not Set";
-  const parsed = parseSchedule(cls.schedule);
+export function formatClassTimeRange(item) {
+  if (!item) return "Not Set";
+
+  // Case 1: AttendanceSession object (direct startTime/endTime)
+  if (item.startTime && item.endTime) {
+    try {
+      return `${format(new Date(item.startTime), "h:mm a")} - ${format(new Date(item.endTime), "h:mm a")}`;
+    } catch (e) {
+      console.error("formatClassTimeRange Session Error:", e);
+    }
+  }
+
+  // Case 2: Class object (has schedule)
+  const parsed = parseSchedule(item.schedule);
   if (!parsed || !parsed.startTime) return "Not Set";
-  
+
   try {
     const [h, m] = parsed.startTime.split(":").map(Number);
     const start = getNowIST();
     start.setHours(h, m, 0, 0);
     const end = new Date(start.getTime() + parsed.duration * 60000);
-    return `${format(start, "hh:mm a")} - ${format(end, "hh:mm a")} (${formatDuration(parsed.duration)})`;
+    return `${format(start, "h:mm a")} - ${format(end, "h:mm a")} (${formatDuration(parsed.duration)})`;
   } catch (e) {
     return format12Hour(parsed.startTime);
   }
@@ -268,16 +279,16 @@ export function formatClassValidity(schedule) {
   if (!schedule) return "Continuous";
   const parsed = parseSchedule(schedule);
   if (!parsed || !parsed.startDate) return "Continuous";
-  
+
   try {
     const start = parse(parsed.startDate, "yyyy-MM-dd", new Date());
     const startStr = format(start, "dd MMM yy");
-    
+
     if (!parsed.endDate) return `${startStr} - Open`;
-    
+
     const end = parse(parsed.endDate, "yyyy-MM-dd", new Date());
     const endStr = format(end, "dd MMM yy");
-    
+
     return `${startStr} - ${endStr}`;
   } catch (e) {
     return parsed.startDate;
@@ -288,10 +299,10 @@ export function formatRelative(date) {
   if (!date) return "";
   const d = new Date(date);
   if (isNaN(d.getTime())) return "";
-  
+
   const now = getNowIST();
   const diff = Math.floor((now - d) / 1000);
-  
+
   if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;

@@ -100,6 +100,7 @@ export const AttendanceActionGroup = ({
         </ButtonGroup>
         <ButtonGroup>
           <ViewRecordButton
+            cls={cls}
             session={session}
             showText={false}
             variant="outline"

@@ -58,7 +58,7 @@ function resolveState(cls, session) {
       variant: "outline",
       disabled: false,
       // TODO: Replace with the actual session-record route once built
-      route: (classId, sessionId) => `/teacher/attendance/${sessionId}/summary`,
+      route: (classId, sessionId) => `/teacher/classes/${classId}/records/${sessionId}`,
     };
   }
 

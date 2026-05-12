@@ -1,10 +1,9 @@
 import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, CalendarDays, Clock } from "lucide-react";
-import { formatTime, formatDate } from "@/lib/utils";
+import { MapPin, Clock } from "lucide-react";
+import { formatTime, formatDate } from "@/lib/date-utils";
 import { StatusBadge } from "./StatusBadge";
 import { cn } from "@/lib/utils";
-
 export const SessionCard = memo(function SessionCard({ session, action, className }) {
   if (!session) return null;
 

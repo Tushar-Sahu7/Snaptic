@@ -26,7 +26,7 @@ export default function DashboardLayout() {
   const { user, generateInviteLink } = useAuth();
   const location = useLocation();
   const { id } = useParams();
-  const [dynamicLabel, setDynamicLabel] = useState("");
+  const [dynamicLabels, setDynamicLabels] = useState({});
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const isTeacher = user?.role === "teacher";
@@ -64,19 +64,26 @@ export default function DashboardLayout() {
       let label =
         segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
       if (segment === "classes") label = "My Classes";
+      else if (segment === "records") label = "Records";
       else if (segment === "take-attendance") label = "Attendance";
       else if (segment === "face-enrollment") label = "Face ID";
       else if (segment === "labels") label = "Global Labels";
       else if (segment === "new") label = "Create New";
 
-      // Use dynamic label for IDs (usually the 3rd segment)
-      if (i === 2 && dynamicLabel) {
-        label = dynamicLabel;
+      // Use dynamic labels for IDs or specific segments
+      if (dynamicLabels[i]) {
+        label = dynamicLabels[i];
+      }
+
+      let href = currentPath;
+      if (segment === "records" && i > 1) {
+        const parentPath = segments.slice(0, i).join("/");
+        href = `/${parentPath}?tab=records`;
       }
 
       crumbsArray.push({
         label,
-        href: currentPath,
+        href,
         isCurrent: i === segments.length - 1,
       });
     }
@@ -91,7 +98,7 @@ export default function DashboardLayout() {
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border/40 bg-background/60 px-6 backdrop-blur-xl transition-all duration-300">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="-ml-2 h-8 w-8 rounded-lg transition-all hover:bg-accent/40 active:scale-95" />
-            <Separator orientation="vertical" className="h-4 bg-border/50" />
+            <Separator orientation="vertical" className="h-8 bg-border/50" />
             <Breadcrumb>
               <BreadcrumbList className="gap-2 sm:gap-3">
                 {crumbs.map((crumb, idx) => (
@@ -141,7 +148,7 @@ export default function DashboardLayout() {
           </div>
         </header>
         <main className="flex-1 px-6  max-w-[1440px] mx-auto w-full">
-          <Outlet context={{ setDynamicLabel }} />
+          <Outlet context={{ setDynamicLabels }} />
         </main>
       </SidebarInset>
 

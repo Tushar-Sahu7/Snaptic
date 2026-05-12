@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import {
   BookOpen,
   LogOut,
@@ -31,6 +31,7 @@ import {
   LayoutDashboard,
   UserCheck,
   UserPlus,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
@@ -59,7 +60,7 @@ const teacherNavItems = [
 ];
 
 const studentNavItems = [
-  { title: "Dashboard", url: "/student/dashboard", icon: Laptop },
+  { title: "Dashboard", url: "/student/dashboard", icon: LayoutDashboard },
   { title: "My Classes", url: "/student/classes", icon: BookOpen },
   { title: "Face ID", url: "/student/face-enrollment", icon: ScanFace },
 ];
@@ -79,25 +80,25 @@ export function AppSidebar({ onInvite }) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-border/40 bg-background/50 backdrop-blur-xl"
+      className="border-r border-border/40 bg-background/60 backdrop-blur-xl transition-all duration-300 ease-in-out"
     >
-      <SidebarHeader className="h-16 px-6 flex items-center justify-between">
+      <SidebarHeader className="h-20 px-4 flex items-center justify-between group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
             <SidebarMenuButton
               size="lg"
               asChild
-              className="hover:bg-transparent"
+              className="hover:bg-transparent transition-all duration-300"
             >
-              <NavLink to={portalUrl} className="flex items-center gap-3">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-xl bg-foreground text-background font-bold shadow-sm transition-transform hover:scale-105 active:scale-95">
+              <NavLink to={portalUrl} className="flex items-center gap-3 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
+                <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all duration-500 hover:rotate-6 group-data-[collapsible=icon]:size-11">
                   S
                 </div>
                 <div className="flex flex-col gap-0 leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="text-[15px] font-bold tracking-tight">
+                  <span className="text-[16px] font-bold tracking-tight">
                     Snaptic
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/50">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary/60">
                     {isTeacher ? "Teacher" : "Student"}
                   </span>
                 </div>
@@ -109,34 +110,34 @@ export function AppSidebar({ onInvite }) {
 
       <SidebarContent className="py-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-6 mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30 group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="px-4 mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30 group-data-[collapsible=icon]:hidden">
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="px-3 gap-1">
+            <SidebarMenu className="px-2 gap-1 group-data-[collapsible=icon]:px-0">
               {navItems.map((item) => {
                 const isActive = location.pathname.startsWith(item.url);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title} className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
                       tooltip={item.title}
                       className={cn(
-                        "relative h-11 rounded-xl px-4 transition-all duration-300",
+                        "relative h-12 rounded-xl px-4 transition-all duration-300 group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:p-0",
                         isActive
-                          ? "bg-primary/5 text-primary font-bold"
-                          : "hover:bg-accent/40 text-muted-foreground/80 hover:text-foreground",
+                          ? "bg-primary/10 text-primary font-bold shadow-[0_0_20px_-5px_rgba(var(--primary),0.3)]"
+                          : "hover:bg-accent/40 text-muted-foreground/80 hover:text-foreground group-data-[collapsible=icon]:justify-center",
                       )}
                     >
-                      <NavLink to={item.url}>
+                      <NavLink to={item.url} className="group-data-[collapsible=icon]:justify-center w-full">
                         <item.icon
                           className={cn(
-                            "size-4.5 transition-transform",
+                            "size-5 transition-all duration-300",
                             isActive && "scale-110",
                           )}
                         />
-                        <span className="text-sm tracking-tight">
+                        <span className="text-[14px] tracking-tight group-data-[collapsible=icon]:hidden">
                           {item.title}
                         </span>
                       </NavLink>
@@ -183,38 +184,37 @@ export function AppSidebar({ onInvite }) {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t bg-muted/20 p-3">
+      <SidebarFooter className="border-t bg-muted/20 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="h-12 rounded-xl px-3 transition-colors hover:bg-accent/60 active:bg-accent/80"
+                  className="h-14 rounded-xl px-3 transition-all duration-300 hover:bg-accent/60 active:bg-accent/80 group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto"
                 >
-                  <div className="flex flex-1 items-center gap-3 overflow-hidden">
+                  <div className="flex flex-1 items-center gap-3 group-data-[collapsible=icon]:justify-center">
                     <div className="relative shrink-0">
-                      <Avatar size="default">
+                      <Avatar 
+                        size="default" 
+                        className="transition-all duration-300 group-data-[collapsible=icon]:size-9"
+                      >
                         {user?.avatar && <AvatarImage src={user.avatar} />}
                         <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-tighter">
                           {initials}
                         </AvatarFallback>
+                        
                       </Avatar>
-                      {user?.faceEnrolled && (
-                        <div className="absolute bottom-0 right-0 flex size-3.5 items-center justify-center rounded-full border-2 border-background bg-emerald-500 text-white shadow-sm">
-                          <Check className="size-2 stroke-4" />
-                        </div>
-                      )}
                     </div>
                     <div className="flex flex-1 flex-col overflow-hidden text-left leading-none group-data-[collapsible=icon]:hidden">
                       <span className="truncate text-sm font-bold tracking-tight text-foreground">
                         {user?.name || user?.email?.split("@")[0]}
                       </span>
-                      <span className="truncate text-[10px] font-medium text-muted-foreground/70 mt-0.5">
+                      <span className="truncate text-[11px] font-medium text-muted-foreground/50 mt-1">
                         {user?.email}
                       </span>
                     </div>
-                    <ChevronUp className="size-3.5 shrink-0 text-muted-foreground/40 group-data-[collapsible=icon]:hidden" />
+                    <ChevronUp className="size-4 shrink-0 text-muted-foreground/30 group-data-[collapsible=icon]:hidden" />
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

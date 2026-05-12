@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useMemo, useEffect } from "react";
+import { useParams, useNavigate, useOutletContext } from "react-router";
 import { useAttendanceSessionDetail } from "@/features/attendance/hooks/useAttendance";
 import { 
   CheckCircle2, 
@@ -7,7 +7,8 @@ import {
   Calendar,
   Users,
   Clock,
-  AlertCircle
+  AlertCircle,
+  ClipboardList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +17,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function AttendanceSummaryPage() {
   const { id: sessionId } = useParams();
   const navigate = useNavigate();
+  const { setDynamicLabels } = useOutletContext();
   
   const { data, isLoading, error } = useAttendanceSessionDetail(sessionId);
+
+  useEffect(() => {
+    const className = data?.session?.classId?.name;
+    if (className) {
+      setDynamicLabels((prev) => ({ 
+        ...prev, 
+        2: className 
+      }));
+    }
+    return () => setDynamicLabels((prev) => ({ 
+      ...prev, 
+      2: undefined 
+    }));
+  }, [data?.session?.classId?.name, setDynamicLabels]);
 
   const stats = useMemo(() => {
     if (!data?.records) return { present: 0, absent: 0, total: 0 };
@@ -174,10 +190,10 @@ export default function AttendanceSummaryPage() {
          <Button 
            size="lg" 
            className="rounded-full px-8 gap-2 h-12"
-           onClick={() => navigate("/teacher/dashboard")}
+           onClick={() => navigate(`/teacher/classes/${session.classId?._id || session.classId}/records/${sessionId}`)}
          >
-           <LayoutDashboard className="w-5 h-5" />
-           Back to Dashboard
+           <ClipboardList className="w-5 h-5" />
+           View Record
          </Button>
       </div>
     </div>

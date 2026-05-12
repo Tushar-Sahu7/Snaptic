@@ -6,7 +6,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const classRoutes = require("./routes/class.routes");
 const attendanceRoutes = require("./routes/attendance.routes");
-const reportRoutes = require("./routes/report.routes");
+const recordRoutes = require("./routes/record.routes");
 const { protect, restrictTo } = require("./middlewares/auth.middleware");
 const { searchStudents } = require("./controllers/class.controller");
 const { initCron } = require("./services/cronService");
@@ -28,7 +28,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/attendance", attendanceRoutes);
-app.use("/api/reports", reportRoutes);
+app.use("/api/records", recordRoutes);
 
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import {
   MapPin,
@@ -26,7 +27,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
  */
 const ClassCard = memo(
   ({ cls, onClick, actions, footer, badge, className, layout = "grid" }) => {
+    const { user } = useAuth();
     const isList = layout === "list";
+    const isStudent = user?.role === "student";
     const { onTime } = isClassInSession(cls);
     const isArchived = cls.status === "archived";
 
@@ -47,7 +50,7 @@ const ClassCard = memo(
         onKeyDown={handleKeyDown}
         className={cn(
           "group relative flex overflow-hidden transition-all duration-500",
-          isList ? "flex-col sm:flex-row items-center p-4 gap-4" : "flex-col",
+          isList ? "flex-col sm:flex-row sm:flex-wrap items-center p-4 gap-4" : "flex-col",
           "bg-background border border-border/50 shadow-sm",
           "hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] hover:-translate-y-1.5 active:scale-[0.98]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
@@ -65,9 +68,9 @@ const ClassCard = memo(
         <div
           className={cn(
             "flex flex-1 gap-8",
-            isList
-              ? "flex-col sm:flex-row items-center p-0 gap-4 sm:gap-8"
-              : "flex-col p-7",
+          isList
+            ? "flex-col sm:flex-row sm:flex-wrap items-center p-0 gap-4 sm:gap-8"
+            : "flex-col p-7",
           )}
         >
           {/* Top Section: Icon & Identity */}
@@ -120,10 +123,6 @@ const ClassCard = memo(
                   {badge && <div className="shrink-0">{badge}</div>}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
-                  <div
-                    className="w-1 h-1 rounded-full"
-                    style={{ backgroundColor: brandColor }}
-                  />
                   <span className="truncate">
                     {cls.location ? formatRoom(cls.location) : "Online Session"}
                   </span>
@@ -131,22 +130,20 @@ const ClassCard = memo(
               </div>
             </div>
 
-            {!isList && (
-              <div
-                className="flex items-center -mr-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {actions}
-              </div>
-            )}
+            <div
+              className="flex items-center -mr-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {!isStudent && !isList && actions}
+            </div>
           </div>
 
           {/* Info Grid: Timing, Days & Validity */}
           <div
             className={cn(
               "grid",
-              isList 
-                ? "hidden lg:grid grid-cols-3 flex-1 px-8 border-x border-border/40 gap-6" 
+              isList
+                ? "hidden lg:grid grid-cols-4 flex-1 px-8 border-x border-border/40 gap-6"
                 : "grid-cols-2 gap-x-10 gap-y-6",
             )}
           >
@@ -154,7 +151,12 @@ const ClassCard = memo(
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2">
                 <Clock size={10} className="opacity-70" /> Schedule
               </p>
-              <p className={cn("text-sm font-bold text-foreground/90", isList && "whitespace-nowrap")}>
+              <p
+                className={cn(
+                  "text-sm font-bold text-foreground/90",
+                  isList && "whitespace-nowrap",
+                )}
+              >
                 {formatClassTimeRange(cls)}
               </p>
             </div>
@@ -176,47 +178,66 @@ const ClassCard = memo(
                 {formatClassValidity(cls.schedule)}
               </p>
             </div>
+
+            <div className="space-y-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2">
+                Attendance
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-foreground/90">
+                  {isStudent
+                    ? `${Math.round(cls.attendancePercentage || 0)}%`
+                    : `${Math.round(cls.averageAttendance || 0)}%`}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Stats */}
+          {/* Stats & Identity */}
           <div
             className={cn(
               "flex items-center gap-3",
               isList
-                ? "hidden lg:flex"
+                ? "flex flex-wrap"
                 : "mt-auto pt-6 border-t border-border/40 justify-between",
             )}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-3">
-                {cls.previewStudents?.length > 0 || cls.students?.length > 0 ? (
-                  (cls.previewStudents || cls.students).slice(0, 3).map((student) => (
-                    <Avatar key={student._id} className="w-10 h-10 border-2 border-background shadow-sm">
-                      <AvatarImage src={student.avatar} />
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
-                        {student.name?.slice(0, 2).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))
-                ) : cls.studentCount > 0 ? (
-                  [...Array(Math.min(cls.studentCount, 3))].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center shadow-sm"
-                    >
-                      <Users size={14} className="text-muted-foreground/40" />
+            <div className="flex items-center gap-4">
+              {!isList && (
+                <div className="flex -space-x-2 overflow-hidden py-1">
+                  {cls.previewStudents?.length > 0 ? (
+                    <>
+                      {cls.previewStudents.slice(0, 3).map((student, i) => (
+                        <Avatar
+                          key={i}
+                          className="w-12 h-12 border-2 border-background shadow-sm transition-transform hover:translate-y-[-2px] hover:z-10"
+                        >
+                          <AvatarImage src={student.avatar} />
+                          <AvatarFallback className="text-[8px] bg-primary/10 text-primary font-bold">
+                            {student.name?.slice(0, 2).toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </>
+                  ) : (cls.studentCount || 0) > 0 ? (
+                    <div className="w-12 h-12 rounded-full border-2 border-background bg-primary/5 flex items-center justify-center shadow-sm">
+                      <Users size={24} className="text-primary/40" />
                     </div>
-                  ))
-                ) : (
-                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center">
-                    <Users size={14} className="text-muted-foreground/30" />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center">
+                      <Users size={24} className="text-muted-foreground/30" />
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-col">
+                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                  Students
+                </p>
+                <p className="text-xs font-bold text-foreground/80">
+                  {cls.studentCount || 0} Enrolled
+                </p>
               </div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                <span className="text-foreground">{cls.studentCount || 0}</span>{" "}
-                Students
-              </p>
             </div>
 
             {!isList && (
@@ -226,12 +247,12 @@ const ClassCard = memo(
             )}
           </div>
 
+
           {isList && (
             <div
               className="flex items-center gap-2 ml-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {actions}
               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-muted group-hover:bg-foreground group-hover:text-background transition-all duration-500">
                 <ChevronRight size={16} strokeWidth={2.5} />
               </div>
@@ -239,14 +260,43 @@ const ClassCard = memo(
           )}
         </div>
 
-        {/* External Footer Action (Attendance) - Only in Grid View or integrated differently */}
-        {footer && !isList && (
+        {/* Footer Area - Role Aware */}
+        {!isList && (isStudent || footer) && (
           <div
             className="px-4 pb-4 bg-background"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pt-2 border-t border-border/40">
-              {footer}
+              {isStudent ? (
+                <div className="flex items-center gap-3.5 py-1.5 px-1 ml-auto w-fit">
+                  <div className={cn(
+                    "relative w-12 h-12 shrink-0 rounded-full shadow-sm overflow-hidden transition-transform hover:scale-105 flex items-center justify-center",
+                    cls.teacher?.avatar ? "border border-border/50 bg-muted" : "border-2 border-dashed border-border/50 bg-background"
+                  )}>
+                    {cls.teacher?.avatar ? (
+                      <img 
+                        src={cls.teacher.avatar.startsWith('http') || cls.teacher.avatar.startsWith('data:') ? cls.teacher.avatar : `data:image/jpeg;base64,${cls.teacher.avatar}`} 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs font-black bg-primary/10 text-primary">
+                        {cls.teacher?.name?.slice(0, 2).toUpperCase() || "T"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 text-left">
+                    <p className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-widest leading-none">
+                      by teacher
+                    </p>
+                    <p className="text-sm font-bold text-foreground tracking-tight leading-tight">
+                      {cls.teacher?.name || "Teacher Name"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                footer
+              )}
             </div>
           </div>
         )}

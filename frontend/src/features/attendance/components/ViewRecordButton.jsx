@@ -20,6 +20,7 @@ import { Eye } from "lucide-react";
  * @param {string}   className - Additional className for layout purposes.
  */
 export const ViewRecordButton = ({
+  cls,
   session,
   showText = true,
   size,
@@ -39,7 +40,13 @@ export const ViewRecordButton = ({
 
   const handleClick = (e) => {
     e.stopPropagation();
-    navigate(`/teacher/attendance/${session._id}/summary`);
+    const classId = cls?._id || session.classId;
+    if (classId) {
+      navigate(`/teacher/classes/${classId}/records/${session._id}`);
+    } else {
+      // Fallback if classId is somehow missing
+      navigate(`/teacher/attendance/${session._id}/summary`);
+    }
   };
 
   const button = (
