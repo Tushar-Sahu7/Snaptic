@@ -87,6 +87,7 @@ const register = async (req, res) => {
         role: user.role,
         isFirstLogin: user.isFirstLogin,
         name: name,
+        faceEnrolled: false,
       },
     });
   } catch (err) {
@@ -125,6 +126,7 @@ const login = async (req, res) => {
         isFirstLogin: user.isFirstLogin,
         name: profile?.name || "",
         avatar: profile?.avatar || null,
+        faceEnrolled: profile?.faceEnrolled || false,
       },
     });
   } catch (err) {

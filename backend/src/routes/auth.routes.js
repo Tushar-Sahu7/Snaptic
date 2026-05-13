@@ -35,6 +35,8 @@ const { protect, restrictTo } = require("../middlewares/auth.middleware");
  *           nullable: true
  *         isFirstLogin:
  *           type: boolean
+ *         faceEnrolled:
+ *           type: boolean
  */
 
 /**
