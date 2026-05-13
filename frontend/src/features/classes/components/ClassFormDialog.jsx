@@ -309,6 +309,8 @@ export default function ClassFormDialog({
 
         await updateMutation.mutateAsync({ classId: classData._id, payload });
         toast.success("Class updated successfully");
+        onOpenChange(false);
+        onSuccess?.();
       } else {
         payload = {
           name: name.trim(),
@@ -325,12 +327,7 @@ export default function ClassFormDialog({
         toast.success("Class created successfully");
         onOpenChange(false);
         onSuccess?.(data?.class);
-        return;
       }
-      await updateMutation.mutateAsync({ classId: classData._id, payload });
-      toast.success("Class updated successfully");
-      onOpenChange(false);
-      onSuccess?.();
     } catch (err) {
       toast.error(
         err.response?.data?.message || "An unexpected error occurred",

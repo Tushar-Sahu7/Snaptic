@@ -536,7 +536,12 @@ export default function ClassListPage() {
         open={formDialogOpen}
         onOpenChange={setFormDialogOpen}
         classData={editingClass}
-        onSuccess={refresh}
+        onSuccess={(newClass) => {
+          refresh();
+          if (!editingClass && newClass?._id) {
+            navigate(`${basePath}/classes/${newClass._id}`);
+          }
+        }}
       />
 
       {/* Bulk Unarchive Dialog */}
