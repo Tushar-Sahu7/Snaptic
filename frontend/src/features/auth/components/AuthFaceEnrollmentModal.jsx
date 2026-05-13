@@ -418,6 +418,10 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
         className="max-w-2xl p-0 overflow-hidden border-none bg-[oklch(0.12_0.02_250)] backdrop-blur-2xl sm:rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)]"
         showCloseButton={false}
       >
+        <DialogTitle className="sr-only">Enroll Face</DialogTitle>
+        <DialogDescription className="sr-only">
+          Enroll your face for attendance.
+        </DialogDescription>
         <div className="relative flex flex-col h-[600px] sm:h-[650px]">
           {/* Close Button */}
           {stage !== "enrolling" && (
@@ -463,14 +467,14 @@ export default function FaceEnrollmentModal({ open, onOpenChange }) {
                   {/* Shared Header */}
                   <div className="flex-none p-8 bg-[oklch(0.15_0.02_250/0.5)] border-b border-white/5">
                     <DialogTitle className="text-white font-black text-2xl tracking-tight flex items-center gap-2">
-                      <Scan className="w-6 h-6 text-primary" />
+                      <Scan className="w-6 h-6" />
                       {stage === "camera"
-                        ? "Biometric Enrollment"
+                        ? "Enroll Face"
                         : "Verify Identity"}
                     </DialogTitle>
                     <DialogDescription className="text-white/50 text-sm font-medium mt-1">
                       {stage === "camera"
-                        ? "Secure your identity with enterprise-grade face recognition."
+                        ? "Capture your face"
                         : "Confirm your capture is clear for optimal recognition."}
                     </DialogDescription>
                   </div>
