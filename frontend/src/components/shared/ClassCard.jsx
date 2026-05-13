@@ -26,15 +26,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
  * Follows MUJI-inspired "Without Thought" design principles.
  */
 const ClassCard = memo(
-  ({ cls, onClick, actions, footer, badge, className, layout = "grid" }) => {
+  ({ cls, onClick, actions, footer, badge, className, layout = "grid", hideAttendance }) => {
     const { user } = useAuth();
     const isList = layout === "list";
     const isStudent = user?.role === "student";
     const { onTime } = isClassInSession(cls);
     const isArchived = cls.status === "archived";
 
-    // Derive colors using OKLCH for perceptual uniformity
-    const brandColor = cls.color || "oklch(0.4 0.02 160)"; // Default to a refined slate if not provided
+    const brandColor = cls.color || "oklch(0.4 0.02 160)";
 
     const handleKeyDown = (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -59,7 +58,7 @@ const ClassCard = memo(
         )}
         onClick={() => onClick?.(cls._id)}
       >
-        {/* Decorative "Thread" - Subtle vertical line for a tactile feel */}
+        {/* Decorative "Thread" */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
           style={{ backgroundColor: brandColor }}
@@ -68,16 +67,16 @@ const ClassCard = memo(
         <div
           className={cn(
             "flex flex-1 gap-8",
-          isList
-            ? "flex-col sm:flex-row sm:flex-wrap items-center p-0 gap-4 sm:gap-8"
-            : "flex-col p-7",
+            isList
+              ? "flex-col sm:flex-row sm:flex-wrap items-center p-0 gap-4 sm:gap-8 w-full"
+              : "flex-col p-7",
           )}
         >
           {/* Top Section: Icon & Identity */}
           <div
             className={cn(
               "flex items-start justify-between gap-4",
-              isList ? "w-full sm:w-auto" : "",
+              isList ? "w-full sm:w-[200px] sm:shrink-0" : "",
             )}
           >
             <div className="flex gap-5 items-center min-w-0">
@@ -92,7 +91,6 @@ const ClassCard = memo(
                   color: brandColor,
                 }}
               >
-                {/* Glassy Overlay */}
                 <div className="absolute inset-0 bg-white/40 dark:bg-black/20 backdrop-blur-[2px]" />
                 <LucideIcon
                   name={cls.icon}
@@ -102,7 +100,7 @@ const ClassCard = memo(
                 />
               </div>
 
-              <div className="min-w-0 space-y-0.5">
+              <div className="min-w-0 space-y-0.5 overflow-hidden">
                 <div className="flex items-center gap-2">
                   <h3
                     className={cn(
@@ -122,9 +120,9 @@ const ClassCard = memo(
                   )}
                   {badge && <div className="shrink-0">{badge}</div>}
                 </div>
-                <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
+                <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium min-w-0">
                   <MapPin size={12} className="shrink-0 opacity-70" />
-                  <span className="truncate">
+                  <span className="truncate block">
                     {cls.location ? formatRoom(cls.location) : "Online Session"}
                   </span>
                 </div>
@@ -144,7 +142,7 @@ const ClassCard = memo(
             className={cn(
               "grid",
               isList
-                ? "hidden lg:grid grid-cols-4 flex-1 px-8 border-x border-border/40 gap-6"
+                ? "hidden lg:grid grid-cols-4 flex-1 px-8 border-x border-border/40 gap-6 items-center"
                 : "grid-cols-2 gap-x-10 gap-y-6",
             )}
           >
@@ -180,18 +178,20 @@ const ClassCard = memo(
               </p>
             </div>
 
-            <div className="space-y-1">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2">
-                Attendance
-              </p>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-foreground/90">
-                  {isStudent
-                    ? `${Math.round(cls.attendancePercentage || 0)}%`
-                    : `${Math.round(cls.averageAttendance || 0)}%`}
+            {!hideAttendance && (
+              <div className="space-y-1">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2">
+                  Attendance
                 </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-foreground/90">
+                    {isStudent
+                      ? `${Math.round(cls.attendancePercentage || 0)}%`
+                      : `${Math.round(cls.averageAttendance || 0)}%`}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Stats & Identity */}
@@ -248,7 +248,6 @@ const ClassCard = memo(
             )}
           </div>
 
-
           {isList && (
             <div
               className="flex items-center gap-2 ml-auto"
@@ -275,9 +274,9 @@ const ClassCard = memo(
                     cls.teacher?.avatar ? "border border-border/50 bg-muted" : "border-2 border-dashed border-border/50 bg-background"
                   )}>
                     {cls.teacher?.avatar ? (
-                      <img 
-                        src={cls.teacher.avatar.startsWith('http') || cls.teacher.avatar.startsWith('data:') ? cls.teacher.avatar : `data:image/jpeg;base64,${cls.teacher.avatar}`} 
-                        alt="" 
+                      <img
+                        src={cls.teacher.avatar.startsWith('http') || cls.teacher.avatar.startsWith('data:') ? cls.teacher.avatar : `data:image/jpeg;base64,${cls.teacher.avatar}`}
+                        alt=""
                         className="w-full h-full object-cover"
                       />
                     ) : (

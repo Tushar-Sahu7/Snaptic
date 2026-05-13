@@ -218,14 +218,59 @@ const getTodaySession = async (req, res) => {
       query.classId = classId;
       const session = await AttendanceSession.findOne(query)
         .populate("classId", "name icon color location status");
+      
+      if (session && req.user.role === "student") {
+        const record = await AttendanceRecord.findOne({
+          sessionId: session._id,
+          studentId: req.user.userId
+        }).lean();
+        
+        return res.status(200).json({ 
+          session: {
+            ...session.toObject(),
+            attendance: record ? { status: record.status, markedAt: record.markedAt } : null
+          } 
+        });
+      }
+      
       return res.status(200).json({ session });
     } else {
-      query.teacherId = req.user.userId;
+      if (req.user.role === "teacher") {
+        query.teacherId = req.user.userId;
+      } else if (req.user.role === "student") {
+        // Find classes the student is enrolled in
+        const enrollments = await Enrollment.find({ 
+          studentId: req.user.userId,
+          status: "active"
+        }).lean();
+        
+        const enrolledClassIds = enrollments.map(e => e.classId);
+        query.classId = { $in: enrolledClassIds };
+      }
+
       const sessions = await AttendanceSession.find(query)
         .populate("classId", "name icon color location status");
 
       // Filter out sessions where class no longer exists (orphaned sessions)
       const validSessions = sessions.filter(s => s.classId);
+
+      if (req.user.role === "student") {
+        const sessionIds = validSessions.map(s => s._id);
+        const records = await AttendanceRecord.find({
+          sessionId: { $in: sessionIds },
+          studentId: req.user.userId
+        }).lean();
+
+        const sessionsWithAttendance = validSessions.map(s => {
+          const record = records.find(r => r.sessionId.toString() === s._id.toString());
+          return {
+            ...s.toObject(),
+            attendance: record ? { status: record.status, markedAt: record.markedAt } : null
+          };
+        });
+
+        return res.status(200).json({ sessions: sessionsWithAttendance });
+      }
 
       return res.status(200).json({ sessions: validSessions });
     }

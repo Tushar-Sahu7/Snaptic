@@ -23,16 +23,15 @@ export default function DashboardPage() {
 
   const { classes, loading: classesLoading, refresh } = useClasses();
 
-  // Only fetch today's sessions for teachers (route is teacher-restricted)
+  // Fetch today's sessions (now available for both roles)
   const {
     data: attendanceQueryData,
     isLoading: sessionsLoading,
     refetch,
   } = useTodayAttendance();
 
-  // Sorted sessions: live → upcoming → done (teacher only)
+  // Sorted sessions: live → upcoming → done
   const sessions = useMemo(() => {
-    if (!isTeacher) return [];
     const raw = attendanceQueryData?.sessions || [];
     const order = {
       inprogress: 0,
@@ -49,7 +48,7 @@ export default function DashboardPage() {
         // Within the same status group, sort by startTime ascending
         return new Date(a.startTime) - new Date(b.startTime);
       });
-  }, [attendanceQueryData, isTeacher]);
+  }, [attendanceQueryData]);
 
   if (isTeacher) {
     return (
@@ -71,7 +70,8 @@ export default function DashboardPage() {
     <StudentDashboard
       user={user}
       classes={classes}
-      loading={classesLoading}
+      sessions={sessions}
+      loading={classesLoading || sessionsLoading}
       navigate={navigate}
     />
   );

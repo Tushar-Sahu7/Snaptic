@@ -20,7 +20,26 @@ const router = express.Router();
 
 router.use(protect);
 
-// Teacher routes
+// Routes accessible by both teachers and students
+/**
+ * @swagger
+ * /api/attendance/today:
+ *   get:
+ *     summary: Get today's sessions (Teacher: their classes, Student: their enrolled classes)
+ *     tags: [Attendance]
+ */
+router.get("/today", getTodaySession);
+
+/**
+ * @swagger
+ * /api/attendance/today/{classId}:
+ *   get:
+ *     summary: Get today's session for a specific class
+ *     tags: [Attendance]
+ */
+router.get("/today/:classId", getTodaySession);
+
+// Teacher-only routes
 router.use(restrictTo("teacher"));
 
 /**
@@ -104,35 +123,7 @@ router.post("/submit/:sessionId", submitSession);
  */
 router.delete("/session/:sessionId/reset", resetSession);
 
-/**
- * @swagger
- * /api/attendance/today:
- *   get:
- *     summary: Get today's active sessions for the teacher
- *     tags: [Attendance]
- *     responses:
- *       200:
- *         description: List of today's sessions
- */
-router.get("/today", getTodaySession);
-
-/**
- * @swagger
- * /api/attendance/today/{classId}:
- *   get:
- *     summary: Get today's active session for a specific class
- *     tags: [Attendance]
- *     parameters:
- *       - in: path
- *         name: classId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Today's session for the class
- */
-router.get("/today/:classId", getTodaySession);
+// (Original routes removed - moved to public section above)
 
 /**
  * @swagger
