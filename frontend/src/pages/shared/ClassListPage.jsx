@@ -58,6 +58,7 @@ import { CalendarIcon } from "lucide-react";
 
 // Shared Components
 import ClassCard from "@/components/shared/ClassCard";
+import ClassCardSkeleton from "@/components/shared/ClassCardSkeleton";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import { isClassInSession, getNowIST, getTodayISTStr, formatIST, parseSchedule } from "@/lib/date-utils";
 import { useTodayAttendance } from "@/features/attendance/hooks/useAttendance";
@@ -199,16 +200,23 @@ export default function ClassListPage() {
     }
   };
 
-  if (loading) {
+  if (loading && classes.length === 0) {
     return (
-      <div className="p-8 space-y-8">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-32" />
+      <div className="container mx-auto px-4 py-8 max-w-7xl space-y-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-1">
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-10 w-64" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-40 rounded-xl" />
+            <Skeleton className="h-10 w-10 rounded-xl" />
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-2xl" />
+            <ClassCardSkeleton key={i} />
           ))}
         </div>
       </div>

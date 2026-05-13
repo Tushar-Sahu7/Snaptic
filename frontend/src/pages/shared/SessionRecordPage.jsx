@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams, useNavigate, useOutletContext } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import { useSessionRecord } from "@/features/records/hooks/useRecords";
-import { Spinner } from "@/components/ui/spinner";
+import SessionRecordSkeleton from "@/components/shared/SessionRecordSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,14 +84,7 @@ export default function SessionRecordPage() {
   }, [data, setDynamicLabels]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Spinner className="w-8 h-8 text-primary" />
-        <p className="text-sm font-bold text-muted-foreground animate-pulse tracking-widest uppercase">
-          Loading Session Record...
-        </p>
-      </div>
-    );
+    return <SessionRecordSkeleton />;
   }
 
   if (error || !data) {

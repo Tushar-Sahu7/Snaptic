@@ -76,6 +76,7 @@ import ClassImportStudentsModal from "@/features/classes/components/ClassImportS
 import SessionList from "@/features/records/components/SessionList";
 import AttendanceLedger from "@/features/records/components/AttendanceLedger";
 import { useDebounce } from "@/hooks/use-debounce";
+import SessionCardSkeleton from "@/components/shared/SessionCardSkeleton";
 import {
   isClassInSession,
   formatClassValidity,
@@ -196,18 +197,28 @@ export default function ClassDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="flex justify-between items-start">
-          <div className="flex gap-4">
-            <Skeleton className="h-14 w-14 rounded-2xl" />
+      <div className="container mx-auto px-4 py-8 max-w-7xl space-y-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <Skeleton className="h-10 w-10 rounded-xl" />
+            <Skeleton className="h-16 w-16 rounded-2xl" />
             <div className="space-y-2">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-96" />
+              <Skeleton className="h-10 w-64" />
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-32" />
+              </div>
             </div>
           </div>
-          <Skeleton className="h-10 w-32 rounded-xl" />
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-32 rounded-xl" />
+            <Skeleton className="h-10 w-10 rounded-xl" />
+          </div>
         </div>
-        <Skeleton className="h-[400px] rounded-3xl" />
+        <div className="p-2 rounded-2xl bg-muted/40 border border-border/50">
+          <Skeleton className="h-11 w-full rounded-xl" />
+        </div>
+        <Skeleton className="h-[500px] w-full rounded-3xl" />
       </div>
     );
   }
@@ -778,8 +789,8 @@ export default function ClassDetailPage() {
               <CardContent className="p-8 pt-4">
                 {sessionsLoading || studentRecordLoading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-48 rounded-2xl" />
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <SessionCardSkeleton key={i} isTeacher={!isStudent} />
                     ))}
                   </div>
                 ) : (

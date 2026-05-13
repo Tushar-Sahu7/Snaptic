@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStartAttendance } from "@/features/attendance/hooks/useAttendance";
 import { useClasses } from "@/features/classes/hooks/useClasses";
 import AttendanceWizard from "@/features/attendance/components/AttendanceWizard";
+import AttendanceSessionSkeleton from "@/components/shared/AttendanceSessionSkeleton";
+
 
 export default function AttendanceSessionPage() {
   const { id: classId } = useParams();
@@ -37,25 +39,7 @@ export default function AttendanceSessionPage() {
 
   // Handle Loading States
   if (isPending || classesLoading || (!data && !error)) {
-    return (
-      <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8 text-center animate-in fade-in duration-500">
-        <div className="space-y-4">
-           <div className="relative w-16 h-16 mx-auto mb-8">
-             <Loader2 className="w-16 h-16 animate-spin text-primary opacity-20" />
-             <div className="absolute inset-0 flex items-center justify-center">
-               <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
-             </div>
-           </div>
-           <h2 className="text-3xl font-black tracking-tight italic uppercase">Initializing <span className="text-primary">Session</span></h2>
-           <p className="text-muted-foreground font-medium text-lg">Synchronizing student profiles and biometric data...</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 pt-12">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
-            <Skeleton key={i} className="aspect-square rounded-[32px] opacity-40" />
-          ))}
-        </div>
-      </div>
-    );
+    return <AttendanceSessionSkeleton />;
   }
 
   // Handle Error States

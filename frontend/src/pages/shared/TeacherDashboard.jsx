@@ -31,8 +31,12 @@ import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import { cn } from "@/lib/utils";
 import { formatIST, getNowIST, isClassInSession, parseSchedule } from "@/lib/date-utils";
 import ClassCard from "@/components/shared/ClassCard";
+import ClassCardSkeleton from "@/components/shared/ClassCardSkeleton";
+import SessionRowSkeleton from "@/components/shared/SessionRowSkeleton";
+import DashboardSkeleton from "@/components/shared/DashboardSkeleton";
 import { AttendanceActionGroup } from "@/features/attendance/components/AttendanceActionGroup";
 import ClassFormDialog from "@/features/classes/components/ClassFormDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -81,7 +85,7 @@ function StatCard({ label, value, icon: Icon, iconColor, loading, className }) {
           </p>
           <p className="text-3xl font-bold tracking-tight mt-1">
             {loading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Skeleton className="w-12 h-8" />
             ) : (
               value
             )}
@@ -300,6 +304,9 @@ export default function TeacherDashboard({
   const todayDateStr = format(getNowIST(), "EEEE, MMMM d");
   const liveCount = sessions.filter(s => SESSION_LIVE_STATUSES.includes(s.status)).length;
   const upcomingCount = sessions.filter(s => SESSION_UPCOMING_STATUSES.includes(s.status)).length;
+  if (loading && !classes.length) {
+    return <DashboardSkeleton />;
+  }
 
   // Top 3 active classes for ClassCard preview (excluding featured)
   const previewClasses = activeClasses
@@ -422,16 +429,16 @@ export default function TeacherDashboard({
             )}
           </CardHeader>
           <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
+            {loading && activeSessions.length === 0 ? (
+                <div className="space-y-3 px-6 pt-2 pb-6">
+                  {[1, 2, 3].map((i) => <SessionRowSkeleton key={i} />)}
+                </div>
             ) : activeSessions.length > 0 ? (
               <ScrollArea className="h-[380px] px-6 pb-6">
                 <div className="space-y-3 pt-2">
-                  {activeSessions.map((s) => (
-                    <SessionRow key={s._id} session={s} navigate={navigate} />
-                  ))}
+                    {activeSessions.map((s) => (
+                      <SessionRow key={s._id} session={s} navigate={navigate} />
+                    ))}
                 </div>
               </ScrollArea>
             ) : (
@@ -511,12 +518,18 @@ export default function TeacherDashboard({
                 {completedSessions.length}
               </Badge>
             </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {completedSessions.map((s) => (
-                  <SessionRow key={s._id} session={s} navigate={navigate} showRecordBtn />
-                ))}
-              </div>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[300px] px-6 pb-6">
+                <div className="space-y-3 pt-2">
+                  {loading && completedSessions.length === 0 ? (
+                    [1, 2, 3].map((i) => <SessionRowSkeleton key={i} />)
+                  ) : (
+                    completedSessions.map((s) => (
+                      <SessionRow key={s._id} session={s} navigate={navigate} showRecordBtn />
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         )}

@@ -30,8 +30,13 @@ import {
   Eye, EyeOff, AlertCircle
 } from "lucide-react";
 import AuthFaceEnrollmentCard from "@/features/auth/components/AuthFaceEnrollmentCard";
+import ProfileSkeleton from "@/components/shared/ProfileSkeleton";
+
 export default function ProfilePage() {
-  const { data: user } = useAuth();
+  const { data: user, isLoading } = useAuth();
+
+  if (isLoading) return <ProfileSkeleton />;
+
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
 

@@ -32,6 +32,10 @@ import { Icon as LucideIcon } from "@/components/ui/icon-picker";
 import { cn } from "@/lib/utils";
 import { formatIST, getNowIST, isClassInSession, parseSchedule } from "@/lib/date-utils";
 import ClassCard from "@/components/shared/ClassCard";
+import ClassCardSkeleton from "@/components/shared/ClassCardSkeleton";
+import SessionRowSkeleton from "@/components/shared/SessionRowSkeleton";
+import DashboardSkeleton from "@/components/shared/DashboardSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -79,7 +83,7 @@ function StatCard({ label, value, icon: Icon, iconColor, loading, className }) {
           </p>
           <div className="text-3xl font-bold tracking-tight mt-1 flex items-baseline gap-1">
             {loading ? (
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Skeleton className="w-12 h-8" />
             ) : (
               value
             )}
@@ -329,6 +333,10 @@ export default function StudentDashboard({
   // Attendance summary is no longer needed in view
   const isFaceReady = user?.faceEnrolled;
 
+  if (loading && !enrolledClasses.length) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div className="container mx-auto px-6 py-10 max-w-7xl space-y-10">
       {/* ── Header ── */}
@@ -491,18 +499,18 @@ export default function StudentDashboard({
             )}
           </CardHeader>
           <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : activeSessions.length > 0 ? (
-              <ScrollArea className="h-[380px] px-6 pb-6">
-                <div className="space-y-3 pt-2">
-                  {activeSessions.map((s) => (
-                    <SessionRow key={s._id} session={s} navigate={navigate} />
-                  ))}
+            {loading && activeSessions.length === 0 ? (
+                <div className="space-y-3 px-6 pt-2 pb-6">
+                  {[1, 2, 3].map((i) => <SessionRowSkeleton key={i} />)}
                 </div>
-              </ScrollArea>
+            ) : activeSessions.length > 0 ? (
+                <ScrollArea className="h-[380px] px-6 pb-6">
+                  <div className="space-y-3 pt-2">
+                    {activeSessions.map((s) => (
+                      <SessionRow key={s._id} session={s} navigate={navigate} />
+                    ))}
+                  </div>
+                </ScrollArea>
             ) : (
               <div className="py-20 text-center space-y-3">
                 <CalendarDays className="w-10 h-10 mx-auto text-muted-foreground/30" />
@@ -571,10 +579,14 @@ export default function StudentDashboard({
               </Badge>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {completedSessions.map((s) => (
-                  <SessionRow key={s._id} session={s} navigate={navigate} showRecordBtn />
-                ))}
+              <div className="space-y-3 pt-2">
+                {loading && completedSessions.length === 0 ? (
+                  [1, 2, 3].map((i) => <SessionRowSkeleton key={i} />)
+                ) : (
+                  completedSessions.map((s) => (
+                    <SessionRow key={s._id} session={s} navigate={navigate} showRecordBtn />
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

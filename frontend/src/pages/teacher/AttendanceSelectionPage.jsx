@@ -6,6 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AttendanceWizard from "@/features/attendance/components/AttendanceWizard";
+import ClassCardSkeleton from "@/components/shared/ClassCardSkeleton";
+import AttendanceSessionSkeleton from "@/components/shared/AttendanceSessionSkeleton";
+
 
 export default function AttendanceSelectionPage() {
   const navigate = useNavigate();
@@ -54,14 +57,14 @@ export default function AttendanceSelectionPage() {
   // 4. Render States
   if (loading) {
     return (
-      <div className="container mx-auto px-8 py-12 space-y-8">
+      <div className="container mx-auto px-8 py-12 space-y-10">
         <div className="space-y-4">
-          <Skeleton className="h-12 w-64 rounded-2xl" />
+          <Skeleton className="h-10 w-64 rounded-2xl" />
           <Skeleton className="h-4 w-96 rounded-lg" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-64 rounded-[32px]" />
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <ClassCardSkeleton key={i} />
           ))}
         </div>
       </div>
@@ -70,20 +73,7 @@ export default function AttendanceSelectionPage() {
 
   // Handle Session Initialization Loading
   if (classId && sessionStarting) {
-    return (
-      <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8 text-center animate-in fade-in duration-500">
-        <div className="space-y-4">
-           <div className="relative w-16 h-16 mx-auto mb-8">
-             <Loader2 className="w-16 h-16 animate-spin text-primary opacity-20" />
-             <div className="absolute inset-0 flex items-center justify-center">
-               <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
-             </div>
-           </div>
-           <h2 className="text-3xl font-black tracking-tight italic uppercase">Initializing <span className="text-primary">Session</span></h2>
-           <p className="text-muted-foreground font-medium text-lg">Synchronizing student profiles and biometric data...</p>
-        </div>
-      </div>
-    );
+    return <AttendanceSessionSkeleton />;
   }
 
   // Handle Session Initialization Error
