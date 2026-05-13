@@ -50,7 +50,7 @@ const ClassCard = memo(
         className={cn(
           "group relative flex overflow-hidden transition-all duration-500",
           isList ? "flex-col sm:flex-row sm:flex-wrap items-center p-4 gap-4" : "flex-col",
-          "bg-background border border-border/50 shadow-sm",
+          "bg-card border border-border/50 shadow-sm",
           "hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] hover:-translate-y-1.5 active:scale-[0.98]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
           onTime && "ring-2 ring-primary/10 border-primary/20",
@@ -263,7 +263,7 @@ const ClassCard = memo(
         {/* Footer Area - Role Aware */}
         {!isList && (isStudent || footer) && (
           <div
-            className="px-4 pb-4 bg-background"
+            className="px-4 pb-4 bg-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pt-2 border-t border-border/40">
