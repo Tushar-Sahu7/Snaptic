@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 @import "tw-animate-css";
+
+
 @import "@fontsource-variable/merriweather";
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/inter";
@@ -149,11 +151,12 @@
     border-radius: 10px;
   }
 
-  /* Handle */
   ::-webkit-scrollbar-thumb {
-    -webkit-border-radius: 10px;
-    border-radius: 10px;
-    background: transparent;
-    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+    @apply bg-muted-foreground/30 rounded-full;
+    -webkit-box-shadow: none;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
   }
 }

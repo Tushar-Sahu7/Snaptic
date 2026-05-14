@@ -42,7 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const SESSION_LIVE_STATUSES = ["inprogress"];
 const SESSION_UPCOMING_STATUSES = ["scheduled"];
-const SESSION_DONE_STATUSES = ["submitted", "finalized", "missed"];
+const SESSION_DONE_STATUSES = ["submitted", "finalized"];
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -434,8 +434,8 @@ export default function TeacherDashboard({
                   {[1, 2, 3].map((i) => <SessionRowSkeleton key={i} />)}
                 </div>
             ) : activeSessions.length > 0 ? (
-              <ScrollArea className="h-[380px] px-6 pb-6">
-                <div className="space-y-3 pt-2">
+              <ScrollArea className="h-[380px]">
+                <div className="space-y-3 pt-2 px-6 pb-6">
                     {activeSessions.map((s) => (
                       <SessionRow key={s._id} session={s} navigate={navigate} />
                     ))}
@@ -519,8 +519,8 @@ export default function TeacherDashboard({
               </Badge>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[300px] px-6 pb-6">
-                <div className="space-y-3 pt-2">
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-3 pt-2 px-6 pb-6">
                   {loading && completedSessions.length === 0 ? (
                     [1, 2, 3].map((i) => <SessionRowSkeleton key={i} />)
                   ) : (

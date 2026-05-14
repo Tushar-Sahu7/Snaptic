@@ -70,7 +70,7 @@ export const AttendanceActionGroup = ({
   // In-Progress — primary ("Resume") + reset button
   if (status === "inprogress") {
     return (
-      <ButtonGroup>
+      <ButtonGroup className={className}>
         <ButtonGroup className="flex-1">
           <PrimaryAttendanceAction
             cls={cls}
@@ -130,7 +130,7 @@ export const AttendanceActionGroup = ({
 
   // On-time, no session: "Face Scan" + "Manual Entry"
   return (
-    <ButtonGroup>
+    <ButtonGroup className={className}>
       <ButtonGroup className="flex-1">
         <PrimaryAttendanceAction
           cls={cls}

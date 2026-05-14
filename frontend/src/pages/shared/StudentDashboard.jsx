@@ -41,7 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const SESSION_LIVE_STATUSES = ["inprogress"];
 const SESSION_UPCOMING_STATUSES = ["scheduled"];
-const SESSION_DONE_STATUSES = ["submitted", "finalized", "missed"];
+const SESSION_DONE_STATUSES = ["submitted", "finalized"];
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 

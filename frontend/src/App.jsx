@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -26,6 +25,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
+
 export default function App() {
   const { loading } = useAuth();
 
@@ -44,73 +44,75 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="snaptic-theme">
-      <TooltipProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
 
-            {/* Teacher — sidebar dashboard with nested routes */}
-            <Route
-              path="/teacher"
-              element={
-                <ProtectedRoute allowedRole="teacher">
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="classes" element={<ClassListPage />} />
-              <Route path="classes/:id" element={<ClassDetailPage />} />
-              <Route
-                path="classes/:id/attendance"
-                element={<AttendanceSessionPage />}
-              />
-              <Route
-                path="classes/:id/records/:sessionId"
-                element={<SessionRecordPage />}
-              />
-              <Route
-                path="take-attendance"
-                element={<AttendanceSelectionPage />}
-              />
-              <Route
-                path="attendance/:id/summary"
-                element={<AttendanceSummaryPage />}
-              />
-              <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-            </Route>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            {/* Student — sidebar dashboard with nested routes */}
-            <Route
-              path="/student"
-              element={
-                <ProtectedRoute allowedRole="student">
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="classes" element={<ClassListPage />} />
-              <Route path="classes/:id" element={<ClassDetailPage />} />
-
+              {/* Teacher — sidebar dashboard with nested routes */}
               <Route
-                path="classes/:id/records/:sessionId"
-                element={<SessionRecordPage />}
-              />
-              <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-            </Route>
+                path="/teacher"
+                element={
+                  <ProtectedRoute allowedRole="teacher">
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="classes" element={<ClassListPage />} />
+                <Route path="classes/:id" element={<ClassDetailPage />} />
+                <Route
+                  path="classes/:id/attendance"
+                  element={<AttendanceSessionPage />}
+                />
+                <Route
+                  path="classes/:id/records/:sessionId"
+                  element={<SessionRecordPage />}
+                />
+                <Route
+                  path="take-attendance"
+                  element={<AttendanceSelectionPage />}
+                />
+                <Route
+                  path="attendance/:id/summary"
+                  element={<AttendanceSummaryPage />}
+                />
+                <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <Toaster position="bottom-right" />
-        </BrowserRouter>
-      </TooltipProvider>
+              {/* Student — sidebar dashboard with nested routes */}
+              <Route
+                path="/student"
+                element={
+                  <ProtectedRoute allowedRole="student">
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="classes" element={<ClassListPage />} />
+                <Route path="classes/:id" element={<ClassDetailPage />} />
+
+                <Route
+                  path="classes/:id/records/:sessionId"
+                  element={<SessionRecordPage />}
+                />
+                <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+              </Route>
+
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <Toaster position="bottom-right" />
+          </BrowserRouter>
+        </TooltipProvider>
+
     </ThemeProvider>
   );
 }

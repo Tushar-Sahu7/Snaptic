@@ -25,7 +25,7 @@ router.use(protect);
  * @swagger
  * /api/attendance/today:
  *   get:
- *     summary: Get today's sessions (Teacher: their classes, Student: their enrolled classes)
+ *     summary: "Get today's sessions (Teacher: their classes, Student: their enrolled classes)"
  *     tags: [Attendance]
  */
 router.get("/today", getTodaySession);
