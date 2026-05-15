@@ -140,6 +140,16 @@ export default function ClassFormDialog({
   const [fieldErrors, setFieldErrors] = useState({});
   const [isDurationPopoverOpen, setIsDurationPopoverOpen] = useState(false);
 
+  const parsedInitial = useMemo(() => 
+    isEdit ? parseSchedule(classData.schedule) : null, 
+    [isEdit, classData]
+  );
+
+  const isStartDateLocked = useMemo(() => {
+    if (!isEdit || !parsedInitial) return false;
+    return parsedInitial.startDate < getTodayISTStr();
+  }, [isEdit, parsedInitial]);
+
   // Time intervals for select
   const timeIntervals = useMemo(() => {
     const times = [];
@@ -247,7 +257,6 @@ export default function ClassFormDialog({
 
     // Conditional Validation for Edits:
     // Only validate past time if we are creating NEW or if startDate/startTime changed on existing
-    const parsedInitial = isEdit ? parseSchedule(classData.schedule) : null;
     
     const startDateTimeChanged = !isEdit || (
       startDate !== parsedInitial?.startDate ||
@@ -262,7 +271,8 @@ export default function ClassFormDialog({
     );
 
     // Past Time Validation (only if start date/time changed or new class)
-    if (startDateTimeChanged && startDate === getTodayISTStr()) {
+    // Relaxed for ongoing classes (where startDate is in the past)
+    if (startDateTimeChanged && startDate === getTodayISTStr() && !isStartDateLocked) {
       const now = getNowIST();
       const currentH = now.getHours();
       const currentM = now.getMinutes();
@@ -517,9 +527,11 @@ export default function ClassFormDialog({
                       <Button
                         variant="outline"
                         type="button"
+                        disabled={isStartDateLocked}
                         className={cn(
                           "h-12 w-full justify-start text-left font-bold text-xs rounded-xl bg-muted/50 border-border",
                           !startDate && "text-muted-foreground",
+                          isStartDateLocked && "opacity-70 cursor-not-allowed"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -556,6 +568,11 @@ export default function ClassFormDialog({
                       />
                     </PopoverContent>
                   </Popover>
+                  {isStartDateLocked && (
+                    <p className="mt-1.5 text-[10px] font-medium text-muted-foreground/70 flex items-center gap-1">
+                      <Clock size={10} /> Start date is locked for ongoing classes
+                    </p>
+                  )}
                   {fieldErrors.startDate && (
                     <FieldError>{fieldErrors.startDate}</FieldError>
                   )}

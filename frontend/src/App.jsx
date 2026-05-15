@@ -24,6 +24,8 @@ import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import ShaderDemo from "@/components/ShaderDemo";
+import { HeroSection } from "@/components/shared/landing/hero";
 
 
 export default function App() {
@@ -107,6 +109,8 @@ export default function App() {
                 <Route path="profile" element={<ProfilePage />} />
               </Route>
 
+              <Route path="/shader-demo" element={<ShaderDemo />} />
+              <Route path="/landing" element={<HeroSection />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <Toaster position="bottom-right" />

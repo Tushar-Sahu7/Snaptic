@@ -274,21 +274,33 @@ const updateClass = async (req, res) => {
         if (schedule.rrule) {
           const newRule = RRule.fromString(schedule.rrule);
           const newDtStart = newRule.options.dtstart;
+          const todayStr = formatIST(new Date(), "yyyy-MM-dd");
+          const newStartDateStr = formatIST(newDtStart, "yyyy-MM-dd");
 
-          // If schedule already existed, only validate if dtstart changed
-          let shouldValidatePast = true;
+          // 1. Logic for existing classes
           if (classDoc.schedule?.rrule) {
-            try {
-              const oldRule = RRule.fromString(classDoc.schedule.rrule);
-              if (oldRule.options.dtstart.getTime() === newDtStart.getTime()) {
-                shouldValidatePast = false;
-              }
-            } catch (e) {
-              // If old rule is unparseable, we fallback to validation
-            }
-          }
+            const oldRule = RRule.fromString(classDoc.schedule.rrule);
+            const oldDtStart = oldRule.options.dtstart;
+            const oldStartDateStr = formatIST(oldDtStart, "yyyy-MM-dd");
 
-          if (shouldValidatePast) {
+            // If class already started in the past
+            if (oldStartDateStr < todayStr) {
+              // Block changing the start date
+              if (newStartDateStr !== oldStartDateStr) {
+                throw new Error("CANNOT_CHANGE_START_DATE");
+              }
+              // Skip "past check" for time changes if date is the same
+            } else {
+              // If class hasn't started yet or started today, enforce future check if date/time changed
+              if (newDtStart.getTime() !== oldDtStart.getTime()) {
+                const now = new Date();
+                if (newDtStart < now) {
+                  throw new Error("START_TIME_PAST");
+                }
+              }
+            }
+          } else {
+            // New schedule for a class that didn't have one
             const now = new Date();
             if (newDtStart < now) {
               throw new Error("START_TIME_PAST");
@@ -309,6 +321,7 @@ const updateClass = async (req, res) => {
     if (err.message === "CLASS_NOT_FOUND") return res.status(404).json({ message: "Class not found" });
     if (err.message === "UNAUTHORIZED") return res.status(403).json({ message: "Unauthorized" });
     if (err.message === "START_TIME_PAST") return res.status(400).json({ message: "Start time cannot be in the past" });
+    if (err.message === "CANNOT_CHANGE_START_DATE") return res.status(400).json({ message: "Cannot change the start date of an ongoing class" });
     
     console.error("[ClassController] updateClass Error:", err);
     return res.status(500).json({ message: err.message });
