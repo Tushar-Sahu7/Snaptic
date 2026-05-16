@@ -1,11 +1,15 @@
 "use client"
-
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
+import { useTheme } from "@/components/ThemeProvider"
 
 export function ShaderAnimation() {
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
+  const { theme } = useTheme()
+  
+  // Detect if we should use dark or light mode colors
+  const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -27,6 +31,7 @@ export function ShaderAnimation() {
       precision highp float;
       uniform vec2 resolution;
       uniform float time;
+      uniform bool isDark;
 
       void main(void) {
         vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
@@ -40,7 +45,15 @@ export function ShaderAnimation() {
           }
         }
         
-        gl_FragColor = vec4(color[0],color[1],color[2],1.0);
+        if (isDark) {
+          gl_FragColor = vec4(color, 1.0);
+        } else {
+          // In light mode, we want subtle darker lines on a light background
+          // We can invert the color or just use a low opacity version of the colors
+          // Let's go with a subtle colored line approach
+          float brightness = (color.r + color.g + color.b) / 3.0;
+          gl_FragColor = vec4(color * 0.5, brightness * 0.4);
+        }
       }
     `
 
@@ -54,19 +67,22 @@ export function ShaderAnimation() {
     const uniforms = {
       time: { type: "f", value: 1.0 },
       resolution: { type: "v2", value: new THREE.Vector2() },
+      isDark: { type: "b", value: isDark },
     }
 
     const material = new THREE.ShaderMaterial({
       uniforms: uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
+      transparent: true,
     })
 
     const mesh = new THREE.Mesh(geometry, material)
     scene.add(mesh)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setClearColor(0x000000, 0)
 
     container.appendChild(renderer.domElement)
 
@@ -122,16 +138,16 @@ export function ShaderAnimation() {
         material.dispose()
       }
     }
-  }, [])
+  }, [isDark])
 
   return (
     <div
       ref={containerRef}
       className="w-full h-screen"
       style={{
-        background: "#000",
         overflow: "hidden",
       }}
     />
   )
 }
+

@@ -8,6 +8,8 @@ import { AnimatedGroup } from "@/components/ui/animated-group";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/Logo";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { useTheme } from "@/components/ThemeProvider";
 
 const transitionVariants = {
   item: {
@@ -30,6 +32,9 @@ const transitionVariants = {
 };
 
 export function HeroSection() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
   return (
     <div className="relative min-h-screen bg-background">
       {/* Shader Background */}
@@ -120,7 +125,6 @@ export function HeroSection() {
                 </AnimatedGroup>
               </div>
             </div>
-
             <AnimatedGroup
               className="relative mt-8 px-2 sm:mt-12 md:mt-20"
               variants={{
@@ -143,7 +147,7 @@ export function HeroSection() {
                 <div className="ring-background dark:inset-shadow-white/20 bg-background/80 backdrop-blur-sm relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-2xl shadow-zinc-950/15 ring-1">
                   <img
                     className="bg-background relative rounded-2xl shadow-inner w-full h-auto object-contain"
-                    src="/landing/dashboard_dark.png"
+                    src={isDark ? "/landing/dashboard_dark.png" : "/landing/dashboard_light.png"}
                     alt="Snaptic AI-Powered Attendance Dashboard Interface"
                   />
                 </div>
@@ -157,7 +161,7 @@ export function HeroSection() {
 }
 
 const menuItems = [
-  { name: "Features", href: "#link" },
+  { name: "Features", href: "#features" },
   { name: "Solution", href: "#link" },
   { name: "Pricing", href: "#link" },
   { name: "About", href: "#link" },
@@ -224,6 +228,7 @@ const HeroHeader = () => {
                 menuState ? "flex" : "hidden lg:flex",
               )}
             >
+              <AnimatedThemeToggler />
               <Button
                 asChild
                 variant="ghost"
