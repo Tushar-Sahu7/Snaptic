@@ -28,6 +28,7 @@ import ShaderDemo from "@/components/ShaderDemo";
 import LandingPage from "@/pages/LandingPage";
 
 export default function App() {
+  
   return (
     <ThemeProvider defaultTheme="system" storageKey="snaptic-theme">
 

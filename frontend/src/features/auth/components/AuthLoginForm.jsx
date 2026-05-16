@@ -199,6 +199,7 @@ export default function LoginForm({ ...props }) {
             Don&apos;t have an account?{" "}
             <Link
               to="/register"
+              replace
               className="text-foreground underline underline-offset-4"
             >
               Sign up

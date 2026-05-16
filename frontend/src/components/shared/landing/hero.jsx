@@ -178,7 +178,6 @@ export function HeroSection() {
 const menuItems = [
   { name: "Features", href: "#features" },
   { name: "How it works", href: "#how-it-works" },
-  { name: "About", href: "#link" },
 ];
 
 const HeroHeader = () => {

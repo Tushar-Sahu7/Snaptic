@@ -211,6 +211,7 @@ export default function RegisterForm({ ...props }) {
             Already have an account?{" "}
             <Link
               to="/login"
+              replace
               className="text-foreground underline underline-offset-4"
             >
               Log in
