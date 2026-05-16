@@ -25,32 +25,16 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ShaderDemo from "@/components/ShaderDemo";
-import { HeroSection } from "@/components/shared/landing/hero";
-
+import LandingPage from "@/pages/LandingPage";
 
 export default function App() {
-  const { loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm font-bold animate-pulse uppercase tracking-widest text-muted-foreground">
-            Initializing Snaptic...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <ThemeProvider defaultTheme="system" storageKey="snaptic-theme">
 
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
@@ -110,7 +94,7 @@ export default function App() {
               </Route>
 
               <Route path="/shader-demo" element={<ShaderDemo />} />
-              <Route path="/landing" element={<HeroSection />} />
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <Toaster position="bottom-right" />
