@@ -107,6 +107,7 @@ const Skiper16 = () => {
 
   return (
     <section
+      id="how-it-works"
       ref={container}
       className="relative py-24 bg-background overflow-visible"
     >

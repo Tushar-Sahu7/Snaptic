@@ -81,7 +81,7 @@ export function Features() {
   }, [students.length]);
 
   return (
-    <section className="bg-gray-50 py-16 md:py-32 dark:bg-transparent">
+    <section id="features" className="bg-gray-50 py-16 md:py-32 dark:bg-transparent">
       <div className="mx-auto max-w-3xl lg:max-w-5xl px-6">
         <div className="relative">
           <div className="mx-auto mb-16 max-w-3xl text-center">

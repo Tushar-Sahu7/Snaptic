@@ -33,7 +33,11 @@ const transitionVariants = {
 
 export function HeroSection() {
   const { theme } = useTheme();
-  const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -118,7 +122,14 @@ export function HeroSection() {
                     variant="ghost"
                     className="h-10.5 rounded-xl px-5"
                   >
-                    <Link to="#features">
+                    <Link
+                      to="#features"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const el = document.getElementById("features");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                    >
                       <span className="text-nowrap">View Features</span>
                     </Link>
                   </Button>
@@ -147,7 +158,11 @@ export function HeroSection() {
                 <div className="ring-background dark:inset-shadow-white/20 bg-background/80 backdrop-blur-sm relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-2xl shadow-zinc-950/15 ring-1">
                   <img
                     className="bg-background relative rounded-2xl shadow-inner w-full h-auto object-contain"
-                    src={isDark ? "/landing/dashboard_dark.png" : "/landing/dashboard_light.png"}
+                    src={
+                      isDark
+                        ? "/landing/dashboard_dark.png"
+                        : "/landing/dashboard_light.png"
+                    }
                     alt="Snaptic AI-Powered Attendance Dashboard Interface"
                   />
                 </div>
@@ -162,8 +177,7 @@ export function HeroSection() {
 
 const menuItems = [
   { name: "Features", href: "#features" },
-  { name: "Solution", href: "#link" },
-  { name: "Pricing", href: "#link" },
+  { name: "How it works", href: "#how-it-works" },
   { name: "About", href: "#link" },
 ];
 
@@ -213,6 +227,14 @@ const HeroHeader = () => {
                   <li key={index}>
                     <Link
                       to={item.href}
+                      onClick={(e) => {
+                        if (item.href.startsWith("#")) {
+                          e.preventDefault();
+                          const id = item.href.substring(1);
+                          const el = document.getElementById(id);
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }}
                       className="text-muted-foreground hover:text-primary block duration-150"
                     >
                       <span>{item.name}</span>
@@ -225,21 +247,51 @@ const HeroHeader = () => {
             <div
               className={cn(
                 "flex items-center gap-4",
-                menuState ? "flex" : "hidden lg:flex",
+                menuState
+                  ? "flex-col absolute top-full left-0 right-0 bg-background border-b p-6 mt-2 rounded-2xl shadow-xl lg:hidden"
+                  : "hidden lg:flex",
               )}
             >
-              <AnimatedThemeToggler />
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="hidden sm:inline-flex"
-              >
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button asChild size="sm" className="rounded-full px-6">
-                <Link to="/register">Sign Up</Link>
-              </Button>
+              {menuState && (
+                <ul className="flex flex-col gap-4 text-sm font-medium w-full mb-4 border-b pb-4">
+                  {menuItems.map((item, index) => (
+                    <li key={index}>
+                      <Link
+                        to={item.href}
+                        onClick={(e) => {
+                          if (item.href.startsWith("#")) {
+                            e.preventDefault();
+                            const id = item.href.substring(1);
+                            const el = document.getElementById(id);
+                            if (el) el.scrollIntoView({ behavior: "smooth" });
+                            setMenuState(false);
+                          }
+                        }}
+                        className="text-muted-foreground hover:text-primary block duration-150 py-2"
+                      >
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex items-center gap-4 w-full justify-center">
+                <AnimatedThemeToggler />
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "hidden sm:inline-flex",
+                    menuState && "inline-flex",
+                  )}
+                >
+                  <Link to="/login">Login</Link>
+                </Button>
+                <Button asChild size="sm" className="rounded-full px-6">
+                  <Link to="/register">Sign Up</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

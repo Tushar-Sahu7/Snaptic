@@ -133,6 +133,7 @@
 
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
 
   button:not(:disabled),
