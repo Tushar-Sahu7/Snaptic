@@ -5,10 +5,11 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const setCookie = (res, token, rememberMe = true) => {
+  const isProd = process.env.NODE_ENV === "production";
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
   };
 
   if (rememberMe) {
@@ -275,7 +276,12 @@ const generateInvite = async (req, res) => {
 // POST /api/auth/logout
 const logout = async (req, res) => {
   try {
-    res.clearCookie("token");
+    const isProd = process.env.NODE_ENV === "production";
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+    });
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
