@@ -23,7 +23,7 @@ const { protect, restrictTo } = require("../middlewares/auth.middleware");
  *   schemas:
  *     Class:
  *       type: object
- *       required: [name, startDate, endDate, startTime, daysOfWeek]
+ *       required: [name, schedule]
  *       properties:
  *         _id:
  *           type: string
@@ -33,31 +33,38 @@ const { protect, restrictTo } = require("../middlewares/auth.middleware");
  *           type: string
  *         icon:
  *           type: string
+ *           default: "BookOpen"
  *         color:
  *           type: string
- *         startDate:
+ *           default: "oklch(0.6 0.2 250)"
+ *         location:
  *           type: string
- *           format: date
- *         endDate:
- *           type: string
- *           format: date
- *         startTime:
- *           type: string
- *           example: "09:00"
- *         duration:
- *           type: number
- *           default: 60
- *         daysOfWeek:
- *           type: array
- *           items:
- *             type: number
- *             minimum: 0
- *             maximum: 6
  *         status:
  *           type: string
  *           enum: [active, archived]
+ *           default: "active"
+ *         schedule:
+ *           type: object
+ *           required: [rrule, duration]
+ *           properties:
+ *             rrule:
+ *               type: string
+ *               description: RFC 5545 iCalendar recurrence rule string
+ *               example: "DTSTART;TZID=Asia/Kolkata:20260518T090000\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE"
+ *             duration:
+ *               type: number
+ *               default: 60
+ *               description: Duration of the class in minutes
+ *         teacherId:
+ *           type: string
  *         studentCount:
  *           type: number
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */
 
 /**
@@ -152,7 +159,60 @@ router.route("/")
  *       200:
  *         description: Class deleted
  */
+
+/**
+ * @swagger
+ * /api/classes/bulk/status:
+ *   put:
+ *     summary: Bulk update class statuses (active/archived)
+ *     tags: [Classes]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [classIds, status]
+ *             properties:
+ *               classIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, archived]
+ *     responses:
+ *       200:
+ *         description: Classes updated successfully
+ */
 router.put("/bulk/status", restrictTo("teacher"), bulkUpdateStatus);
+
+/**
+ * @swagger
+ * /api/classes/bulk:
+ *   delete:
+ *     summary: Bulk delete classes
+ *     tags: [Classes]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [classIds]
+ *             properties:
+ *               classIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Classes deleted successfully
+ */
 router.delete("/bulk", restrictTo("teacher"), bulkDeleteClasses);
 
 /**
@@ -219,14 +279,23 @@ router.post("/:id/students", restrictTo("teacher"), addStudent);
  *         schema:
  *           type: string
  *     requestBody:
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [sourceClassId]
+ *             required: [fromClassId]
  *             properties:
- *               sourceClassId:
+ *               fromClassId:
  *                 type: string
  *     responses:
  *       200:
@@ -254,6 +323,36 @@ router.post("/:id/enrollments/import", restrictTo("teacher"), importStudents);
  *     responses:
  *       200:
  *         description: Student removed
+ */
+/**
+ * @swagger
+ * /api/classes/{id}/students/bulk:
+ *   delete:
+ *     summary: Bulk remove students from a class
+ *     tags: [Classes]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [studentIds]
+ *             properties:
+ *               studentIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Students removed successfully
  */
 router.delete("/:id/students/bulk", restrictTo("teacher"), bulkRemoveStudents);
 router.delete("/:id/students/:studentId", restrictTo("teacher"), removeStudent);

@@ -20,6 +20,7 @@ const { protect, restrictTo } = require("../middlewares/auth.middleware");
  *   schemas:
  *     User:
  *       type: object
+ *       required: [_id, email, role, isFirstLogin, name]
  *       properties:
  *         _id:
  *           type: string
@@ -35,8 +36,32 @@ const { protect, restrictTo } = require("../middlewares/auth.middleware");
  *           nullable: true
  *         isFirstLogin:
  *           type: boolean
- *         faceEnrolled:
- *           type: boolean
+ *         joinedAt:
+ *           type: string
+ *           format: date-time
+ *     TeacherUser:
+ *       allOf:
+ *         - $ref: '#/components/schemas/User'
+ *         - type: object
+ *           properties:
+ *             inviteLink:
+ *               type: string
+ *               nullable: true
+ *             classCount:
+ *               type: number
+ *             studentCount:
+ *               type: number
+ *             faceEnrolled:
+ *               type: boolean
+ *     StudentUser:
+ *       allOf:
+ *         - $ref: '#/components/schemas/User'
+ *         - type: object
+ *           properties:
+ *             faceEnrolled:
+ *               type: boolean
+ *             classCount:
+ *               type: number
  */
 
 /**
@@ -78,7 +103,9 @@ const { protect, restrictTo } = require("../middlewares/auth.middleware");
  *               type: object
  *               properties:
  *                 user:
- *                   $ref: '#/components/schemas/User'
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/StudentUser'
+ *                     - $ref: '#/components/schemas/TeacherUser'
  */
 router.post("/register", register);
 
@@ -111,7 +138,9 @@ router.post("/register", register);
  *               type: object
  *               properties:
  *                 user:
- *                   $ref: '#/components/schemas/User'
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/StudentUser'
+ *                     - $ref: '#/components/schemas/TeacherUser'
  */
 router.post("/login", login);
 
@@ -126,6 +155,15 @@ router.post("/login", login);
  *     responses:
  *       200:
  *         description: Current user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/StudentUser'
+ *                     - $ref: '#/components/schemas/TeacherUser'
  */
 router.get("/me", protect, me);
 
@@ -151,6 +189,21 @@ router.get("/me", protect, me);
  *     responses:
  *       200:
  *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 profile:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     avatar:
+ *                       type: string
+ *                       nullable: true
  */
 router.put("/profile", protect, updateProfile);
 
@@ -203,6 +256,13 @@ router.post("/logout", logout);
  *     responses:
  *       200:
  *         description: Invite link generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 inviteLink:
+ *                   type: string
  */
 router.post("/invite", protect, restrictTo("teacher"), generateInvite);
 
@@ -231,7 +291,16 @@ router.post("/invite", protect, restrictTo("teacher"), generateInvite);
  *                   type: number
  *     responses:
  *       200:
- *         description: Face enrolled
+ *         description: Face enrolled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 faceEnrolled:
+ *                   type: boolean
  */
 router.post("/face/enroll", protect, enrollFace);
 
@@ -246,6 +315,17 @@ router.post("/face/enroll", protect, enrollFace);
  *     responses:
  *       200:
  *         description: Face status returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 faceEnrolled:
+ *                   type: boolean
+ *                 enrolledAt:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
  */
 router.get("/face/status", protect, getFaceStatus);
 
@@ -260,6 +340,15 @@ router.get("/face/status", protect, getFaceStatus);
  *     responses:
  *       200:
  *         description: Face enrollment deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 faceEnrolled:
+ *                   type: boolean
  */
 router.delete("/face", protect, deleteFace);
 

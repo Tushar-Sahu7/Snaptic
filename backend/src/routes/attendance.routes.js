@@ -18,6 +18,86 @@ const router = express.Router();
  *   description: Attendance session management and marking
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AttendanceSession:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         classId:
+ *           type: string
+ *         teacherId:
+ *           type: string
+ *         date:
+ *           type: string
+ *           format: date-time
+ *         location:
+ *           type: string
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *         status:
+ *           type: string
+ *           enum: [scheduled, inprogress, submitted, finalized, missed]
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     AttendanceRecord:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         sessionId:
+ *           type: string
+ *         studentId:
+ *           type: string
+ *         classId:
+ *           type: string
+ *         teacherId:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [present, absent]
+ *         method:
+ *           type: string
+ *           enum: [face, manual]
+ *         markedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     StudentProfileForSession:
+ *       type: object
+ *       properties:
+ *         userId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         avatar:
+ *           type: string
+ *           nullable: true
+ *         embedding:
+ *           type: array
+ *           items:
+ *             type: number
+ *         faceEnrolled:
+ *           type: boolean
+ */
+
 router.use(protect);
 
 // Routes accessible by both teachers and students
@@ -27,6 +107,32 @@ router.use(protect);
  *   get:
  *     summary: "Get today's sessions (Teacher: their classes, Student: their enrolled classes)"
  *     tags: [Attendance]
+ *     responses:
+ *       200:
+ *         description: List of sessions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sessions:
+ *                   type: array
+ *                   items:
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/AttendanceSession'
+ *                       - type: object
+ *                         properties:
+ *                           attendance:
+ *                             type: object
+ *                             nullable: true
+ *                             properties:
+ *                               status:
+ *                                 type: string
+ *                                 enum: [present, absent]
+ *                               markedAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                                 nullable: true
  */
 router.get("/today", getTodaySession);
 
@@ -36,6 +142,36 @@ router.get("/today", getTodaySession);
  *   get:
  *     summary: Get today's session for a specific class
  *     tags: [Attendance]
+ *     parameters:
+ *       - in: path
+ *         name: classId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Session details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 session:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/AttendanceSession'
+ *                     - type: object
+ *                       properties:
+ *                         attendance:
+ *                           type: object
+ *                           nullable: true
+ *                           properties:
+ *                             status:
+ *                               type: string
+ *                               enum: [present, absent]
+ *                             markedAt:
+ *                               type: string
+ *                               format: date-time
+ *                               nullable: true
  */
 router.get("/today/:classId", getTodaySession);
 
@@ -56,7 +192,22 @@ router.use(restrictTo("teacher"));
  *           type: string
  *     responses:
  *       200:
- *         description: Session started
+ *         description: Session started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 session:
+ *                   $ref: '#/components/schemas/AttendanceSession'
+ *                 profiles:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/StudentProfileForSession'
+ *                 records:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/AttendanceRecord'
  */
 router.post("/start/:classId", startSession);
 
@@ -81,9 +232,19 @@ router.post("/start/:classId", startSession);
  *               status:
  *                 type: string
  *                 enum: [present, absent]
+ *               method:
+ *                 type: string
+ *                 enum: [face, manual]
  *     responses:
  *       200:
- *         description: Attendance marked
+ *         description: Attendance marked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 record:
+ *                   $ref: '#/components/schemas/AttendanceRecord'
  */
 router.put("/mark", markAttendance);
 
@@ -101,7 +262,16 @@ router.put("/mark", markAttendance);
  *           type: string
  *     responses:
  *       200:
- *         description: Session submitted
+ *         description: Session submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 session:
+ *                   $ref: '#/components/schemas/AttendanceSession'
  */
 router.post("/submit/:sessionId", submitSession);
 
@@ -119,7 +289,17 @@ router.post("/submit/:sessionId", submitSession);
  *           type: string
  *     responses:
  *       200:
- *         description: Session reset
+ *         description: Session reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                   example: scheduled
  */
 router.delete("/session/:sessionId/reset", resetSession);
 
@@ -139,7 +319,26 @@ router.delete("/session/:sessionId/reset", resetSession);
  *           type: string
  *     responses:
  *       200:
- *         description: List of attendance records
+ *         description: List of attendance records and session details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 session:
+ *                   $ref: '#/components/schemas/AttendanceSession'
+ *                 records:
+ *                   type: array
+ *                   items:
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/AttendanceRecord'
+ *                       - type: object
+ *                         properties:
+ *                           studentName:
+ *                             type: string
+ *                           avatar:
+ *                             type: string
+ *                             nullable: true
  */
 router.get("/session/:sessionId/records", getSessionRecords);
 
