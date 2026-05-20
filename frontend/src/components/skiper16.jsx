@@ -65,7 +65,7 @@ const StickyCard = ({
   const scale = useTransform(progress, range, [1, targetScale]);
 
   return (
-    <div className="sticky top-[150px] flex items-center justify-center mb-[8vh]">
+    <div className="sticky top-37.5 flex items-center justify-center mb-[8vh]">
       <motion.div
         variants={revealVariants}
         style={{
@@ -105,6 +105,30 @@ const Skiper16 = () => {
 
   const activeStep = attendanceSteps[activeIndex];
 
+  const handleNextStep = () => {
+    if (activeIndex < attendanceSteps.length - 1) {
+      const nextIndex = activeIndex + 1;
+      if (container.current) {
+        const rect = container.current.getBoundingClientRect();
+        const containerTop = window.scrollY + rect.top;
+        const containerHeight = rect.height;
+        const windowHeight = window.innerHeight;
+        const scrollDistance = containerHeight - windowHeight;
+        
+        if (scrollDistance > 0) {
+          // Scroll to 90% through each step's quarter-segment so the
+          // sticky card has fully stacked over the previous one.
+          const targetProgress = nextIndex * 0.25 + 0.225;
+          const targetScroll = containerTop + (targetProgress * scrollDistance);
+          window.scrollTo({
+            top: targetScroll,
+            behavior: "smooth"
+          });
+        }
+      }
+    }
+  };
+
   return (
     <section
       id="how-it-works"
@@ -133,14 +157,15 @@ const Skiper16 = () => {
           <div className="lg:col-span-3">
             <motion.div
               variants={revealVariants}
-              className="sticky top-[150px] z-20 space-y-6"
+              className="sticky top-37.5 z-20 space-y-6"
             >
               <motion.div
                 key={activeIndex}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className="space-y-4"
+                className={`space-y-4 ${activeIndex < attendanceSteps.length - 1 ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                onClick={handleNextStep}
               >
                 <div className="flex items-center gap-4">
                   <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs ring-1 ring-primary/20">
@@ -157,16 +182,29 @@ const Skiper16 = () => {
                   {activeStep.description}
                 </p>
                 
-                {/* Visual Step Indicator */}
-                <div className="flex gap-2 pt-4">
-                  {attendanceSteps.map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-1 rounded-full transition-all duration-500 ${
-                        i === activeIndex ? "w-8 bg-primary" : "w-2 bg-muted"
-                      }`}
-                    />
-                  ))}
+                {/* Visual Step Indicator with Arrow */}
+                <div className="flex items-center gap-3 pt-4">
+                  <div className="flex gap-2 items-center">
+                    {attendanceSteps.map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`h-1 rounded-full transition-all duration-500 ${
+                          i === activeIndex ? "w-8 bg-primary" : "w-2 bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {activeIndex < attendanceSteps.length - 1 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleNextStep(); }}
+                      className="flex items-center justify-center size-7 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors ring-1 ring-primary/20 cursor-pointer"
+                      aria-label="Next step"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>
