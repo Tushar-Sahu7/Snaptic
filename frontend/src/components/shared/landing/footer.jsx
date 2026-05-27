@@ -21,13 +21,13 @@ const footerLinks = {
     { name: "Scheduling", href: "#link" },
   ],
   company: [
-    { name: "About Us", href: "#link" },
-    { name: "Contact", href: "#link" },
+    { name: "About Us", href: "https://github.com/Tushar-Sahu7" },
+    { name: "Contact", href: "mailto:sahutushar532@gmail.com" },
     { name: "Careers", href: "#link" },
     { name: "Blog", href: "#link" },
   ],
   resources: [
-    { name: "Documentation", href: "#link" },
+    { name: "Documentation", href: "https://snaptic-ray7.onrender.com/api-docs/" },
     { name: "Help Center", href: "#link" },
     { name: "Privacy Policy", href: "#link" },
     { name: "Terms of Service", href: "#link" },
@@ -35,10 +35,10 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { name: "Twitter", icon: Twitter, href: "#" },
-  { name: "LinkedIn", icon: Linkedin, href: "#" },
-  { name: "GitHub", icon: Github, href: "#" },
-  { name: "Instagram", icon: Instagram, href: "#" },
+  { name: "Twitter", icon: Twitter, href: "https://x.com/Tushar_Sahu7" },
+  { name: "LinkedIn", icon: Linkedin, href: "https://www.linkedin.com/in/tushar-sahu-8b39b4290/" },
+  { name: "GitHub", icon: Github, href: "https://github.com/Tushar-Sahu7" },
+  { name: "Instagram", icon: Instagram, href: "https://www.instagram.com/killermac.7/" },
 ];
 
 export function Footer() {
@@ -57,14 +57,16 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
-                <Link
+                <a
                   key={social.name}
-                  to={social.href}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="size-10 flex items-center justify-center rounded-xl bg-muted hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
                   aria-label={social.name}
                 >
                   <social.icon className="size-5" />
-                </Link>
+                </a>
               ))}
             </div>
           </div>
@@ -103,12 +105,23 @@ export function Footer() {
             <ul className="space-y-4">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
-                  <Link
-                    to={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
-                  >
-                    {link.name}
-                  </Link>
+                  {link.href.startsWith("http") || link.href.startsWith("mailto:") ? (
+                    <a
+                      href={link.href}
+                      target={link.href.startsWith("http") ? "_blank" : undefined}
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.href}
+                      className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    >
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -121,12 +134,23 @@ export function Footer() {
             <ul className="space-y-4">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
-                  <Link
-                    to={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
-                  >
-                    {link.name}
-                  </Link>
+                  {link.href.startsWith("http") || link.href.startsWith("mailto:") ? (
+                    <a
+                      href={link.href}
+                      target={link.href.startsWith("http") ? "_blank" : undefined}
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.href}
+                      className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    >
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -140,15 +164,19 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
                 <Mail className="size-4 mt-0.5 text-primary" />
-                <span>support@snaptic.ai</span>
+                <a href="mailto:sahutushar532@gmail.com" className="hover:text-primary transition-colors">
+                  sahutushar532@gmail.com
+                </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
                 <Phone className="size-4 mt-0.5 text-primary" />
-                <span>+1 (555) 000-0000</span>
+                <a href="tel:+917275007737" className="hover:text-primary transition-colors">
+                  +91 7275007737
+                </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
                 <MapPin className="size-4 mt-0.5 text-primary" />
-                <span>San Francisco, CA</span>
+                <span>Ayodhya, UP</span>
               </li>
             </ul>
           </div>
