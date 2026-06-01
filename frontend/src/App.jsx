@@ -20,7 +20,6 @@ import AttendanceSummaryPage from "@/pages/teacher/AttendanceSummaryPage";
 
 // Student Specific Pages
 
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -31,7 +30,6 @@ export default function App() {
   
   return (
     <ThemeProvider defaultTheme="system" storageKey="snaptic-theme">
-
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
@@ -68,7 +66,10 @@ export default function App() {
                   path="attendance/:id/summary"
                   element={<AttendanceSummaryPage />}
                 />
-                <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+                <Route
+                  path="face-enrollment"
+                  element={<FaceEnrollmentPage />}
+                />
                 <Route path="profile" element={<ProfilePage />} />
               </Route>
 
@@ -90,7 +91,10 @@ export default function App() {
                   path="classes/:id/records/:sessionId"
                   element={<SessionRecordPage />}
                 />
-                <Route path="face-enrollment" element={<FaceEnrollmentPage />} />
+                <Route
+                  path="face-enrollment"
+                  element={<FaceEnrollmentPage />}
+                />
                 <Route path="profile" element={<ProfilePage />} />
               </Route>
 

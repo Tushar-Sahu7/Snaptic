@@ -7,7 +7,38 @@
     <title>Snaptic</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <style>
+        .app-loader {
+          position: fixed; inset: 0; display: flex;
+          align-items: center; justify-content: center;
+          background: #fff;
+        }
+        .app-loader .spinner {
+          width: 36px; height: 36px;
+          border: 3.5px solid rgba(0,0,0,.1);
+          border-top-color: #1a1a1a;
+          border-radius: 50%;
+          animation: spin .45s linear infinite;
+        }
+        .dark .app-loader {
+          background: #1a1a1a;
+        }
+        .dark .app-loader .spinner {
+          border-color: rgba(255,255,255,.1);
+          border-top-color: #fff;
+        }
+        @keyframes spin { to { transform: rotate(360deg) } }
+      </style>
+      <script>
+        (function(){
+          var t = localStorage.getItem('snaptic-theme');
+          if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches))
+            document.getElementById('root').classList.add('dark');
+        })();
+      </script>
+      <div class="app-loader"><div class="spinner"></div></div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
