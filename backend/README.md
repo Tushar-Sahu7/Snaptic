@@ -172,9 +172,9 @@ erDiagram
     User ||--o| TeacherProfile : "has"
     User ||--o| StudentProfile : "has"
     User ||--o{ Enrollment : "enrolls"
-    User ||--o{ Class : "teaches"
-    Class ||--o{ Enrollment : "contains"
-    Class ||--o{ AttendanceSession : "schedules"
+    User ||--o{ "Class" : "teaches"
+    "Class" ||--o{ Enrollment : "contains"
+    "Class" ||--o{ AttendanceSession : "schedules"
     AttendanceSession ||--o{ AttendanceRecord : "tracks"
     User ||--o{ AttendanceRecord : "recorded for"
 
@@ -205,7 +205,7 @@ erDiagram
         Boolean faceEnrolled
     }
 
-    Class {
+    "Class" {
         ObjectId _id PK
         String name
         String description
