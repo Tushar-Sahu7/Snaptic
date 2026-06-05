@@ -171,12 +171,12 @@ The application uses **7 Mongoose models** with a separated profile pattern for 
 erDiagram
     User ||--o| TeacherProfile : "has"
     User ||--o| StudentProfile : "has"
-    User ||--o| Enrollment : "enrolls"
-    User ||--o| Class : "teaches"
-    Class ||--o| Enrollment : "contains"
-    Class ||--o| AttendanceSession : "schedules"
-    AttendanceSession ||--o| AttendanceRecord : "tracks"
-    User ||--o| AttendanceRecord : "recorded for"
+    User ||--o{ Enrollment : "enrolls"
+    User ||--o{ Class : "teaches"
+    Class ||--o{ Enrollment : "contains"
+    Class ||--o{ AttendanceSession : "schedules"
+    AttendanceSession ||--o{ AttendanceRecord : "tracks"
+    User ||--o{ AttendanceRecord : "recorded for"
 
     User {
         ObjectId _id PK
@@ -433,7 +433,7 @@ Two automated background jobs manage session lifecycle and class archiving.
 
 | Job | Schedule | Description |
 |-----|----------|-------------|
-| **Session Finalization** | `*/5 * * * *` (every 5 min) | Transitions `submitted → finalized` after grace period. Transitions `scheduled/inprogress → missed` after grace period. Deletes partial records for missed sessions. |
+| **Session Finalization** | `*/5 * * * *` (every 5 min) | Transitions `submitted → finalized` after grace period. Transitions `scheduled/inprogress → missed` after grace period. Deletes partial records. |
 | **Class Archiving** | `0 0 * * *` (daily at midnight) | Transitions `active → archived` for classes past their end date. |
 
 ---
