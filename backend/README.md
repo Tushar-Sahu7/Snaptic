@@ -171,12 +171,12 @@ The application uses **7 Mongoose models** with a separated profile pattern for 
 erDiagram
     User ||--o| TeacherProfile : "has"
     User ||--o| StudentProfile : "has"
-    User ||--o{ Enrollment : "enrolls"
-    User ||--o{ Class : "teaches"
-    Class ||--o{ Enrollment : "contains"
-    Class ||--o{ AttendanceSession : "schedules"
-    AttendanceSession ||--o{ AttendanceRecord : "tracks"
-    User ||--o{ AttendanceRecord : "recorded for"
+    User ||--o| Enrollment : "enrolls"
+    User ||--o| Class : "teaches"
+    Class ||--o| Enrollment : "contains"
+    Class ||--o| AttendanceSession : "schedules"
+    AttendanceSession ||--o| AttendanceRecord : "tracks"
+    User ||--o| AttendanceRecord : "recorded for"
 
     User {
         ObjectId _id PK
